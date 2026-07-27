@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETL开发助手项目 - 全景介绍</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; }
+        .header { background: linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #01579b 100%); color: white; padding: 60px 40px; text-align: center; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { font-size: 1.2em; opacity: 0.9; }
+        .header .version { font-size: 0.9em; opacity: 0.7; margin-top: 8px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .section { background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .section h2 { color: #1a237e; font-size: 1.6em; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #e3f2fd; }
+        .section h3 { color: #0d47a1; font-size: 1.2em; margin: 20px 0 10px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.9em; }
+        th, td { padding: 10px 12px; text-align: left; border: 1px solid #e0e0e0; }
+        th { background: #e3f2fd; color: #1a237e; font-weight: 600; }
+        tr:nth-child(even) { background: #fafafa; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 500; }
+        .badge-done { background: #e8f5e9; color: #2e7d32; }
+        .badge-wip { background: #fff3e0; color: #e65100; }
+        .badge-high { background: #fce4ec; color: #c62828; }
+        .flow-diagram { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85em; white-space: pre-wrap; overflow-x: auto; }
+        .file-tree { background: #263238; color: #eeffff; border-radius: 8px; padding: 20px; font-family: 'Courier New', monospace; font-size: 0.85em; white-space: pre; overflow-x: auto; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 20px 0; }
+        .card { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; transition: box-shadow 0.2s; }
+        .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+        .card h4 { color: #1a237e; margin-bottom: 8px; }
+        .card p { font-size: 0.9em; color: #555; }
+        .tag { display: inline-block; background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; margin: 2px; }
+        .legend { display: flex; gap: 20px; flex-wrap: wrap; margin: 10px 0; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.85em; }
+        .legend-color { width: 14px; height: 14px; border-radius: 3px; }
+        .toc { background: #f0f4f8; border-radius: 8px; padding: 20px; margin-bottom: 30px; }
+        .toc h3 { margin-bottom: 10px; }
+        .toc ul { list-style: none; padding-left: 0; }
+        .toc li { padding: 4px 0; }
+        .toc a { color: #1565c0; text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .nav-top { position: fixed; bottom: 30px; right: 30px; background: #1a237e; color: white; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-size: 1.2em; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>ETL 开发助手项目</h1>
+    <p>海信集团 IPD 研发指标数据仓库 &mdash; AI驱动的ETL开发全流程管理</p>
+    <div class="version">v2.4.0 | 2026-05-15</div>
+</div>
+
+<div class="container">
+
+<div class="toc">
+    <h3>目录</h3>
+    <ul>
+        <li><a href="#overview">1. 项目概述</a></li>
+        <li><a href="#architecture">2. 系统架构</a></li>
+        <li><a href="#file-structure">3. 项目文件结构</a></li>
+        <li><a href="#steering">4. Steering 规则体系</a></li>
+        <li><a href="#skills">5. Skills 技能体系</a></li>
+        <li><a href="#requirements">6. 需求模块详解</a></li>
+        <li><a href="#data-flow">7. 整体数据流程图</a></li>
+        <li><a href="#dependency">8. 指标依赖关系</a></li>
+        <li><a href="#product-lines">9. 产品线覆盖矩阵</a></li>
+        <li><a href="#business-rules">10. 公共业务规则</a></li>
+        <li><a href="#automation">11. 自动化与Hook机制</a></li>
+        <li><a href="#tech-stack">12. 技术栈</a></li>
+    </ul>
+</div>
+
+<!-- 1. 项目概述 -->
+<div class="section" id="overview">
+    <h2>1. 项目概述</h2>
+    <p>本项目是一个<strong>AI驱动的ETL开发助手系统</strong>，专为海信集团IPD（集成产品开发）研发指标数据仓库建设而设计。系统通过Kiro Agent的Steering规则体系、Skills技能、Hooks自动化三层架构，实现了从需求分析、SQL脚本生成、代码审查、数据质量验证到文档自动化的全流程管理。</p>
+    <h3>核心能力</h3>
+    <div class="card-grid">
+        <div class="card">
+            <h4>智能需求分析</h4>
+            <p>分叉链路v2.0对话流程：自动分类新建/变更需求，走不同处理路径。支持模式匹配加速分析，阶段门禁确保每步确认。</p>
+        </div>
+        <div class="card">
+            <h4>SQL脚本生成</h4>
+            <p>基于12个实战模板和8条公共规则，自动生成符合Apache Doris 2.1+语法的ETL脚本，覆盖DWD/DWS/ADS各层。</p>
+        </div>
+        <div class="card">
+            <h4>SQL代码审查</h4>
+            <p>6维度审查（规范/性能/业务/幂等/字段/可维护），100分制评分，支持自动修复建议。</p>
+        </div>
+        <div class="card">
+            <h4>知识管理</h4>
+            <p>三层校验体系（实时校验→推理反馈→定期体检），支持多人投喂、日志追溯、过期检测。</p>
+        </div>
+        <div class="card">
+            <h4>数据质量管控</h4>
+            <p>内置数据质量验证脚本，支持记录数验证、关键字段验证和业务规则验证。</p>
+        </div>
+        <div class="card">
+            <h4>文档自动化</h4>
+            <p>自动生成需求文档、表清单、血缘关系、权限检查报告，Hook监控SQL变更自动更新。</p>
+        </div>
+    </div>
+    <h3>业务目标</h3>
+    <p>为海信集团各事业部（冰冷、洗护、空气、显示）提供7大核心研发指标的数据支撑：</p>
+    <table>
+        <tr><th>指标</th><th>业务含义</th><th>考核目的</th></tr>
+        <tr><td>低效型号占比</td><td>销量完成率&lt;80%的型号占比</td><td>监控产品效率，推动低效型号退出</td></tr>
+        <tr><td>新品规划命中率</td><td>新品期内规划销量命中情况</td><td>评估新品规划准确性</td></tr>
+        <tr><td>企划命中率</td><td>央空日立按项目维度的销售达标率</td><td>红黑榜考核各营销部</td></tr>
+        <tr><td>在销型号数</td><td>当前市场在售的产品型号数量</td><td>衡量产品组合丰富度</td></tr>
+        <tr><td>在产型号数</td><td>当前正在生产的产品型号数量</td><td>衡量生产复杂度</td></tr>
+        <tr><td>平台数</td><td>平台库平台数 + 产品平台数</td><td>衡量平台资产规模和利用率</td></tr>
+        <tr><td>单型号销量/单平台销量</td><td>总销量/型号数（或平台数）</td><td>衡量产品组合效率和平台投资回报</td></tr>
+    </table>
+</div>
+
+<!-- 2. 系统架构 -->
+<div class="section" id="architecture">
+    <h2>2. 系统架构</h2>
+    <div class="flow-diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          Kiro Agent（AI 对话引擎）                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
+│  │  Steering    │  │   Skills     │  │   Hooks      │  │   MCP        │   │
+│  │  规则体系    │  │   技能体系   │  │   自动化     │  │   数据库连接  │   │
+│  │  (16个文件)  │  │  (7个技能)   │  │  (5个Hook)   │  │  (PostgreSQL) │   │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘   │
+│         │                  │                  │                  │           │
+└─────────┼──────────────────┼──────────────────┼──────────────────┼───────────┘
+          │                  │                  │                  │
+          ▼                  ▼                  ▼                  ▼
+┌──────────────────┐ ┌──────────────┐ ┌──────────────────┐ ┌──────────────┐
+│ .kiro/steering/  │ │ .kiro/skills/│ │ .kiro/hooks/     │ │ requirements/│
+│ 16个规则文件     │ │ 7个技能文件  │ │ 5个Hook配置      │ │ 7个需求模块  │
+│ (always/file/    │ │ (manual模式) │ │ (自动:2/按钮:3)  │ │ (SQL+文档)   │
+│  manual)         │ │              │ │                  │ │              │
+└──────────────────┘ └──────────────┘ └──────────────────┘ └──────────────┘
+    </div>
+    <h3>数据仓库分层架构</h3>
+    <div class="flow-diagram">
+┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐
+│   ODS   │────▶│   DWD   │────▶│   DWS   │────▶│   ADS   │     │   DIM   │
+│ 原始数据 │     │ 明细层   │     │ 汇总层   │     │ 应用层   │     │ 维度层   │
+│         │     │         │     │         │     │         │     │         │
+│ 管报数据 │     │ BP/LX   │     │ 型号明细 │     │ 指标结果 │     │ 产品型号 │
+│ 库存数据 │     │ 规划量   │     │ 销量明细 │     │ 汇总报表 │     │ 销售型号 │
+│ 平台数据 │     │ 分月展开 │     │ 平台明细 │     │ 完成率   │     │ 产品平台 │
+└─────────┘     └─────────┘     └─────────┘     └─────────┘     └─────────┘
+                                                                       │
+                                                    ◀──────────────────┘
+                                                    (维度表被各层引用)
+    </div>
+</div>
+
+<!-- 3. 项目文件结构 -->
+<div class="section" id="file-structure">
+    <h2>3. 项目文件结构</h2>
+    <div class="file-tree">
+KrioCaase2/
+├── .kiro/                              # Kiro Agent 配置目录
+│   ├── steering/                       # Steering 规则文件（16个）
+│   │   ├── README.md                   # 规则文件索引与依赖关系
+│   │   ├── language.md                 # 语言规范（强制中文）
+│   │   ├── product.md                  # 产品概述与设计原则
+│   │   ├── tech.md                     # 技术栈与构建系统
+│   │   ├── data_mapping.md             # 关键词→数据表映射
+│   │   ├── business_rules.md           # 8条公共业务规则（PUB-001~008）
+│   │   ├── sql_rules.md                # SQL编码规范与Doris特定规范
+│   │   ├── etl_dialogue_flow.md        # 分叉链路v2.0对话流程（总控）
+│   │   ├── etl_change_management.md    # 变更需求专属流程（链路B）
+│   │   ├── etl_analysis.md             # 需求分析（关键词+表匹配+分层）
+│   │   ├── etl_clarification.md        # 需求澄清（模糊度评分+问题模板）
+│   │   ├── requirement_patterns.md     # 需求模式库（7个模式，自学习）
+│   │   ├── sql_templates.md            # SQL实战模板库 [fileMatch: *.sql]
+│   │   ├── etl_sql_generator.md        # SQL生成器 [fileMatch: *.sql]
+│   │   ├── table_structures.md         # 完整表DDL [manual]
+│   │   ├── table_validation.md         # 权限检查流程 [manual]
+│   │   └── project_audit.md            # 项目审计规则 [manual]
+│   ├── skills/                         # Agent 技能（7个）
+│   │   ├── etl-requirement.md          # ETL需求处理（分叉链路）
+│   │   ├── knowledge-feeding.md        # 知识投喂（含智能校验）
+│   │   ├── knowledge-health-check.md   # 知识库健康检查
+│   │   ├── sql-review.md              # SQL代码审查（6维度）
+│   │   ├── sql-template-extract.md     # SQL模板提取
+│   │   ├── project-audit.md            # 项目审计
+│   │   └── update-readmes.md           # README同步更新
+│   ├── hooks/                          # Agent Hook 自动化（5个）
+│   │   ├── auto-update-lineage.kiro.hook      # SQL变更→自动更新血缘
+│   │   ├── auto-health-check-reminder.kiro.hook # 累计修改≥5次→提醒体检
+│   │   ├── btn-project-audit.kiro.hook        # 按钮：一键项目审计
+│   │   ├── btn-health-check.kiro.hook         # 按钮：一键健康检查
+│   │   └── btn-update-readmes.kiro.hook       # 按钮：一键更新README
+│   ├── settings/                       # 工具配置
+│   │   └── mcp.json                    # MCP服务器配置（PostgreSQL）
+│   ├── data/                           # Agent 数据存储
+│   │   ├── feeding-log.md              # 知识投喂日志（追溯）
+│   │   ├── feeding-counter.json        # 投喂计数器
+│   │   └── table_permissions.csv       # 表权限清单
+│   └── specs/                          # Spec 规格文件
+│       └── etl-developer-assistant/    # 项目Spec
+│
+├── requirements/                       # 需求管理目录（7个需求模块）
+│   ├── README.md                       # 需求汇总与依赖关系
+│   ├── templates/                      # 输出文件模板
+│   ├── 002-dx-model-rate/              # 低效型号占比与新品命中率
+│   ├── 003-qihua-hit-rate/             # 企划命中率
+│   ├── 004-sale-model-count/           # 在销型号数
+│   ├── 005-zcmodel-count/             # 在产型号数
+│   ├── 006-platform-count/             # 平台数
+│   ├── 007-single-model-sales/         # 单型号销量
+│   └── 008-single-platform-sales/      # 单平台销量
+│
+├── audit-feedback/                     # 审计反馈目录
+│   ├── README.md                       # 审计流程说明
+│   └── audit-report-20260515.html      # 审计报告
+│
+├── framework-review-report.html        # 框架审视报告
+├── project-overview.html               # 项目全景介绍（本文件）
+├── requirement-pipeline-analysis.html  # 需求处理链路分析
+├── kiro-docs-zh.md                     # Kiro 中文文档
+└── CHANGELOG.md                        # 项目框架变更记录
+    </div>
+</div>
+
+<!-- 4. Steering 规则体系 -->
+<div class="section" id="steering">
+    <h2>4. Steering 规则体系</h2>
+    <p>Steering 是本项目的核心创新点，通过16个规则文件构建了一套完整的AI Agent行为控制体系，使Agent能够像资深数据工程师一样理解业务、生成SQL、管理文档。</p>
+    
+    <h3>加载模式分类</h3>
+    <div class="legend">
+        <div class="legend-item"><div class="legend-color" style="background:#4caf50;"></div> Always（11个）- 每次对话自动加载</div>
+        <div class="legend-item"><div class="legend-color" style="background:#ff9800;"></div> FileMatch（2个）- SQL文件在上下文时加载</div>
+        <div class="legend-item"><div class="legend-color" style="background:#9c27b0;"></div> Manual（3个）- 通过 # 手动引用</div>
+    </div>
+
+    <table>
+        <tr><th>文件</th><th>模式</th><th>职责</th><th>核心内容</th></tr>
+        <tr><td>language.md</td><td><span class="badge badge-done">Always</span></td><td>语言规范</td><td>强制中文交流，技术术语可保留英文</td></tr>
+        <tr><td>product.md</td><td><span class="badge badge-done">Always</span></td><td>产品概述</td><td>系统能力、设计原则、快速问答模式</td></tr>
+        <tr><td>tech.md</td><td><span class="badge badge-done">Always</span></td><td>技术栈</td><td>Doris 2.1+、Kimball建模、五层架构</td></tr>
+        <tr><td>data_mapping.md</td><td><span class="badge badge-done">Always</span></td><td>数据映射</td><td>关键词→表映射、表间关联SQL、核心字段</td></tr>
+        <tr><td>business_rules.md</td><td><span class="badge badge-done">Always</span></td><td>业务规则</td><td>8条公共规则（PUB-001~008）</td></tr>
+        <tr><td>sql_rules.md</td><td><span class="badge badge-done">Always</span></td><td>SQL规范</td><td>编码规范、Doris数据类型、标准类型映射表</td></tr>
+        <tr><td>etl_dialogue_flow.md</td><td><span class="badge badge-done">Always</span></td><td>对话流程</td><td>分叉链路v2.0（新建链路A + 变更链路B）</td></tr>
+        <tr><td>etl_change_management.md</td><td><span class="badge badge-done">Always</span></td><td>变更管理</td><td>6种变更类型、专属澄清维度、影响分析</td></tr>
+        <tr><td>etl_analysis.md</td><td><span class="badge badge-done">Always</span></td><td>需求分析</td><td>关键词提取 + 表匹配 + 分层识别</td></tr>
+        <tr><td>etl_clarification.md</td><td><span class="badge badge-done">Always</span></td><td>需求澄清</td><td>模糊度评分 + 问题模板</td></tr>
+        <tr><td>requirement_patterns.md</td><td><span class="badge badge-done">Always</span></td><td>模式库</td><td>7个已有模式（PAT-001~007，自学习追加）</td></tr>
+        <tr><td>sql_templates.md</td><td><span class="badge badge-wip">FileMatch</span></td><td>SQL模板</td><td>12个实战模板（从已有SQL提取）</td></tr>
+        <tr><td>etl_sql_generator.md</td><td><span class="badge badge-wip">FileMatch</span></td><td>SQL生成器</td><td>模板选择→变量替换→输出流程</td></tr>
+        <tr><td>table_structures.md</td><td><span class="badge badge-high">Manual</span></td><td>表结构</td><td>完整DDL、全量字段说明</td></tr>
+        <tr><td>table_validation.md</td><td><span class="badge badge-high">Manual</span></td><td>权限检查</td><td>读取CSV验证表权限</td></tr>
+        <tr><td>project_audit.md</td><td><span class="badge badge-high">Manual</span></td><td>项目审计</td><td>审计规则与报告生成</td></tr>
+    </table>
+
+    <h3>规则文件依赖关系</h3>
+    <div class="flow-diagram">
+etl_dialogue_flow.md（总控，分叉链路v2.0）
+  ├── 状态2.5 需求分类判定
+  │   └── requirement_patterns.md（模式匹配+依赖关系）
+  ├── 链路A：新建需求
+  │   ├── etl_analysis.md（关键词提取+表匹配+分层识别）
+  │   │   └── data_mapping.md（提供实际表映射数据）
+  │   ├── etl_clarification.md（需求澄清）
+  │   ├── sql_templates.md + etl_sql_generator.md（SQL生成）[fileMatch]
+  │   │   ├── sql_rules.md（编码规范）
+  │   │   └── business_rules.md（公共业务规则）
+  │   └── requirement_patterns.md（经验沉淀，自学习追加）
+  ├── 链路B：变更需求
+  │   ├── etl_change_management.md（变更分类+澄清+影响分析+修改策略）
+  │   │   └── requirement_patterns.md（下游依赖查找）
+  │   └── business_rules.md（规则变更时引用）
+  └── table_validation.md（权限检查）[manual]
+    </div>
+</div>
+
+<!-- 5. Skills 技能体系 -->
+<div class="section" id="skills">
+    <h2>5. Skills 技能体系</h2>
+    <p>技能是预定义的执行步骤集合，通过触发词或 <code>#技能名</code> 手动引用激活。所有技能均为manual模式，不影响日常自由对话。</p>
+    <table>
+        <tr><th>技能</th><th>触发方式</th><th>功能描述</th><th>核心能力</th></tr>
+        <tr>
+            <td>etl-requirement</td>
+            <td><code>#etl-requirement</code> 或说"新需求/修改需求"</td>
+            <td>ETL需求处理</td>
+            <td>分叉链路：新建链路A（A1~A7）+ 变更链路B（B1~B6），阶段门禁</td>
+        </tr>
+        <tr>
+            <td>knowledge-feeding</td>
+            <td><code>#knowledge-feeding</code> 或说"投喂知识"</td>
+            <td>知识投喂</td>
+            <td>4种投喂类型 + 智能校验引擎 + 推理反馈 + 日志记录</td>
+        </tr>
+        <tr>
+            <td>knowledge-health-check</td>
+            <td><code>#knowledge-health-check</code> 或说"健康检查"</td>
+            <td>知识库健康检查</td>
+            <td>5维度检查 + 健康评分 + 修复引导</td>
+        </tr>
+        <tr>
+            <td>sql-review</td>
+            <td><code>#sql-review</code> 或说"审查SQL"</td>
+            <td>SQL代码审查</td>
+            <td>6维度审查（规范/性能/业务/幂等/字段/可维护），100分制</td>
+        </tr>
+        <tr>
+            <td>sql-template-extract</td>
+            <td><code>#sql-template-extract</code> 或说"提取模板"</td>
+            <td>SQL模板提取</td>
+            <td>从已有SQL中自动识别可复用模式并写入模板库</td>
+        </tr>
+        <tr>
+            <td>project-audit</td>
+            <td>说"执行项目审计"</td>
+            <td>项目审计</td>
+            <td>生成交互式HTML审计报告，支持处理意见反馈</td>
+        </tr>
+        <tr>
+            <td>update-readmes</td>
+            <td><code>#update-readmes</code> 或说"更新README"</td>
+            <td>README同步更新</td>
+            <td>扫描所有目录并同步更新README文件清单</td>
+        </tr>
+    </table>
+</div>
+
+<!-- 6. 需求模块详解 -->
+<div class="section" id="requirements">
+    <h2>6. 需求模块详解</h2>
+    <p>每个需求模块遵循统一的目录结构：<code>requirement.md</code> + <code>sql_scripts/</code> + <code>tables.txt</code> + <code>lineage.md</code> + <code>changelog.md</code> + <code>permission_check.md</code></p>
+
+    <h3>002 - 低效型号占比与新品规划命中率</h3>
+    <table>
+        <tr><th>属性</th><th>内容</th></tr>
+        <tr><td>状态</td><td><span class="badge badge-done">已完成</span></td></tr>
+        <tr><td>分层路径</td><td>DWD → DWS → ADS</td></tr>
+        <tr><td>业务含义</td><td>实际销量/规划销量 &lt; 0.8 为低效型号，监控各事业部低效型号占比和新品命中率</td></tr>
+        <tr><td>覆盖产品线</td><td>冰箱、冷柜、洗衣机、家用空调、中央空调/日立、视像科技</td></tr>
+        <tr><td>SQL脚本</td><td>dwd_ipd_ipm_bp_lx_model_mid_dd.sql / dws_ipd_ipm_dxmodel_detail_dd.sql / ads_ipd_ipm_dxmodel_result_dd.sql / 出点草稿×2 / validate</td></tr>
+    </table>
+
+    <h3>003 - 企划命中率</h3>
+    <table>
+        <tr><th>属性</th><th>内容</th></tr>
+        <tr><td>状态</td><td><span class="badge badge-done">已完成</span></td></tr>
+        <tr><td>分层路径</td><td>DWS → ADS</td></tr>
+        <tr><td>业务含义</td><td>央空内销/日立按项目维度，6个阶段判定销售达标情况，制作红黑榜</td></tr>
+        <tr><td>覆盖产品线</td><td>中央空调/日立</td></tr>
+        <tr><td>SQL脚本</td><td>create_tables.sql / dws_ipd_ipm_qihua_hit_detail_dd.sql / ads_ipd_ipm_qihua_hit_result_dd.sql / validate</td></tr>
+    </table>
+
+    <h3>004 - 在销型号数</h3>
+    <table>
+        <tr><th>属性</th><th>内容</th></tr>
+        <tr><td>状态</td><td><span class="badge badge-done">已完成</span></td></tr>
+        <tr><td>分层路径</td><td>DWS → ADS</td></tr>
+        <tr><td>业务含义</td><td>统计各事业部当前在销的产品型号数量，含库存清零判定</td></tr>
+        <tr><td>覆盖产品线</td><td>冰箱、冷柜、洗衣机、家用空调、中央空调/日立、视像科技</td></tr>
+        <tr><td>SQL脚本</td><td>dws_ipd_ipm_sale_model_detail_dd.sql / ads_ipd_ipm_sale_model_result_dd.sql / 出点草稿 / validate</td></tr>
+    </table>
+
+    <h3>005 - 在产型号数</h3>
+    <table>
+        <tr><th>属性</th><th>内容</th></tr>
+        <tr><td>状态</td><td><span class="badge badge-done">已完成</span></td></tr>
+        <tr><td>分层路径</td><td>DWS → ADS</td></tr>
+        <tr><td>业务含义</td><td>从在销型号筛选在产，剔除代工产品</td></tr>
+        <tr><td>覆盖产品线</td><td>冰箱、冷柜、洗衣机、家用空调、中央空调/日立、视像科技</td></tr>
+        <tr><td>SQL脚本</td><td>dws_ipd_ipm_zcmodel_detail_dd.sql / ads_ipd_ipm_zcmodel_result_dd.sql / 出点草稿 / validate</td></tr>
+    </table>
+
+    <h3>006 - 平台数</h3>
+    <table>
+        <tr><th>属性</th><th>内容</th></tr>
+        <tr><td>状态</td><td><span class="badge badge-done">已完成</span></td></tr>
+        <tr><td>分层路径</td><td>DWS → ADS</td></tr>
+        <tr><td>业务含义</td><td>平台库平台数（4个源系统）+ 产品平台数（在产型号关联平台）</td></tr>
+        <tr><td>覆盖产品线</td><td>冰箱、冷柜、洗衣机、家用空调、中央空调/日立、视像科技</td></tr>
+        <tr><td>SQL脚本</td><td>dws_ipd_ipm_platform_library_detail_dd.sql / dws_ipd_ipm_platform_detail_dd.sql / ads×2 / validate</td></tr>
+    </table>
+
+    <h3>007 - 单型号销量</h3>
+    <table>
+        <tr><th>属性</th><th>内容</th></tr>
+        <tr><td>状态</td><td><span class="badge badge-done">已完成</span></td></tr>
+        <tr><td>分层路径</td><td>DWS → ADS</td></tr>
+        <tr><td>业务含义</td><td>总销量 / 在销型号数，近3月滚动平均和年累两种口径</td></tr>
+        <tr><td>覆盖产品线</td><td>冰箱、冷柜、洗衣机、家用空调、中央空调/日立、视像科技</td></tr>
+        <tr><td>SQL脚本</td><td>dws_ipd_ipm_dxhxl_detail_dd.sql / ads_ipd_ipm_dxhxl_result_dd.sql / validate</td></tr>
+    </table>
+
+    <h3>008 - 单平台销量</h3>
+    <table>
+        <tr><th>属性</th><th>内容</th></tr>
+        <tr><td>状态</td><td><span class="badge badge-done">已完成</span></td></tr>
+        <tr><td>分层路径</td><td>DWS → ADS</td></tr>
+        <tr><td>业务含义</td><td>总销量 / 平台数，月度和年累两种口径</td></tr>
+        <tr><td>覆盖产品线</td><td>冰箱、冷柜、洗衣机、家用空调、中央空调/日立、视像科技</td></tr>
+        <tr><td>SQL脚本</td><td>dws_ipd_ipm_dptxl_detail_dd.sql / ads_ipd_ipm_dptxl_result_dd.sql / validate</td></tr>
+    </table>
+</div>
+
+<!-- 7. 整体数据流程图 -->
+<div class="section" id="data-flow">
+    <h2>7. 整体数据流程图</h2>
+    <div class="flow-diagram">
+═══════════════════════════════════════════════════════════════════════════════
+                            源系统数据层（ODS/DIM）
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐
+│  ods.管报销量数据    │  │  dim.产品型号信息    │  │  dim.销售型号信息    │
+│  (ods_mr_v_app_fm_  │  │  (dim_ipd_product   │  │  (dim_ipd_salemodel │
+│   imat_saledata)    │  │   model_dd)         │  │   _dd)              │
+└──────────┬──────────┘  └──────────┬──────────┘  └──────────┬──────────┘
+           │                        │                         │
+           │  ┌─────────────────────┐  ┌─────────────────────┐
+           │  │  dw.MDG主数据       │  │  库存数据（多源）    │
+           │  │  (dim_product_base  │  │  大库龄/寄售/海外/   │
+           │  │   _info_dd)         │  │  基地/在途/OEM      │
+           │  └──────────┬──────────┘  └──────────┬──────────┘
+           │             │                         │
+═══════════╪═════════════╪═════════════════════════╪═══════════════════════════
+           │    DWD层（明细加工）                   │
+═══════════╪═════════════╪═════════════════════════╪═══════════════════════════
+           ▼             ▼                         │
+┌──────────────────────────────┐                   │
+│  dwd.BP/LX规划销量分月       │                   │
+│  (dwd_ipd_ipm_bp_lx_model_  │                   │
+│   mid_dd) [需求002专用]      │                   │
+└──────────────┬───────────────┘                   │
+               │                                   │
+═══════════════╪═══════════════════════════════════╪═══════════════════════════
+               │    DWS层（汇总计算）              │
+═══════════════╪═══════════════════════════════════╪═══════════════════════════
+               ▼                                   ▼
+┌──────────────────────┐  ┌────────────────────────────────┐
+│  dws.低效型号明细    │  │  dws.在销型号明细              │
+│  [需求002]          │  │  [需求004] ← 库存+生命周期     │
+└──────────┬───────────┘  └───────┬────────────────────────┘
+           │                      │
+           │              ┌───────┼────────────────────┐
+           │              ▼       ▼                    ▼
+           │  ┌───────────────┐ ┌───────────────┐ ┌───────────────────┐
+           │  │ dws.在产型号  │ │ dws.单型号销量│ │ dws.企划命中率    │
+           │  │ 明细 [005]   │ │ 明细 [007]   │ │ 明细 [003]        │
+           │  └───────┬───────┘ └───────┬───────┘ └───────────────────┘
+           │          │                 │
+           │          ▼                 │
+           │  ┌───────────────┐         │
+           │  │ dws.平台库明细│         │
+           │  │ + 产品平台明细│         │
+           │  │ [006]        │         │
+           │  └───────┬───────┘         │
+           │          │                 │
+           │          ▼                 ▼
+           │  ┌───────────────────────────────┐
+           │  │ dws.单平台销量明细 [008]      │
+           │  │ (销量÷平台数)                 │
+           │  └───────────────┬───────────────┘
+           │                  │
+═══════════╪══════════════════╪═══════════════════════════════════════════════
+           │    ADS层（应用结果）
+═══════════╪══════════════════╪═══════════════════════════════════════════════
+           ▼                  ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│ ads.低效型号 │  │ ads.在销型号 │  │ ads.在产型号 │  │ ads.企划命中 │
+│ 占比 [002]  │  │ 数 [004]    │  │ 数 [005]    │  │ 率 [003]    │
+└──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│ ads.平台库   │  │ ads.产品平台 │  │ ads.单型号/  │
+│ [006]       │  │ 数 [006]    │  │ 单平台 [007/8]│
+└──────────────┘  └──────────────┘  └──────────────┘
+    </div>
+</div>
+
+<!-- 8. 指标依赖关系 -->
+<div class="section" id="dependency">
+    <h2>8. 指标依赖关系</h2>
+    <div class="flow-diagram">
+                    ┌─────────────────────────────────────┐
+                    │         独立指标（可并行执行）        │
+                    ├─────────────────────────────────────┤
+                    │  002 低效型号占比（依赖BP/LX规划量） │
+                    │  003 企划命中率（央空日立专属）       │
+                    └─────────────────────────────────────┘
+
+                    ┌─────────────────────────────────────┐
+                    │         依赖链（串行执行）            │
+                    ├─────────────────────────────────────┤
+                    │  004 在销型号数                      │
+                    │   ├──▶ 005 在产型号数（筛选在产）    │
+                    │   │     └──▶ 006 平台数              │
+                    │   │           └──▶ 008 单平台销量    │
+                    │   └──▶ 007 单型号销量                │
+                    │         └──▶ 008 单平台销量          │
+                    └─────────────────────────────────────┘
+
+调度执行顺序：004 → 005 → 006 → 007 → 008（串行）
+             002、003 可与上述链路并行执行
+    </div>
+    <table>
+        <tr><th>指标</th><th>上游依赖</th><th>下游被依赖</th><th>可并行</th></tr>
+        <tr><td>002 低效型号占比</td><td>BP/LX规划量（DWD层）</td><td>无</td><td>是</td></tr>
+        <tr><td>003 企划命中率</td><td>无（独立计算）</td><td>无</td><td>是</td></tr>
+        <tr><td>004 在销型号数</td><td>产品型号+库存数据</td><td>005、007</td><td>是（首个执行）</td></tr>
+        <tr><td>005 在产型号数</td><td>004 在销型号数</td><td>006</td><td>否（依赖004）</td></tr>
+        <tr><td>006 平台数</td><td>005 在产型号数</td><td>008</td><td>否（依赖005）</td></tr>
+        <tr><td>007 单型号销量</td><td>004 在销型号数 + 管报销量</td><td>008</td><td>否（依赖004）</td></tr>
+        <tr><td>008 单平台销量</td><td>006 平台数 + 007 单型号销量</td><td>无</td><td>否（依赖006+007）</td></tr>
+    </table>
+</div>
+
+<!-- 9. 产品线覆盖矩阵 -->
+<div class="section" id="product-lines">
+    <h2>9. 产品线覆盖矩阵</h2>
+    <table>
+        <tr><th>产品线</th><th>事业部</th><th>002</th><th>003</th><th>004</th><th>005</th><th>006</th><th>007</th><th>008</th></tr>
+        <tr><td>冰箱</td><td>冰冷事业部</td><td>&#10004;</td><td>—</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+        <tr><td>冷柜</td><td>冰冷事业部</td><td>&#10004;</td><td>—</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+        <tr><td>洗衣机</td><td>洗护事业部</td><td>&#10004;</td><td>—</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+        <tr><td>家用空调</td><td>空气事业部</td><td>&#10004;</td><td>—</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+        <tr><td>中央空调/日立</td><td>空气事业部</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+        <tr><td>视像科技</td><td>显示事业部</td><td>&#10004;</td><td>—</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+    </table>
+    <h3>各产品线管理口径差异</h3>
+    <table>
+        <tr><th>产品线</th><th>管理口径</th><th>销量来源</th><th>特殊处理</th></tr>
+        <tr><td>冰箱/冷柜/洗衣机</td><td>产品型号</td><td>管报→MDG→model_name</td><td>ODM/gorenje剔除；外销剔除标机样机CKD</td></tr>
+        <tr><td>家用空调</td><td>产品型号</td><td>管报→MDG→model_name</td><td>排除环境电器；轻商单元式内外机去重</td></tr>
+        <tr><td>中央空调/日立</td><td>销售型号编码</td><td>管报→MDG→sale_model_code</td><td>按归属营销部过滤；排除非标准品/委外/模块组合</td></tr>
+        <tr><td>视像科技</td><td>产品型号</td><td>管报→MDG→model_name</td><td>能效机转换原型机；排除代工产品</td></tr>
+    </table>
+</div>
+
+<!-- 10. 公共业务规则 -->
+<div class="section" id="business-rules">
+    <h2>10. 公共业务规则</h2>
+    <p>8条公共规则跨需求复用，由 <code>business_rules.md</code> 统一维护。</p>
+    <table>
+        <tr><th>编号</th><th>规则名称</th><th>优先级</th><th>适用范围</th><th>核心逻辑</th></tr>
+        <tr><td>PUB-001</td><td>指标范围标记规则</td><td>P0</td><td>所有DWS层</td><td>is_project字段标记是否纳入统计（N=纳入，Y=不纳入）</td></tr>
+        <tr><td>PUB-002</td><td>BP与LX规划量选择</td><td>P1</td><td>002低效、007单型号</td><td>立项首月在本年时用LX替代BP</td></tr>
+        <tr><td>PUB-003</td><td>产品线分类-冰冷洗</td><td>P0</td><td>所有涉及冰冷洗的指标</td><td>按大类/中类/小类/品类细分判定；ODM/gorenje剔除</td></tr>
+        <tr><td>PUB-004</td><td>日立管理口径</td><td>P1</td><td>所有涉及日立的指标</td><td>以销售型号编码为口径；按归属营销部过滤</td></tr>
+        <tr><td>PUB-005</td><td>电视能效机转换</td><td>P2</td><td>涉及视像科技销量</td><td>能效机→原型机映射</td></tr>
+        <tr><td>PUB-006</td><td>空调产品线分类</td><td>P0</td><td>所有涉及空调的指标</td><td>家空/轻商/央空日立分类；排除环境电器</td></tr>
+        <tr><td>PUB-007</td><td>库存清零判定</td><td>P1</td><td>004在销、005在产</td><td>退市+库存为0→老品清零（不纳入在销）</td></tr>
+        <tr><td>PUB-008</td><td>调度参数规范</td><td>P2</td><td>所有ETL脚本</td><td>${GP_START_DT}=昨天（yyyymmdd）</td></tr>
+    </table>
+</div>
+
+<!-- 11. 自动化与Hook机制 -->
+<div class="section" id="automation">
+    <h2>11. 自动化与Hook机制</h2>
+    <h3>已配置的Hook（5个）</h3>
+    <table>
+        <tr><th>Hook名称</th><th>触发事件</th><th>触发条件</th><th>执行动作</th></tr>
+        <tr>
+            <td>自动更新血缘关系</td>
+            <td>fileEdited</td>
+            <td>requirements/*/sql_scripts/*.sql</td>
+            <td>askAgent：解析SQL中的源表/目标表，自动更新 lineage.md</td>
+        </tr>
+        <tr>
+            <td>自动健康检查提醒</td>
+            <td>fileEdited</td>
+            <td>data_mapping.md / business_rules.md / requirement_patterns.md / table_structures.md</td>
+            <td>askAgent：累计修改≥5次后提醒执行知识库健康检查</td>
+        </tr>
+        <tr>
+            <td>一键项目审计</td>
+            <td>userTriggered</td>
+            <td>用户点击按钮</td>
+            <td>askAgent：执行项目审计，生成HTML报告</td>
+        </tr>
+        <tr>
+            <td>一键健康检查</td>
+            <td>userTriggered</td>
+            <td>用户点击按钮</td>
+            <td>askAgent：执行知识库健康检查</td>
+        </tr>
+        <tr>
+            <td>一键更新README</td>
+            <td>userTriggered</td>
+            <td>用户点击按钮</td>
+            <td>askAgent：扫描并更新所有README</td>
+        </tr>
+    </table>
+
+    <h3>分叉链路v2.0对话流程</h3>
+    <div class="flow-diagram">
+状态1（初始）→ 状态2（接收+关键词提取）→ 状态2.5（需求分类判定）
+                                              │
+                              ┌────────────────┼────────────────┐
+                              ▼                                  ▼
+                    链路A：新建需求流程                 链路B：变更需求流程
+                    A1 依赖识别                        B1 定位已有资产
+                    A2 需求澄清（新建专属）            B2 变更澄清
+                    A3 数据表匹配                      B3 影响分析
+                    A4 分层识别与架构设计              B4 执行修改
+                    A5 需求确认（最终汇总）            B5 文档更新
+                    A6 SQL生成                         B6 下游同步（可选）
+                    A7 文档生成 + 经验沉淀
+    </div>
+
+    <h3>三层校验体系</h3>
+    <table>
+        <tr><th>层次</th><th>时机</th><th>能力</th></tr>
+        <tr><td>层次1：实时校验</td><td>每条知识录入时</td><td>格式检查、类型规范、关联存在性</td></tr>
+        <tr><td>层次2：推理反馈</td><td>每条录入后</td><td>关联链延伸、产品线覆盖、命名一致性、规则冲突、缺失推理</td></tr>
+        <tr><td>层次3：健康检查</td><td>手动触发 + 累计≥5次自动提醒</td><td>5维度全面体检（表完整性/规则一致性/模式有效性/交叉一致性/覆盖度）</td></tr>
+    </table>
+</div>
+
+<!-- 12. 技术栈 -->
+<div class="section" id="tech-stack">
+    <h2>12. 技术栈</h2>
+    <div class="card-grid">
+        <div class="card">
+            <h4>数据库引擎</h4>
+            <p><strong>Apache Doris 2.1+</strong></p>
+            <p>MPP架构，高性能分析查询，支持物化视图、多种表类型。</p>
+            <div><span class="tag">OLAP</span><span class="tag">MPP</span><span class="tag">物化视图</span><span class="tag">分区分桶</span></div>
+        </div>
+        <div class="card">
+            <h4>数据建模</h4>
+            <p><strong>Kimball维度建模</strong></p>
+            <p>星型/雪花模式，ODS/DWD/DWS/ADS/DIM五层架构。</p>
+            <div><span class="tag">星型模式</span><span class="tag">五层架构</span><span class="tag">SCD</span></div>
+        </div>
+        <div class="card">
+            <h4>AI Agent</h4>
+            <p><strong>Kiro + Steering + Skills + Hooks</strong></p>
+            <p>16个Steering规则 + 7个Skills技能 + 5个Hooks自动化 + MCP数据库连接。</p>
+            <div><span class="tag">Steering</span><span class="tag">Skills</span><span class="tag">Hooks</span><span class="tag">MCP</span></div>
+        </div>
+        <div class="card">
+            <h4>调度与运维</h4>
+            <p><strong>海信内部数据平台</strong></p>
+            <p>调度参数 ${GP_START_DT}，支持Airflow/DolphinScheduler。</p>
+            <div><span class="tag">调度系统</span><span class="tag">增量加载</span><span class="tag">幂等设计</span></div>
+        </div>
+    </div>
+
+    <h3>SQL编码规范要点</h3>
+    <table>
+        <tr><th>规范项</th><th>要求</th></tr>
+        <tr><td>关键字</td><td>全部大写（SELECT, FROM, WHERE, JOIN...）</td></tr>
+        <tr><td>缩进</td><td>4个空格</td></tr>
+        <tr><td>别名</td><td>有意义的别名，禁止 a/b/c</td></tr>
+        <tr><td>数值类型</td><td>DECIMALV3（Doris 2.1+推荐）</td></tr>
+        <tr><td>时间类型</td><td>DATETIMEV2(0)（Doris 2.1+推荐）</td></tr>
+        <tr><td>临时表</td><td>在test库创建中间表（Doris不支持TEMPORARY TABLE）</td></tr>
+        <tr><td>UPDATE替代</td><td>DELETE + INSERT 模式</td></tr>
+    </table>
+</div>
+
+</div><!-- end container -->
+
+<a href="#" class="nav-top" title="回到顶部">&#8593;</a>
+<div style="text-align:center; padding:30px; color:#666; font-size:0.85em;">
+    <p>ETL开发助手项目 &mdash; 海信集团IPD研发指标数据仓库</p>
+    <p>版本 v2.4.0 | 更新时间：2026-05-15 | 由 Kiro Agent 生成</p>
+</div>
+</body>
+</html>

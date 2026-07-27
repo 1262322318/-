@@ -1,0 +1,79 @@
+# XuebinLV IPM域业务规则：产品线分类
+# 对应公共规则 PUB-003（冰冷洗）+ PUB-006（空调）
+
+rules:
+  - id: product_line_classification
+    name: 产品线分类总览
+    domain: IPM
+    entity: 产品型号
+    field: product_line
+    description: |
+      IPM域涵盖9+7条产品线（内销9+外销7），通过CASE WHEN动态计算。
+      核心分类字段：PG00002(大类)、PG00003(中类)、PG00004(小类)、PG00020(内外销)、PC00001(品类细分)。
+      日立/央空走销售型号编码口径，其余走产品型号口径。
+
+  - id: nx_bingxiang
+    name: 内销冰箱分类规则
+    domain: IPM
+    entity: 产品型号
+    field: product_line
+    判定逻辑: |
+      (PG00002='控温储藏类产品' AND PG00003='家用冰箱' AND PG00004 IN ('冷藏冷冻箱','冷藏箱'))
+      OR
+      (PG00002='控温储藏类产品' AND PG00003='家用冰箱' AND PG00004='冷冻箱' AND PC00001='冰箱')
+    待确认:
+
+  - id: nx_lenggui
+    name: 内销冷柜分类规则
+    domain: IPM
+    entity: 产品型号
+    field: product_line
+    判定逻辑: |
+      (PG00002='控温储藏类产品' AND PG00003='家用冰箱' AND PG00004='冷冻箱' AND PC00001≠'冰箱')
+      OR
+      (PG00002='控温储藏类产品' AND PG00003='家用冷柜')
+      OR
+      (PG00002='控温储藏类产品' AND PG00003='家用展示柜' AND PG00004='冰吧')
+    待确认:
+
+  - id: nx_xiyiji
+    name: 内销洗衣机分类规则
+    domain: IPM
+    entity: 产品型号
+    field: product_line
+    判定逻辑: "PG00002='清洁卫生器具' AND PG00003 IN ('洗衣机','干衣机','护理机')"
+    待确认:
+
+  - id: nx_jiakong
+    name: 内销家用空调分类规则
+    domain: IPM
+    entity: 产品型号
+    field: product_line
+    判定逻辑: "产品公司='空调' AND PG00020='内销' AND PG00003='家用房间空调' AND PG00004='分体式空调器整机'"
+    待确认:
+
+  - id: hitachi_rule
+    name: 日立/央空管理口径规则
+    domain: IPM
+    entity: 销售型号
+    field: sale_model_code
+    判定逻辑: |
+      以销售型号编码(sale_model_code/PG00068)为管理粒度。
+      实际销量路径：管报→MDG(product_code→sale_model_code)→按sale_model_code聚合。
+      规划量：LX model_type='销售型号编码口径'。
+      归属营销部过滤：日立家装、海信家装、大客户部、工程营销部、电商事业部、约克家装、海外(氟)、科龙商空。
+    待确认:
+
+  - id: exclusion_rules
+    name: 通用排除条件
+    domain: IPM
+    entity: 产品型号/销售型号
+    field: is_project/is_odm
+    判定逻辑: |
+      - gorenje品牌排除
+      - 模块组合(HX00379='是')排除
+      - ODM产品排除（海信/容声品牌但非海信/平度基地）
+      - 委外工厂产品排除（日立：1000-海信日立委外工厂）
+      - 非标准品排除
+      - 激光商用：标记is_project='Y'不纳入统计
+    待确认:

@@ -1,0 +1,18 @@
+{
+  "name": "知识投喂后自动健康检查提醒",
+  "version": "1.0.0",
+  "description": "当steering核心文件（data_mapping/business_rules/requirement_patterns）被修改时，检查累计投喂次数，超过阈值则提醒执行健康检查",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      ".kiro/steering/data_mapping.md",
+      ".kiro/steering/business_rules.md",
+      ".kiro/steering/requirement_patterns.md",
+      ".kiro/steering/table_structures.md"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "知识库文件刚被修改。请读取 .kiro/data/feeding-counter.json（如不存在则创建，初始值 feeds_since_last_check=0）。将 feeds_since_last_check 加1并保存。如果 feeds_since_last_check >= 5，则向用户输出提醒：'⚠️ 自上次健康检查以来已累计修改知识库[N]次，建议执行一次知识库健康检查（说\"健康检查\"即可启动）。'如果 < 5 则不输出任何内容。"
+  }
+}

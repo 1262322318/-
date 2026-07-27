@@ -1,0 +1,15 @@
+# 涉及数据表清单 - {requirement_name}
+
+## 源表（数据读取）
+{source_tables}
+
+## 目标表（数据写入）
+{target_tables}
+
+## 维度表（关联查询）
+{dimension_tables}
+
+## 说明
+# 1. 每行一个表，格式为 database.table_name
+# 2. 使用#注释不需要的表
+# 3. 按表类型分组

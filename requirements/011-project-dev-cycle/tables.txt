@@ -1,0 +1,12 @@
+## 011-project-dev-cycle 涉及表清单
+
+### 源表（ODS层）
+- odsplm_bm_hbmtprojectkpi — PLM项目KPI主表
+- odsplm_bm_hbmtprojectadjust — PLM项目调整单表（暂停/恢复/取消）
+- ods.ODS_FEISHU_WIKI_LHK6WMDWWI3GFQK7ZIACKU3KNCB_TBLTRBIEBXRYRKO4 — 飞书多维表格（目标值）
+
+### 目标表（DWS层）
+- dws.dws_ipd_ipd_project_dev_cycle_dd — 项目开发周期明细表
+
+### 目标表（ADS层）
+- ads.ads_ipd_ipd_project_dev_cycle_result_dd — 项目开发周期结果表

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skills技能 + Hooks自动化 - ETL开发助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #2c3e50; line-height: 1.6; }
+        .header { background: linear-gradient(135deg, #1a237e, #283593, #3949ab); color: white; padding: 40px; }
+        .header h1 { font-size: 2em; }
+        .header .nav { margin-top: 10px; }
+        .header .nav a { color: rgba(255,255,255,0.8); text-decoration: none; margin-right: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+        .card { background: white; border-radius: 12px; padding: 30px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .card h2 { color: #1a237e; margin-bottom: 16px; font-size: 1.4em; border-bottom: 2px solid #e8eaf6; padding-bottom: 10px; }
+        .card h3 { color: #283593; margin: 18px 0 10px; font-size: 1.1em; }
+        .flow-diagram { background: #263238; color: #a5d6a7; padding: 20px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 0.82em; overflow-x: auto; white-space: pre; line-height: 1.6; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; }
+        th { background: #e8eaf6; color: #1a237e; padding: 10px 12px; text-align: left; }
+        td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+        .pros, .cons { padding: 16px; border-radius: 8px; }
+        .pros { background: #e8f5e9; }
+        .cons { background: #fce4ec; }
+        .pros h4 { color: #2e7d32; }
+        .cons h4 { color: #c62828; }
+        ul { padding-left: 20px; }
+        li { margin: 6px 0; }
+        .improve { background: #fff8e1; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .improve h4 { color: #f57f17; margin-bottom: 8px; }
+        footer { text-align: center; padding: 30px; color: #999; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚡ Skills 技能 + Hooks 自动化详解</h1>
+        <div class="nav"><a href="index.html">← 返回总览</a> <a href="module-requirements.html">需求管理 →</a></div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h2>模块概述</h2>
+            <p>Skills（技能）定义Agent"能做什么"——通过触发词激活特定能力集。Hooks（钩子）定义"何时自动做"——通过IDE事件自动触发Agent执行任务。两者配合形成ETL开发助手的"技能矩阵+自动化管线"。</p>
+        </div>
+
+        <div class="card">
+            <h2>架构图</h2>
+            <div class="flow-diagram">┌─────────────────────────────────────────────────────────────┐
+│                     用户交互层                                 │
+│  触发词（"新需求"/"投喂知识"/"项目审计"）                       │
+│  按钮（btn-* hooks）                                          │
+│  文件保存（auto-* hooks）                                     │
+└───────────────┬────────────────────────────────┬────────────┘
+                │                                │
+                ▼                                ▼
+┌──────────────────────────┐    ┌──────────────────────────────┐
+│   Skills 技能（16个）     │    │   Hooks 自动化（7个）         │
+│                          │    │                              │
+│ 核心业务：               │    │ 文件事件触发：                │
+│  • etl-requirement       │    │  • auto-sql-review          │
+│  • requirement-converter │    │  • auto-health-check        │
+│  • requirement-refiner   │    │                              │
+│  • sql-review            │    │ 按钮触发：                    │
+│  • sql-template-extract  │    │  • btn-project-audit        │
+│                          │    │  • btn-health-check         │
+│ 知识管理：               │    │  • btn-update-readmes       │
+│  • knowledge-feeding     │    │  • btn-project-docs         │
+│  • knowledge-health-check│    │  • post-task-metrics        │
+│                          │    │                              │
+│ 项目治理：               │    └──────────────────────────────┘
+│  • project-audit         │
+│  • project-dashboard     │
+│  • project-docs-generator│
+│  • update-readmes        │
+│                          │
+│ 度量与反馈：             │
+│  • interaction-metrics   │
+│  • feedback-collector    │
+│  • feedback-review       │
+│  • data-lineage-viz      │
+└──────────────────────────┘</div>
+        </div>
+
+        <div class="card">
+            <h2>核心设计 — Skills 清单</h2>
+            <table>
+                <tr><th>技能</th><th>触发词</th><th>核心功能</th></tr>
+                <tr><td>etl-requirement</td><td>"新需求"/"修改需求"</td><td>需求全流程处理（链路A+B）</td></tr>
+                <tr><td>requirement-converter</td><td>"转换需求"</td><td>原始需求→标准化converted文档</td></tr>
+                <tr><td>requirement-refiner</td><td>"精化需求"</td><td>converted→refined PRD（含字段映射）</td></tr>
+                <tr><td>knowledge-feeding</td><td>"投喂知识"</td><td>表/规则/模式知识录入+智能校验</td></tr>
+                <tr><td>knowledge-health-check</td><td>"健康检查"</td><td>5维度知识库体检+评分+修复引导</td></tr>
+                <tr><td>sql-review</td><td>"审查SQL"</td><td>SQL编码规范审查</td></tr>
+                <tr><td>sql-template-extract</td><td>"提取模板"</td><td>从已有SQL中学习可复用模式</td></tr>
+                <tr><td>project-audit</td><td>"项目审计"</td><td>7维度审计+交互式HTML报告</td></tr>
+                <tr><td>project-dashboard</td><td>"项目看板"</td><td>需求-脚本-逻辑三维视图</td></tr>
+                <tr><td>project-docs-generator</td><td>"生成项目文档"</td><td>生成本套项目文档</td></tr>
+                <tr><td>update-readmes</td><td>"更新README"</td><td>扫描并更新所有README</td></tr>
+                <tr><td>interaction-metrics</td><td>自动调用</td><td>交互度量记录+瓶颈分析</td></tr>
+                <tr><td>feedback-collector</td><td>自动调用</td><td>快速反馈采集（3题）</td></tr>
+                <tr><td>feedback-review</td><td>"复盘反馈"</td><td>反馈汇总+趋势分析</td></tr>
+                <tr><td>data-lineage-viz</td><td>"血缘可视化"</td><td>数据血缘图可视化</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>核心设计 — Hooks 清单</h2>
+            <table>
+                <tr><th>Hook</th><th>触发事件</th><th>触发条件</th><th>执行动作</th></tr>
+                <tr><td>auto-sql-review</td><td>fileEdited</td><td>requirements/*/sql_scripts/*.sql</td><td>SQL快检3项 + 更新lineage.md</td></tr>
+                <tr><td>auto-health-check-reminder</td><td>fileEdited</td><td>4个核心steering文件</td><td>累计≥5次修改后提醒健康检查</td></tr>
+                <tr><td>btn-project-audit</td><td>userTriggered</td><td>用户点击按钮</td><td>执行完整项目审计</td></tr>
+                <tr><td>btn-health-check</td><td>userTriggered</td><td>用户点击按钮</td><td>执行知识库健康检查</td></tr>
+                <tr><td>btn-update-readmes</td><td>userTriggered</td><td>用户点击按钮</td><td>更新所有README</td></tr>
+                <tr><td>btn-project-docs</td><td>userTriggered</td><td>用户点击按钮</td><td>生成项目文档</td></tr>
+                <tr><td>post-task-metrics</td><td>userTriggered</td><td>用户点击按钮</td><td>度量记录+反馈采集</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>数据流转图 — Hook触发流程</h2>
+            <div class="flow-diagram">IDE事件（文件保存/按钮点击）
+    │
+    ▼
+匹配 Hook 的 when.patterns
+    │
+    ├─ 匹配成功 → 执行 then.type
+    │               ├─ askAgent → Agent执行prompt指令
+    │               └─ runCommand → 执行shell命令
+    │
+    └─ 未匹配 → 忽略
+
+示例：用户保存 requirements/002/sql_scripts/dws_xxx.sql
+    │
+    ▼
+auto-sql-review.kiro.hook 匹配成功
+    │
+    ▼
+Agent执行：
+  1. 关键字大写检查（前5处违规）
+  2. MDG过滤条件检查
+  3. INSERT-SELECT字段数对齐检查
+  4. 更新对应需求的 lineage.md</div>
+        </div>
+
+        <div class="card">
+            <h2>优缺点分析</h2>
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>✅ 优势</h4>
+                    <ul>
+                        <li>技能通过触发词激活，不占用always token预算</li>
+                        <li>Hook实现"保存即检查"，零人工介入的质量守门</li>
+                        <li>按钮Hook降低了审计/健康检查的使用门槛</li>
+                        <li>度量和反馈自动采集，持续改进有数据支撑</li>
+                        <li>知识投喂有智能校验引擎，防止错误数据写入</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>❌ 局限</h4>
+                    <ul>
+                        <li>Hook触发后执行时间不可控（大文件审查可能较慢）</li>
+                        <li>无法临时禁用单个Hook（需手动改文件名加_前缀）</li>
+                        <li>技能间无编排能力（不能一个技能自动调用另一个）</li>
+                        <li>部分技能依赖MCP连通性，断连时降级体验不佳</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>待改进项</h2>
+            <div class="improve">
+                <h4>🔧 建议</h4>
+                <ul>
+                    <li>P1：支持Hook优先级和并发控制（多文件同时保存时不重复触发）</li>
+                    <li>P1：技能编排能力（如需求完成后自动调用审计）</li>
+                    <li>P2：Hook执行结果持久化（当前只在对话中显示，不记录历史）</li>
+                    <li>P2：技能市场机制（从社区导入新技能定义）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <footer>ETL开发助手 · Skills技能+Hooks自动化详解 · 生成日期：2026-06-11</footer>
+</body>
+</html>

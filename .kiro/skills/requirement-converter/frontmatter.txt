@@ -1,0 +1,9 @@
+---
+name: requirement-converter
+version: 1.0.0
+description: "需求转换。将原始需求输入（粘贴文本、CSV内容、口头描述、会议纪要等）转换为标准化的.md文件，只做格式标准化和信息提取，不做业务判定。"
+inclusion: manual
+metadata:
+  requires:
+    bins: []
+---

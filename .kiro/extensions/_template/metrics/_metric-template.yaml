@@ -1,0 +1,52 @@
+# {团队} 指标定义模板
+#
+# 指标分三层，通过 derives_from 建立层次关系：
+#   基础度量 → 派生度量 → 复合指标
+#
+# 规则：
+# - 基础度量：直接从源表取值，有 source 字段，无 derives_from
+# - 派生度量：由基础度量计算得出，有 derives_from
+# - 复合指标：由度量组合（比率/乘积等），有 derives_from
+# - 同名度量只定义一次，其他指标通过 derives_from 引用
+# - 新增指标时检查：derives_from 引用的度量是否已有定义？口径是否一致？
+
+metrics:
+
+  # ═══ 基础度量（原子，直接从源取） ═══
+  - name: "{度量中文名}"
+    type: 基础度量
+    synonyms: ["{同义词}"]
+    definition: "{一句话：这个数从哪来、含不含XX}"
+    formula: "SUM({字段})"
+    source: "{ODS表.字段（最终数据来源）}"
+    table: "{所在DWD/DWS表}"
+    field: "{字段名}"
+    owner: "{负责人}"
+    status: "在用"
+
+  # ═══ 派生度量（由基础度量计算） ═══
+  - name: "{度量中文名}"
+    type: 派生度量
+    synonyms: ["{同义词}"]
+    definition: "{计算逻辑说明}"
+    formula: "{基础度量A} - {基础度量B}"
+    derives_from: ["{基础度量A}", "{基础度量B}"]
+    table: "{所在表}"
+    field: "{字段名}"
+    owner: "{负责人}"
+    status: "在用"
+
+  # ═══ 复合指标（比率/组合类） ═══
+  - name: "{指标中文名}"
+    type: 复合指标
+    synonyms: ["{同义词1}", "{同义词2}", "{英文}"]
+    definition: "{口径说明}"
+    formula: "{分子} / NULLIF({分母}, 0)"
+    derives_from: ["{分子度量}", "{分母度量}"]
+    granularity: "{统计粒度：日 × 工厂 × 产线}"
+    table: "{所在DWS/ADS表}"
+    field: "{字段名}"
+    related_terms: ["{相关指标}"]
+    owner: "{负责人}"
+    status: "在用 / 废弃 / 规划中"
+    project: "{来源项目}"

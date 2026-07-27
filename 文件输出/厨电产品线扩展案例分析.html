@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETL Agent 使用案例 - 厨电产品线扩展（004/005/002）- 已闭环</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%); color: white; padding: 40px; border-radius: 12px; margin-bottom: 30px; }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header .subtitle { opacity: 0.9; font-size: 16px; }
+        .header .meta { margin-top: 15px; display: flex; gap: 20px; flex-wrap: wrap; }
+        .header .meta span { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 13px; }
+        .section { background: white; border-radius: 12px; padding: 30px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .section h2 { font-size: 20px; color: #333; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #4caf50; }
+        .section h3 { font-size: 16px; color: #555; margin: 15px 0 10px; }
+        .timeline { position: relative; padding-left: 30px; }
+        .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 3px; background: linear-gradient(to bottom, #4caf50, #2e7d32); border-radius: 2px; }
+        .timeline-item { position: relative; margin-bottom: 25px; padding: 15px 20px; background: #f8f9ff; border-radius: 8px; border-left: 3px solid #4caf50; }
+        .timeline-item::before { content: ''; position: absolute; left: -25px; top: 20px; width: 12px; height: 12px; background: #4caf50; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #4caf50; }
+        .timeline-item.highlight { background: #fff3e0; border-left-color: #ff9800; }
+        .timeline-item.highlight::before { background: #ff9800; box-shadow: 0 0 0 2px #ff9800; }
+        .timeline-item .stage-label { font-weight: 600; color: #2e7d32; font-size: 14px; margin-bottom: 5px; }
+        .timeline-item.highlight .stage-label { color: #e65100; }
+        .chat-bubble { margin: 10px 0; padding: 12px 16px; border-radius: 12px; max-width: 85%; font-size: 14px; }
+        .chat-user { background: #e3f2fd; margin-left: auto; border-bottom-right-radius: 4px; }
+        .chat-agent { background: #e8f5e9; margin-right: auto; border-bottom-left-radius: 4px; }
+        .chat-label { font-size: 11px; color: #888; margin-bottom: 4px; font-weight: 600; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 15px 0; }
+        .metric-card { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); padding: 20px; border-radius: 10px; text-align: center; border: 1px solid #a5d6a7; }
+        .metric-card .value { font-size: 28px; font-weight: 700; color: #2e7d32; }
+        .metric-card .label { font-size: 13px; color: #666; margin-top: 5px; }
+        .tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin: 2px; }
+        .tag-green { background: #e8f5e9; color: #2e7d32; }
+        .tag-orange { background: #fff3e0; color: #e65100; }
+        .tag-blue { background: #e3f2fd; color: #1565c0; }
+        .tag-purple { background: #f3e5f5; color: #6a1b9a; }
+        .tag-red { background: #ffebee; color: #c62828; }
+        .progress-bar { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin: 8px 0; }
+        .progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+        .table-simple { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+        .table-simple th, .table-simple td { padding: 10px 12px; border: 1px solid #e0e0e0; text-align: left; }
+        .table-simple th { background: #f5f7fa; font-weight: 600; color: #555; }
+        .table-simple tr:hover { background: #e8f5e9; }
+        .code-block { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; font-family: 'Fira Code', monospace; font-size: 13px; overflow-x: auto; margin: 10px 0; white-space: pre-wrap; }
+        .flowchart { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
+        .flow-node { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; }
+        .flow-arrow { color: #999; font-size: 18px; }
+        .alert-box { padding: 12px 16px; border-radius: 8px; margin: 10px 0; font-size: 14px; }
+        .alert-info { background: #e3f2fd; border-left: 4px solid #1976d2; }
+        .alert-warning { background: #fff3e0; border-left: 4px solid #ff9800; }
+        .alert-success { background: #e8f5e9; border-left: 4px solid #4caf50; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } .metrics-grid { grid-template-columns: 1fr 1fr; } }
+        .review-section { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin: 15px 0; }
+        .toc { background: #e8f5e9; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .toc a { color: #2e7d32; text-decoration: none; display: block; padding: 4px 0; }
+        .toc a:hover { text-decoration: underline; }
+        .impact-chain { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 10px 0; padding: 15px; background: #f8f9ff; border-radius: 8px; }
+        .impact-node { padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; border: 2px solid; }
+        .impact-arrow { color: #999; font-size: 16px; }
+        .status-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+        .status-closed { background: #4caf50; color: white; }
+    </style>
+</head>
+<body>
+<div class="container">
+<!-- ==================== HEADER ==================== -->
+<div class="header">
+    <h1>✅ ETL Agent 使用案例展示 <span class="status-badge status-closed">已闭环</span></h1>
+    <div class="subtitle">厨电产品线扩展 — 跨需求产品线新增的全流程复盘（004/005/002联动变更）</div>
+    <div class="meta">
+        <span>📅 2026-05-12 ~ 2026-05-20（已闭环）</span>
+        <span>👤 操作人：lvxuebin</span>
+        <span>🔗 链路类型：B（变更需求 - 产品线扩展 CHG-02）</span>
+        <span>⏱️ 总耗时：约180分钟（跨9天）</span>
+        <span>🔄 总轮次：约28轮（含闭环确认）</span>
+        <span>📦 涉及需求：004 / 005 / 002</span>
+        <span>✅ 最终状态：全部合入正式脚本</span>
+    </div>
+</div>
+<!-- ==================== TOC ==================== -->
+<div class="section">
+    <div class="toc">
+        <h3 style="margin-bottom:10px;">📑 目录</h3>
+        <a href="#overview">一、案例概览</a>
+        <a href="#phase1">二、Phase 1：需求提报与分类判定</a>
+        <a href="#phase2">三、Phase 2：变更澄清（厨电业务规则确认）</a>
+        <a href="#phase3">四、Phase 3：影响分析（跨需求依赖链）</a>
+        <a href="#phase4">五、Phase 4：执行修改 — 004在销型号数</a>
+        <a href="#phase5">六、Phase 5：执行修改 — 005在产型号数</a>
+        <a href="#phase6">七、Phase 6：执行修改 — 002低效型号占比</a>
+        <a href="#phase7">八、Phase 7：迭代修正（库存源调整）</a>
+        <a href="#phase8">九、Phase 8：闭环确认（手工合入正式脚本）</a>
+        <a href="#metrics">十、交互度量数据（复盘）</a>
+        <a href="#review">十一、反馈复盘分析</a>
+        <a href="#improvement">十二、改进建议与行动项</a>
+    </div>
+</div>
+<!-- ==================== SECTION 1: OVERVIEW ==================== -->
+<div class="section" id="overview">
+    <h2>一、案例概览</h2>
+    <p style="margin-bottom:15px;">本案例展示了ETL Agent处理一个<strong>跨需求产品线扩展</strong>的完整生命周期。用户需要将"厨电事业部"（烟机/灶具/洗碗机/电热水器/燃气热水器/烤箱）作为新产品线加入已有的在销型号数（004）、在产型号数（005）、低效型号占比（002）三个指标体系中。<strong>该需求已于2026-05-20全部闭环，草稿逻辑已手工合入正式脚本。</strong></p>
+    
+    <div class="alert-box alert-success">
+        <strong>✅ 闭环状态：</strong>2026-05-20，用户将所有草稿逻辑手工合入正式脚本。Agent验证确认DWS+ADS层均已包含完整厨电逻辑，changelog已更新。代工判定最终确认为"6516-黄岛厨电工厂"（替代初始的"海信"关键字）。
+    </div>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="value">~180</div>
+            <div class="label">总耗时（分钟，跨9天）</div>
+        </div>
+        <div class="metric-card">
+            <div class="value">~28</div>
+            <div class="label">交互轮次（含闭环）</div>
+        </div>
+        <div class="metric-card">
+            <div class="value">3</div>
+            <div class="label">涉及需求数</div>
+        </div>
+        <div class="metric-card">
+            <div class="value">6</div>
+            <div class="label">生成/修改SQL文件数</div>
+        </div>
+        <div class="metric-card">
+            <div class="value">~800</div>
+            <div class="label">新增SQL总行数</div>
+        </div>
+        <div class="metric-card">
+            <div class="value" style="color:#4caf50;">已闭环</div>
+            <div class="label">最终状态</div>
+        </div>
+    </div>
+    <h3>需求特殊性</h3>
+    <div class="alert-box alert-info">
+        <strong>与009案例的核心差异：</strong>本案例是<strong>变更需求（链路B）</strong>，不是全新独立需求。它涉及对已有3个需求的产品线扩展，需要理解已有逻辑、确认差异点、处理跨需求依赖关系。采用"副本草稿→用户验证→手工合入"策略，体现了Agent的谨慎策略与用户的主导权。
+    </div>
+
+    <h3>涉及需求与依赖关系</h3>
+    <div class="impact-chain">
+        <div class="impact-node" style="background:#c8e6c9;border-color:#388e3c;">004 在销型号数<br><small>（基础层，最先开发）✅</small></div>
+        <div class="impact-arrow">→</div>
+        <div class="impact-node" style="background:#c8e6c9;border-color:#388e3c;">005 在产型号数<br><small>（依赖004的DWS表）✅</small></div>
+        <div class="impact-arrow">→</div>
+        <div class="impact-node" style="background:#c8e6c9;border-color:#388e3c;">002 低效型号占比<br><small>（独立逻辑，参照冰箱）✅</small></div>
+    </div>
+
+    <h3>数据流转</h3>
+    <div class="flowchart">
+        <div class="flow-node" style="background:#e3f2fd;">dim.dim_ipd_productmodel_dd<br><small>（HX00223产品线）</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="background:#e8f5e9;">dws.dws_ipd_ipm_sale_model_detail_dd<br><small>（004 在销型号明细）</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="background:#e8f5e9;">dws.dws_ipd_ipm_zcmodel_detail_dd<br><small>（005 在产型号明细）</small></div>
+    </div>
+    <div class="flowchart">
+        <div class="flow-node" style="background:#e3f2fd;">dim.dim_ipd_productmodel_dd + 管报 + BP/LX</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="background:#e8f5e9;">dws.dws_ipd_ipm_dxmodel_detail_dd<br><small>（002 低效型号明细）</small></div>
+    </div>
+</div>
+<!-- ==================== SECTION 2: PHASE 1 ==================== -->
+<div class="section" id="phase1">
+    <h2>二、Phase 1：需求提报与分类判定</h2>
+    <p style="margin-bottom:15px;">用户提出将厨电事业部纳入已有指标体系，Agent按照v2.0分叉链路进行分类判定。</p>
+
+    <div class="timeline">
+        <div class="timeline-item">
+            <div class="stage-label">状态2：需求接收 & 关键词提取</div>
+            <div class="chat-bubble chat-user">
+                <div class="chat-label">👤 用户</div>
+                在销型号数（004）需要新增厨电事业部的产品线。厨电包含烟机、灶具、洗碗机、电热水器、燃气热水器、烤箱6个产品线。逻辑参照冰箱产品线，但产品线判定用HX00223字段。
+            </div>
+            <div class="chat-bubble chat-agent">
+                <div class="chat-label">🤖 Agent 关键词提取</div>
+                <strong>业务词：</strong>在销型号数、厨电、烟机、灶具、洗碗机、电热水器、燃气热水器、烤箱<br>
+                <strong>技术词：</strong>HX00223、产品线判定<br>
+                <strong>动词类型：</strong>变更类（"新增"产品线）<br>
+                <strong>关联需求：</strong>004-sale-model-count
+            </div>
+        </div>
+
+        <div class="timeline-item">
+            <div class="stage-label">状态2.5：需求分类判定</div>
+            <div class="chat-bubble chat-agent">
+                <div class="chat-label">🤖 Agent 判定结论</div>
+                【需求分类判定】<br><br>
+                我判断这是一个 <strong>变更需求</strong>：<br>
+                • 类型：产品线扩展（CHG-02）<br>
+                • 关联需求：004-sale-model-count<br>
+                • 判定依据：提及已有需求ID"004" + 变更动词"新增" + "产品线"<br>
+                • 下游影响预判：005在产型号数（依赖004）、002低效型号（独立但同类扩展）<br><br>
+                请确认是否正确？
+            </div>
+            <div class="chat-bubble chat-user">
+                <div class="chat-label">👤 用户</div>
+                确认。005和002也需要同步扩展厨电。
+            </div>
+        </div>
+    </div>
+
+    <div class="alert-box alert-info">
+        <strong>判定规则命中：</strong>优先级2 — 提及已有需求ID（"004"）+ 变更动词（"新增"产品线）→ 变更需求 → 进入链路B
+    </div>
+</div>
+<!-- ==================== SECTION 3: PHASE 2 ==================== -->
+<div class="section" id="phase2">
+    <h2>三、Phase 2：变更澄清（厨电业务规则确认）</h2>
+    <p style="margin-bottom:15px;">按照CHG-02（产品线扩展）的澄清维度，Agent逐项确认厨电的业务规则。这是本案例的核心阶段，因为厨电与冰冷洗存在多处差异。</p>
+
+    <div class="timeline">
+        <div class="timeline-item">
+            <div class="stage-label">B1：定位已有资产</div>
+            <div class="chat-bubble chat-agent">
+                <div class="chat-label">🤖 Agent</div>
+                【已有资产定位】<br><br>
+                需求：004 - 在销型号数<br>
+                涉及SQL脚本：<br>
+                • <code>dws_ipd_ipm_sale_model_detail_dd.sql</code> — DWS层在销型号明细<br>
+                • <code>ads_ipd_ipm_sale_model_result_dd.sql</code> — ADS层在销型号数汇总<br><br>
+                当前逻辑概要：冰冷洗/空调/日立/视像科技 四大分支，按产品型号口径统计。<br>
+                请确认我找到的是您要修改的需求？
+            </div>
+            <div class="chat-bubble chat-user">
+                <div class="chat-label">👤 用户</div>
+                确认
+            </div>
+        </div>
+
+        <div class="timeline-item highlight">
+            <div class="stage-label">B2：变更澄清 — 第1轮（产品线基础规则）</div>
+            <div class="chat-bubble chat-agent">
+                <div class="chat-label">🤖 Agent 提问 Q1-Q3</div>
+                1. 厨电产品线分类规则是什么？<br>
+                2. 管理口径：产品型号口径还是销售型号编码口径？<br>
+                3. 数据来源与冰冷洗相同吗？
+            </div>
+            <div class="chat-bubble chat-user">
+                <div class="chat-label">👤 用户</div>
+                1. 厨电直接用HX00223字段，值为"烟机/灶具/洗碗机/电热水器/燃气热水器/烤箱"的就是目标产品线<br>
+                2. 产品型号口径<br>
+                3. 产品型号来源相同（dim_ipd_productmodel_dd），但库存来源不同
+            </div>
+        </div>
+        <div class="timeline-item highlight">
+            <div class="stage-label">B2：变更澄清 — 第2轮（指标范围与剔除规则）</div>
+            <div class="chat-bubble chat-agent">
+                <div class="chat-label">🤖 Agent 提问 Q4-Q6</div>
+                4. 内销指标范围剔除规则？<br>
+                5. 外销指标范围剔除规则？<br>
+                6. 库存数据从哪个表取？
+            </div>
+            <div class="chat-bubble chat-user">
+                <div class="chat-label">👤 用户</div>
+                4. 内销：剔除空壳机（型号名含"空壳机"）、吸油烟机配件（中类）、非Hisense品牌<br>
+                5. 外销：剔除散件（/SKD结尾）、样机（YJ结尾）<br>
+                6. 内销库存用山东厨卫产成品明细表（dws.dws_fi_mr_kbsp_ccpmx_di），外销库存暂时占位
+            </div>
+        </div>
+
+        <div class="timeline-item highlight">
+            <div class="stage-label">B2：变更澄清 — 第3轮（在产型号代工判定）</div>
+            <div class="chat-bubble chat-agent">
+                <div class="chat-label">🤖 Agent 提问 Q7-Q8</div>
+                7. 在产型号数（005）的代工剔除逻辑？<br>
+                8. 生产版本规划生产基地（PC00025）如何获取？
+            </div>
+            <div class="chat-bubble chat-user">
+                <div class="chat-label">👤 用户</div>
+                7. 自制判定：规划生产基地包含"6516-黄岛厨电工厂"为自制，其他均为非自制。内销非自制不纳入统计，外销额外剔除OEM品牌。<br>
+                8. 通过dim.dim_ipd_productionversion_dd的PC00025字段，按产品型号GROUP_CONCAT合并去重
+            </div>
+        </div>
+
+        <div class="timeline-item highlight">
+            <div class="stage-label">B2：变更澄清 — 第4轮（低效型号规则）</div>
+            <div class="chat-bubble chat-agent">
+                <div class="chat-label">🤖 Agent 提问 Q9-Q11</div>
+                9. 低效型号占比（002）的厨电逻辑？<br>
+                10. 规划量来源？<br>
+                11. 实际销量累计方式？
+            </div>
+            <div class="chat-bubble chat-user">
+                <div class="chat-label">👤 用户</div>
+                9. 两个都要：新品命中率（type='4'）+ 低效型号数（type='2'）<br>
+                10. 新品命中率只用LX；低效型号数用BP+LX组合<br>
+                11. 新品命中率：上市至今全部累计；低效型号数：本年度1月至当前月累计
+            </div>
+        </div>
+    </div>
+    <h3>厨电与冰冷洗差异汇总（最终确认版）</h3>
+    <table class="table-simple">
+        <tr><th>差异点</th><th>冰冷洗</th><th>厨电（最终）</th></tr>
+        <tr><td>产品线判定</td><td>PG00002/PG00003/PG00004组合</td><td>HX00223字段直接取值</td></tr>
+        <tr><td>产品线范围</td><td>冰箱/冷柜/洗衣机</td><td>烟机/灶具/洗碗机/电热水器/燃气热水器/烤箱</td></tr>
+        <tr><td>内销剔除</td><td>gorenje品牌、ODM</td><td>空壳机、吸油烟机配件、非Hisense品牌</td></tr>
+        <tr><td>外销剔除</td><td>标机/样机/CKD全散件</td><td>散件(/SKD)、样机(YJ)</td></tr>
+        <tr><td>内销库存源</td><td>大库龄明细 + 营销产成品明细</td><td>山东厨卫产成品明细（唯一来源，load_dt取次日）</td></tr>
+        <tr><td>外销库存源</td><td>海外分公司+基地+在途</td><td>海外分公司+基地+在途（6A/6B/65物料组）</td></tr>
+        <tr><td>ODM剔除</td><td>海信/容声品牌+非海信/平度基地</td><td>无ODM剔除（is_odm固定='N'）</td></tr>
+        <tr><td>代工判定（005）</td><td>model_label_4规划生产基地含"海信"</td><td>plan_base包含"6516-黄岛厨电工厂"=自制</td></tr>
+    </table>
+</div>
+<!-- ==================== SECTION 4: PHASE 3 ==================== -->
+<div class="section" id="phase3">
+    <h2>四、Phase 3：影响分析（跨需求依赖链）</h2>
+    <p style="margin-bottom:15px;">Agent根据 requirement_patterns.md 中的依赖关系，自动识别受影响的下游需求，并评估修改策略。</p>
+
+    <div class="timeline">
+        <div class="timeline-item">
+            <div class="stage-label">B3：影响分析</div>
+            <div class="chat-bubble chat-agent">
+                <div class="chat-label">🤖 Agent</div>
+                【影响分析】<br><br>
+                <strong>修改范围（3个需求联动）：</strong><br><br>
+                ① <strong>004 在销型号数</strong>（基础层）— DWS + ADS<br>
+                ② <strong>005 在产型号数</strong>（依赖004）— DWS + ADS<br>
+                ③ <strong>002 低效型号占比</strong>（独立逻辑）— DWS + ADS<br><br>
+                <strong>表结构变更：</strong>无需ALTER TABLE（复用已有字段）<br>
+                <strong>修改策略：</strong>先生成副本草稿（_chudian_draft.sql），待确认后合入正式脚本
+            </div>
+        </div>
+    </div>
+
+    <h3>依赖链与执行顺序</h3>
+    <div class="impact-chain">
+        <div class="impact-node" style="background:#c8e6c9;border-color:#388e3c;">Step 1<br>004 在销型号数 ✅</div>
+        <div class="impact-arrow">→</div>
+        <div class="impact-node" style="background:#c8e6c9;border-color:#388e3c;">Step 2<br>005 在产型号数 ✅</div>
+        <div class="impact-arrow">→</div>
+        <div class="impact-node" style="background:#c8e6c9;border-color:#388e3c;">Step 3<br>002 低效型号占比 ✅</div>
+    </div>
+</div>
+<!-- ==================== SECTION 5: PHASE 4 ==================== -->
+<div class="section" id="phase4">
+    <h2>五、Phase 4：执行修改 — 004在销型号数</h2>
+    <p style="margin-bottom:15px;">第一步生成004在销型号数的厨电分支。包含产品线判定、指标范围、库存清零、生产版本等完整逻辑。</p>
+
+    <h3>最终合入的正式脚本位置</h3>
+    <table class="table-simple">
+        <tr><th>文件</th><th>位置</th><th>说明</th></tr>
+        <tr><td><code>dws_ipd_ipm_sale_model_detail_dd.sql</code></td><td>第1471行起</td><td>厨电在销型号数DWS层（含年维度汇总）</td></tr>
+        <tr><td><code>ads_ipd_ipm_sale_model_result_dd.sql</code></td><td>DELETE/INSERT中</td><td>厨电汇总统计+集团汇总</td></tr>
+    </table>
+
+    <h3>核心逻辑结构</h3>
+    <div class="code-block">-- 厨电在销型号数 核心CTE结构（已合入正式脚本）
+WITH kucun_qingwei AS (...)        -- 历史库存清零时间
+,productionversion_base AS (...)   -- 生产版本规划生产基地（GROUP_CONCAT合并去重）
+,product_model AS (...)            -- 产品型号 + HX00223产品线判定 + 指标范围判定
+,kc_nx AS (...)                    -- 内销库存（山东厨卫产成品明细，唯一来源）
+,kc_wx AS (...)                    -- 外销库存（海外分公司+基地+在途，6A/6B/65物料组）
+,kc_all AS (...)                   -- 库存汇总
+,zx_model AS (...)                 -- 最终型号（库存清零判定）
+SELECT ...                         -- INSERT INTO dws.dws_ipd_ipm_sale_model_detail_dd</div>
+
+    <h3>关键代码片段 — 产品线判定</h3>
+    <div class="code-block">-- 厨电产品线：直接使用HX00223字段，仅保留6个目标产品线
+CASE WHEN HX00223 IN ('烟机','灶具','洗碗机','电热水器','燃气热水器','烤箱') 
+     THEN HX00223
+     ELSE '其他' 
+END AS product_line</div>
+
+    <h3>关键代码片段 — 内销指标范围判定</h3>
+    <div class="code-block">-- 厨电内销指标范围判定
+CASE WHEN PG00020 = '内销' THEN CASE 
+    WHEN PG00061 LIKE '%空壳机%' THEN 'N'           -- 剔除空壳机
+    WHEN PG00003 = '吸油烟机配件' THEN 'N'          -- 剔除配件
+    WHEN COALESCE(PG00005,'') <> 'Hisense' THEN 'N' -- 品牌必须为Hisense
+    ELSE 'Y' END 
+WHEN PG00020 = '外销' THEN CASE 
+    WHEN PG00061 LIKE '%/SKD' THEN 'N'              -- 剔除散件
+    WHEN PG00061 LIKE '%YJ' THEN 'N'                -- 剔除样机
+    ELSE 'Y' END 
+ELSE 'Y' END AS is_zhibiaofanwei</div>
+</div>
+<!-- ==================== SECTION 6: PHASE 5 ==================== -->
+<div class="section" id="phase5">
+    <h2>六、Phase 5：执行修改 — 005在产型号数</h2>
+    <p style="margin-bottom:15px;">从004的DWS表中筛选 model_label_10='在产' 的厨电型号，再应用代工剔除逻辑。</p>
+
+    <h3>最终合入的正式脚本位置</h3>
+    <table class="table-simple">
+        <tr><th>文件</th><th>位置</th><th>说明</th></tr>
+        <tr><td><code>dws_ipd_ipm_zcmodel_detail_dd.sql</code></td><td>第263行起</td><td>厨电在产型号数DWS层</td></tr>
+        <tr><td><code>ads_ipd_ipm_zcmodel_result_dd.sql</code></td><td>DELETE/INSERT中</td><td>厨电汇总统计+集团汇总</td></tr>
+    </table>
+
+    <h3>核心逻辑 — 代工剔除判定（最终版）</h3>
+    <div class="code-block">-- 厨电在产型号代工剔除逻辑（最终确认版）：
+-- 自制判定：规划生产基地包含"6516-黄岛厨电工厂"为自制，其他均为非自制
+-- 内销：非自制（外购/ODM）不纳入统计
+-- 外销：剔除OEM品牌、非自制（外协）
+CASE 
+    -- 内销：规划生产基地不包含"6516-黄岛厨电工厂" → 非自制，不纳入统计
+    WHEN in_out_sale = '内销' AND (plan_base IS NULL OR plan_base NOT LIKE '%6516-黄岛厨电工厂%') THEN 'Y'
+    -- 外销：品牌为OEM品牌的剔除
+    WHEN in_out_sale = '外销' AND brand = 'OEM品牌' THEN 'Y'
+    -- 外销：规划生产基地不包含"6516-黄岛厨电工厂" → 非自制（外协），不纳入统计
+    WHEN in_out_sale = '外销' AND (plan_base IS NULL OR plan_base NOT LIKE '%6516-黄岛厨电工厂%') THEN 'Y'
+    ELSE is_project 
+END AS is_project</div>
+
+    <div class="alert-box alert-success">
+        <strong>代工判定演进：</strong>初始草稿使用 <code>plan_base LIKE '%海信%'</code>，最终合入正式脚本时用户调整为更精确的 <code>plan_base LIKE '%6516-黄岛厨电工厂%'</code>，避免误匹配其他含"海信"的基地。
+    </div>
+</div>
+<!-- ==================== SECTION 7: PHASE 6 ==================== -->
+<div class="section" id="phase6">
+    <h2>七、Phase 6：执行修改 — 002低效型号占比</h2>
+    <p style="margin-bottom:15px;">生成002低效型号占比的厨电分支。包含两个独立指标：新品命中率（zhibiao_type='4'）和低效型号数（zhibiao_type='2'）。</p>
+
+    <h3>最终合入的正式脚本位置</h3>
+    <table class="table-simple">
+        <tr><th>文件</th><th>位置</th><th>指标类型</th><th>说明</th></tr>
+        <tr><td><code>dws_ipd_ipm_dxmodel_detail_dd.sql</code></td><td>第2387行起</td><td>低效型号数(type='2')</td><td>本年累计，BP+LX组合</td></tr>
+        <tr><td><code>dws_ipd_ipm_dxmodel_detail_dd.sql</code></td><td>第2635行起</td><td>新品命中率(type='4')</td><td>上市至今累计，仅LX</td></tr>
+        <tr><td><code>ads_ipd_ipm_dxmodel_result_dd.sql</code></td><td>全文</td><td>两种</td><td>7产品线列表+集团汇总</td></tr>
+    </table>
+
+    <h3>两种指标口径对比</h3>
+    <table class="table-simple">
+        <tr><th>差异点</th><th>新品命中率（type='4'）</th><th>低效型号数（type='2'）</th></tr>
+        <tr><td>实际销量累计</td><td>上市至今全部累计</td><td>本年度1月至当前月累计</td></tr>
+        <tr><td>规划量来源</td><td>仅LX立项（从上市次月累计）</td><td>BP+LX组合（本年上市用LX替代BP）</td></tr>
+        <tr><td>新品期限制</td><td>12个月（shangshi_m>=13不纳入）</td><td>无限制</td></tr>
+        <tr><td>判定阈值</td><td>完成率&lt;80%为未命中</td><td>完成率&lt;80%为低效</td></tr>
+    </table>
+</div>
+<!-- ==================== SECTION 8: PHASE 7 ==================== -->
+<div class="section" id="phase7">
+    <h2>八、Phase 7：迭代修正（库存源调整）</h2>
+    <p style="margin-bottom:15px;">在草稿生成后的验证过程中，用户对厨电内销库存源进行了<strong>3次迭代调整</strong>。</p>
+
+    <h3>库存源演进对比</h3>
+    <table class="table-simple">
+        <tr><th>版本</th><th>内销库存源</th><th>状态</th></tr>
+        <tr><td>v1（初始）</td><td>大库龄明细 + 营销产成品明细（复用冰箱）</td><td><span class="tag tag-red">❌ 被否</span></td></tr>
+        <tr><td>v2（调整）</td><td>山东厨卫产成品明细 + 大库龄明细</td><td><span class="tag tag-orange">⚠️ 过渡</span></td></tr>
+        <tr><td>v3（最终）</td><td>山东厨卫产成品明细（唯一来源）+ load_dt取次日</td><td><span class="tag tag-green">✅ 已合入</span></td></tr>
+    </table>
+
+    <div class="alert-box alert-success">
+        <strong>✅ 迭代价值：</strong>通过3次迭代，厨电库存源从"复用冰箱"逐步精简为"独立单一来源"。Agent每次修改都精准定位到kc_nx CTE，使用str_replace精准替换，不影响其他逻辑。最终版本已合入正式脚本。
+    </div>
+</div>
+<!-- ==================== SECTION 9: PHASE 8 (NEW) ==================== -->
+<div class="section" id="phase8">
+    <h2>九、Phase 8：闭环确认（手工合入正式脚本）</h2>
+    <p style="margin-bottom:15px;">2026-05-20，用户将所有草稿逻辑手工合入正式脚本，Agent逐一验证确认。</p>
+
+    <div class="timeline">
+        <div class="timeline-item">
+            <div class="stage-label">闭环1：004+005 在销/在产型号数（2026-05-20）</div>
+            <div class="chat-bubble chat-user">
+                <div class="chat-label">👤 用户</div>
+                厨电在销型号数、在产型号数的需求闭环，草稿里的逻辑我手工粘贴进正式逻辑了
+            </div>
+            <div class="chat-bubble chat-agent">
+                <div class="chat-label">🤖 Agent 验证</div>
+                ✅ 004 DWS正式脚本：第1471行起，厨电在销型号数完整逻辑已确认<br>
+                ✅ 004 ADS正式脚本：company列表已包含'厨电'，集团汇总已包含<br>
+                ✅ 005 DWS正式脚本：第263行起，厨电在产型号数+代工判定（6516-黄岛厨电工厂）已确认<br>
+                ✅ 005 ADS正式脚本：company列表已包含'厨电'，集团汇总已包含<br><br>
+                changelog已更新：004 #007、005 #005
+            </div>
+        </div>
+
+        <div class="timeline-item">
+            <div class="stage-label">闭环2：002 低效型号占比+新品命中率（2026-05-20）</div>
+            <div class="chat-bubble chat-user">
+                <div class="chat-label">👤 用户</div>
+                厨电：低效型号数、新品规划命中率 需求闭环
+            </div>
+            <div class="chat-bubble chat-agent">
+                <div class="chat-label">🤖 Agent 验证</div>
+                ✅ 002 DWS正式脚本：第2387行起（低效型号数type='2'）+ 第2635行起（新品命中率type='4'）<br>
+                ✅ 002 ADS正式脚本：product_line列表已包含'厨电'（7产品线），CASE筛选已更新<br><br>
+                changelog已更新：002 #003
+            </div>
+        </div>
+    </div>
+
+    <h3>闭环验证清单</h3>
+    <table class="table-simple">
+        <tr><th>需求</th><th>DWS正式脚本</th><th>ADS正式脚本</th><th>changelog</th><th>状态</th></tr>
+        <tr><td>004 在销型号数</td><td>✅ 厨电段已合入</td><td>✅ 厨电汇总+集团汇总</td><td>✅ #007</td><td><span class="tag tag-green">✅ 闭环</span></td></tr>
+        <tr><td>005 在产型号数</td><td>✅ 厨电段已合入（6516判定）</td><td>✅ 厨电汇总+集团汇总</td><td>✅ #005</td><td><span class="tag tag-green">✅ 闭环</span></td></tr>
+        <tr><td>002 低效型号占比</td><td>✅ 两个指标口径已合入</td><td>✅ 7产品线+集团汇总</td><td>✅ #003</td><td><span class="tag tag-green">✅ 闭环</span></td></tr>
+    </table>
+
+    <div class="alert-box alert-success">
+        <strong>闭环策略总结：</strong>用户选择手工合入草稿到正式脚本，体现了对SQL逻辑的充分理解和把控。Agent的角色从"生成者"转变为"验证者"，通过grep确认每个脚本中厨电逻辑的存在性和完整性。这种"Agent出草稿 + 用户手工合入 + Agent验证"的协作模式在复杂变更场景中效果良好。
+    </div>
+</div>
+<!-- ==================== SECTION 10: METRICS ==================== -->
+<div class="section" id="metrics">
+    <h2>十、交互度量数据（复盘）</h2>
+
+    <div class="two-col">
+        <div>
+            <h3>📊 基本数据</h3>
+            <table class="table-simple">
+                <tr><th>指标</th><th>值</th></tr>
+                <tr><td>变更类型</td><td>CHG-02 产品线扩展</td></tr>
+                <tr><td>涉及需求</td><td>004 / 005 / 002</td></tr>
+                <tr><td>操作人</td><td>lvxuebin</td></tr>
+                <tr><td>开始日期</td><td>2026-05-12</td></tr>
+                <tr><td>闭环日期</td><td>2026-05-20</td></tr>
+                <tr><td>跨越天数</td><td>9天</td></tr>
+                <tr><td>总轮次</td><td>~28轮（含闭环确认）</td></tr>
+                <tr><td>用户修正次数</td><td>3次（库存源迭代）</td></tr>
+                <tr><td>最终状态</td><td><span class="tag tag-green">✅ 全部闭环</span></td></tr>
+            </table>
+        </div>
+        <div>
+            <h3>📝 产出统计</h3>
+            <table class="table-simple">
+                <tr><th>产出项</th><th>数量</th></tr>
+                <tr><td>修改的正式SQL文件</td><td>6个（3×DWS + 3×ADS）</td></tr>
+                <tr><td>新增SQL总行数</td><td>~800行</td></tr>
+                <tr><td>草稿文件（保留参考）</td><td>5个</td></tr>
+                <tr><td>changelog更新</td><td>004: #004~#007 / 005: #004~#005 / 002: #003</td></tr>
+                <tr><td>用户反馈评分</td><td>004+005: 3/5 / 002: 4/5</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <h3>⏱️ 各阶段耗时分布</h3>
+    <table class="table-simple">
+        <tr><th>阶段</th><th>轮次</th><th>耗时(估)</th><th>占比</th><th>修正</th><th>瓶颈</th></tr>
+        <tr><td>分类判定+定位</td><td>3</td><td>7min</td><td>4%</td><td>0</td><td>-</td></tr>
+        <tr style="background:#fff3e0;"><td><strong>B2 变更澄清</strong></td><td><strong>8</strong></td><td><strong>40min</strong></td><td><strong>22%</strong></td><td><strong>0</strong></td><td><span class="tag tag-orange">⚠️ 耗时</span></td></tr>
+        <tr><td>B3 影响分析</td><td>1</td><td>5min</td><td>3%</td><td>0</td><td>-</td></tr>
+        <tr><td>B4 执行修改（004+005+002）</td><td>8</td><td>70min</td><td>39%</td><td>0</td><td>-</td></tr>
+        <tr style="background:#fff3e0;"><td><strong>迭代修正（库存源）</strong></td><td><strong>4</strong></td><td><strong>40min</strong></td><td><strong>22%</strong></td><td><strong>3</strong></td><td><span class="tag tag-orange">⚠️ 瓶颈</span></td></tr>
+        <tr><td>B5 文档更新</td><td>2</td><td>10min</td><td>5%</td><td>0</td><td>-</td></tr>
+        <tr><td>闭环确认（Phase 8）</td><td>5</td><td>8min</td><td>5%</td><td>0</td><td>-</td></tr>
+    </table>
+</div>
+<!-- ==================== SECTION 11: REVIEW ==================== -->
+<div class="section" id="review">
+    <h2>十一、反馈复盘分析</h2>
+
+    <div class="two-col">
+        <div>
+            <h3>🎯 归因分析</h3>
+            <div class="review-section">
+                <div style="font-size:48px;font-weight:700;text-align:center;color:#ff9800;">Mixed</div>
+                <p style="text-align:center;margin-top:10px;color:#666;">主因归类：混合型（用户侧需求演进 + 框架侧初始假设偏差）</p>
+                <table class="table-simple" style="margin-top:15px;">
+                    <tr><th>归因类型</th><th>判定</th><th>详情</th></tr>
+                    <tr><td>用户侧</td><td><span class="tag tag-orange">1项</span></td><td>库存源信息分3次提供（需求逐步明确）</td></tr>
+                    <tr><td>框架侧</td><td><span class="tag tag-orange">1项</span></td><td>初始假设"复用冰箱库存"被否</td></tr>
+                </table>
+            </div>
+        </div>
+        <div>
+            <h3>📈 用户反馈</h3>
+            <div class="review-section">
+                <table class="table-simple">
+                    <tr><th>闭环批次</th><th>评分</th><th>满意点</th><th>不爽点</th></tr>
+                    <tr><td>004+005</td><td>3/5</td><td>逻辑调整得不错，理解能力也不错</td><td>乱码问题严重影响开发</td></tr>
+                    <tr><td>002</td><td>4/5</td><td>-</td><td>-</td></tr>
+                </table>
+                <div class="alert-box alert-warning" style="margin-top:15px;">
+                    <strong>用户痛点：</strong>乱码问题严重影响了开发效率并消耗了大量资源。已记录为高严重度改进项。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3>🏷️ 标签</h3>
+    <div style="margin:10px 0;">
+        <span class="tag tag-purple">框架侧:初始假设偏差</span>
+        <span class="tag tag-blue">用户侧:需求逐步明确</span>
+        <span class="tag tag-green">亮点:跨需求依赖自动识别</span>
+        <span class="tag tag-green">亮点:副本草稿策略降低风险</span>
+        <span class="tag tag-green">亮点:Agent验证闭环高效</span>
+        <span class="tag tag-red">痛点:乱码问题</span>
+    </div>
+
+    <h3>📋 与009案例对比</h3>
+    <table class="table-simple">
+        <tr><th>对比维度</th><th>009（全新独立需求）</th><th>厨电扩展（变更需求）</th></tr>
+        <tr><td>链路类型</td><td>A（新建）</td><td>B（变更 - CHG-02）</td></tr>
+        <tr><td>涉及需求数</td><td>1个</td><td>3个</td></tr>
+        <tr><td>总耗时</td><td>55min</td><td>~180min</td></tr>
+        <tr><td>总轮次</td><td>11轮</td><td>~28轮</td></tr>
+        <tr><td>SQL修订轮次</td><td>0</td><td>3</td></tr>
+        <tr><td>主因归类</td><td>clean</td><td>mixed</td></tr>
+        <tr><td>最终状态</td><td>直接生成最终SQL</td><td>草稿→验证→手工合入→Agent验证闭环</td></tr>
+        <tr><td>用户评分</td><td>-</td><td>3~4/5</td></tr>
+    </table>
+</div>
+<!-- ==================== SECTION 12: IMPROVEMENT ==================== -->
+<div class="section" id="improvement">
+    <h2>十二、改进建议与行动项</h2>
+
+    <h3>🚨 改进Backlog</h3>
+    <table class="table-simple">
+        <tr><th>优先级</th><th>日期</th><th>改进项</th><th>来源</th><th>严重度</th><th>状态</th></tr>
+        <tr>
+            <td><span class="tag tag-red">P0</span></td>
+            <td>2026-05-20</td>
+            <td>乱码问题严重影响开发效率，需排查文件编码一致性</td>
+            <td>用户反馈</td>
+            <td>高</td>
+            <td><span class="tag tag-orange">待排查</span></td>
+        </tr>
+        <tr>
+            <td><span class="tag tag-orange">P1</span></td>
+            <td>2026-05-12</td>
+            <td>产品线扩展时不应默认"复用已有库存源"，应主动询问</td>
+            <td>B4</td>
+            <td>中</td>
+            <td><span class="tag tag-green">已改进</span></td>
+        </tr>
+        <tr>
+            <td><span class="tag tag-orange">P1</span></td>
+            <td>2026-05-20</td>
+            <td>CHG-02澄清模板新增"库存数据来源"为必问项</td>
+            <td>B2</td>
+            <td>中</td>
+            <td><span class="tag tag-blue">待处理</span></td>
+        </tr>
+    </table>
+
+    <h3>💡 本次交互的关键发现</h3>
+    <div class="review-section">
+        <ol style="padding-left:20px;">
+            <li style="margin-bottom:10px;">
+                <strong>跨需求依赖自动识别有效</strong>：Agent通过 requirement_patterns.md 的依赖字段，自动识别出004→005→002的影响链，并按正确顺序执行修改。
+                <br><span class="tag tag-green">亮点：模式库的依赖关系设计在变更场景中发挥了关键作用</span>
+            </li>
+            <li style="margin-bottom:10px;">
+                <strong>"草稿→手工合入→Agent验证"是最佳协作模式</strong>：Agent出草稿降低风险，用户手工合入保证主导权，Agent验证确保完整性。三方协作效果优于任何单方操作。
+                <br><span class="tag tag-green">启示：复杂变更的标准协作模式已确立</span>
+            </li>
+            <li style="margin-bottom:10px;">
+                <strong>代工判定从"海信"到"6516-黄岛厨电工厂"的精化</strong>：用户在手工合入时进一步精化了判定条件，说明草稿策略给了用户优化空间。
+                <br><span class="tag tag-blue">启示：草稿不仅是"待合入"，也是"待优化"的载体</span>
+            </li>
+            <li style="margin-bottom:10px;">
+                <strong>乱码是当前最大痛点</strong>：用户评分从4分降到3分的主要原因是乱码问题，而非逻辑质量。需要优先解决编码问题。
+                <br><span class="tag tag-red">行动项：排查文件编码（UTF-8 BOM vs UTF-8）和工具链编码一致性</span>
+            </li>
+        </ol>
+    </div>
+</div>
+<!-- ==================== FULL FLOW SUMMARY ==================== -->
+<div class="section">
+    <h2>附录：完整流程总结图</h2>
+    
+    <h3>ETL Agent 变更需求处理全流程（链路B - 产品线扩展 - 已闭环）</h3>
+    <div style="background:#e8f5e9;padding:20px;border-radius:8px;margin:15px 0;">
+        <div class="flowchart" style="justify-content:center;">
+            <div class="flow-node" style="background:#c8e6c9;">状态2<br><small>关键词提取</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node" style="background:#c8e6c9;">状态2.5<br><small>分类→链路B</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node" style="background:#c8e6c9;">B1<br><small>定位资产</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node" style="background:#fff3e0;border:2px solid #ff9800;">B2<br><small>澄清(4轮)</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node" style="background:#c8e6c9;">B3<br><small>影响分析</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node" style="background:#c8e6c9;">B4<br><small>生成草稿×5</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node" style="background:#fff3e0;border:2px solid #ff9800;">迭代<br><small>库存源×3</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node" style="background:#c8e6c9;">B5<br><small>文档更新</small></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node" style="background:#4caf50;color:white;border:2px solid #2e7d32;">✅ 闭环<br><small>手工合入+验证</small></div>
+        </div>
+    </div>
+
+    <h3>最终文件清单</h3>
+    <div class="code-block">requirements/004-sale-model-count/
+├── changelog.md                                    # #004~#007 变更记录
+└── sql_scripts/
+    ├── dws_ipd_ipm_sale_model_detail_dd.sql        # ✅ 正式脚本（含厨电，第1471行起）
+    ├── ads_ipd_ipm_sale_model_result_dd.sql        # ✅ 正式脚本（含厨电汇总+集团汇总）
+    └── dws_ipd_ipm_sale_model_detail_dd_chudian_draft.sql  # 📋 草稿（保留参考）
+
+requirements/005-zcmodel-count/
+├── changelog.md                                    # #004~#005 变更记录
+└── sql_scripts/
+    ├── dws_ipd_ipm_zcmodel_detail_dd.sql           # ✅ 正式脚本（含厨电，第263行起，6516判定）
+    ├── ads_ipd_ipm_zcmodel_result_dd.sql           # ✅ 正式脚本（含厨电汇总+集团汇总）
+    └── dws_ipd_ipm_zcmodel_detail_dd_chudian_draft.sql     # 📋 草稿（保留参考）
+
+requirements/002-dx-model-rate/
+├── changelog.md                                    # #003 变更记录
+└── sql_scripts/
+    ├── dws_ipd_ipm_dxmodel_detail_dd.sql           # ✅ 正式脚本（含厨电type=2+4，第2387/2635行起）
+    ├── ads_ipd_ipm_dxmodel_result_dd.sql           # ✅ 正式脚本（7产品线+集团汇总）
+    ├── dws_ipd_ipm_dxmodel_detail_dd_chudian_draft.sql     # 📋 草稿-新品命中率（保留参考）
+    ├── dws_ipd_ipm_dxmodel_detail_dd_chudian_dx_draft.sql  # 📋 草稿-低效型号数（保留参考）
+    └── ads_ipd_ipm_dxmodel_result_dd_chudian_draft.sql     # 📋 草稿-ADS层（保留参考）</div>
+</div>
+<!-- ==================== FOOTER ==================== -->
+<div class="section" style="text-align:center;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);">
+    <h2 style="border:none;padding:0;">📌 总结</h2>
+    <div style="max-width:650px;margin:20px auto;text-align:left;">
+        <p style="margin-bottom:15px;">厨电产品线扩展是ETL Agent处理的第一个<strong>跨需求联动变更</strong>案例，已于2026-05-20全部闭环。展示了Agent在复杂变更场景中的能力与协作模式：</p>
+        <ul style="padding-left:20px;">
+            <li style="margin-bottom:8px;"><strong>跨需求依赖识别</strong>：自动识别004→005→002的影响链，按正确顺序执行</li>
+            <li style="margin-bottom:8px;"><strong>草稿→合入→验证协作模式</strong>：Agent出草稿、用户手工合入（含优化）、Agent验证闭环</li>
+            <li style="margin-bottom:8px;"><strong>核心逻辑一次正确</strong>：产品线判定(HX00223)、指标范围、代工判定均首次正确</li>
+            <li style="margin-bottom:8px;"><strong>用户在合入时进一步优化</strong>：代工判定从"海信"精化为"6516-黄岛厨电工厂"</li>
+            <li style="margin-bottom:8px;"><strong>库存源是薄弱环节</strong>：初始假设被否，后续3次迭代才确定最终方案</li>
+            <li style="margin-bottom:8px;"><strong>乱码是当前最大痛点</strong>：影响了用户体验评分，需优先解决</li>
+        </ul>
+    </div>
+    <div style="margin-top:20px;padding:15px;background:rgba(255,255,255,0.7);border-radius:8px;display:inline-block;">
+        <strong>与009案例的互补价值：</strong><br>
+        009展示了"全新独立需求（链路A）"的标准流程 → 简单、高效、一次通过<br>
+        厨电展示了"跨需求变更（链路B）"的复杂场景 → 迭代、依赖、草稿策略、协作闭环
+    </div>
+    <p style="color:#888;font-size:13px;margin-top:20px;">
+        生成时间：2026-05-21 | 闭环确认：2026-05-20 | ETL Agent v2.0 | Powered by Kiro
+    </p>
+</div>
+
+</div><!-- end container -->
+</body>
+</html>

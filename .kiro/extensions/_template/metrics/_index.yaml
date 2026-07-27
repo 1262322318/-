@@ -1,0 +1,13 @@
+# {团队} 指标语义索引
+#
+# AI 匹配入口：通过 synonyms 快速定位指标/度量 → table.field
+# 包含所有层级（基础度量 + 派生度量 + 复合指标）
+
+metrics_index:
+  - name: "{名称}"
+    type: "基础度量 / 派生度量 / 复合指标"
+    synonyms: ["{同义词1}", "{同义词2}"]
+    table: "{所在表}"
+    field: "{所在字段}"
+    domain: "{主题域}"
+    file: "{domain}.yaml"

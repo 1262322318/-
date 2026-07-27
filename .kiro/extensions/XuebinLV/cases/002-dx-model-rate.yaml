@@ -1,0 +1,101 @@
+# 项目案例详情：002-dx-model-rate 低效型号占比与新品规划命中率
+
+project_id: 002-dx-model-rate
+name: 低效型号占比与新品规划命中率
+time: "2026-04 ~ 2026-06"
+team: XuebinLV
+status: 已闭环
+
+# ═══ 决策记录 ═══
+decisions:
+  - id: D1
+    topic: DWD层是否独立建表
+    decision: 是，建dwd_ipd_ipm_bp_lx_model_mid_dd
+    reason: BP和LX来源不同（HDRP vs PLM维表36个月字段），展开为统一月度×型号粒度后被DWS层多处引用
+    alternatives: [直接在DWS层内联展开]
+    why_not: 多个zhibiao_type段落都需要规划量，重复展开浪费且不一致风险高
+
+  - id: D2
+    topic: 日立用什么管理口径
+    decision: 销售型号编码（sale_model_code），不走产品型号口径
+    reason: 业务方以PG00068为管理粒度，日立体系特殊（一个产品型号对应多个销售型号编码）
+    alternatives: [产品型号口径统一处理]
+    why_not: 会丢失日立业务方需要的粒度细节
+
+  - id: D3
+    topic: 各产品线是否合并为一个大SQL
+    decision: 分段独立INSERT（每条产品线一个段落）
+    reason: 便于扩展、便于调试、各产品线规则差异大（数据源/剔除条件/关联路径不同）
+    alternatives: [单个大UNION ALL]
+    why_not: 维护困难，新增产品线影响面大
+
+  - id: D4
+    topic: 外销新品命中率是否合入内销脚本
+    decision: 独立脚本（dws_ipd_ipm_dxmodel_detail_dd_wx.sql）
+    reason: 外销数据源完全不同（GSS系统，非管报），时间频率也不同（针对昨天而非上月），合入内销脚本会过于复杂
+    alternatives: [合入内销脚本的最后]
+    why_not: 数据源和刷新频率差异太大
+
+# ═══ 踩坑记录 ═══
+pitfalls:
+  - id: P1
+    scene: 视像科技能效机导致销量重复
+    symptom: 电视产品线销量偏高，存在能效机和原型机同时计入
+    root_cause: 能效机是为满足能效标准衍生的型号，实际销量应归入原型机统计
+    fix: 使用dim.dim_ipd_tv_model_nengxiao_nd映射表，COALESCE(原型机, 管报型号)
+    affected: 视像科技+激光（共用能效机转换逻辑PUB-005）
+
+  - id: P2
+    scene: 管报物料无法直接关联产品型号表
+    symptom: LEFT JOIN管报到dim_ipd_productmodel_dd匹配率极低
+    root_cause: 管报的matnr是物料编码，必须经过MDG桥梁表转换为model_name
+    fix: 路径固定为 ods管报.matnr → dw.dim_product_base_info_dd.product_code → model_name
+    affected: 所有涉及管报销量的指标
+
+  - id: P3
+    scene: 厨电从草稿合入主脚本后年维度汇总遗漏
+    symptom: 年维度数据不含厨电分支写入的月度数据
+    root_cause: 年维度汇总段原来在脚本中间（冰冷洗/空调之后），厨电段落追加在末尾，执行顺序导致年维度汇总时厨电数据尚未写入
+    fix: 将年维度汇总段移至脚本最末尾（所有产品线之后）
+    affected: 004在销型号数
+
+  - id: P4
+    scene: 本年复产型号被误判为低效
+    symptom: 再上市型号（从退市恢复为在产）被当作老品判定低效
+    root_cause: fuchan_model CTE已定义但未LEFT JOIN关联，is_project条件中引用了未关联的字段
+    fix: 补充LEFT JOIN关联 + is_project CASE WHEN条件引用
+    affected: 冰冷洗、视像科技、家用空调、厨电的低效/命中率段
+
+  - id: P5
+    scene: 日立MDG关联只能匹配前14位
+    symptom: 完整的sale_model_code匹配率不到50%
+    root_cause: MDG表中product_code与dim_ipd_salemodel_dd的关联需要截取前14位字符
+    fix: JOIN条件改为SUBSTRING(product_code,1,14) = SUBSTRING(sale_model_code,1,14)，且限定create_company='RILI'
+    affected: 所有日立口径的管报销量获取
+
+# ═══ 产出表清单 ═══
+output_tables:
+  - dwd.dwd_ipd_ipm_bp_lx_model_mid_dd
+  - dws.dws_ipd_ipm_dxmodel_detail_dd
+  - dws.dws_ipd_ipm_dxmodel_detail_dd_wx.sql（外销）
+  - ads.ads_ipd_ipm_dxmodel_result_dd
+
+# ═══ 可复用经验 ═══
+reusable_patterns:
+  - pattern: multi-product-line-branch
+    description: 多产品线分叉统一汇总——每条产品线独立段落INSERT，ADS层统一聚合
+  - pattern: bp-lx-priority-select
+    description: BP/LX优先选择——DWD层展开为统一粒度，DWS层按立项首月判断选用
+
+# ═══ 复杂度评估 ═══
+complexity:
+  level: 复杂
+  factors:
+    - 覆盖内9+外7条产品线，各有差异
+    - DWD→DWS→ADS三层完整链路
+    - 涉及9条公共规则（PUB-001~010）
+    - 日立/央空走特殊口径（sale_model_code）
+    - 外销独立脚本（GSS数据源）
+    - 多次产品线扩展（厨电、激光、外销先后合入）
+  scripts_count: 5
+  total_changes: 8次变更（changelog记录）

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>需求管理体系详解 - ETL开发助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #2c3e50; line-height: 1.6; }
+        .header { background: linear-gradient(135deg, #1a237e, #283593, #3949ab); color: white; padding: 40px; }
+        .header h1 { font-size: 2em; }
+        .header .nav { margin-top: 10px; }
+        .header .nav a { color: rgba(255,255,255,0.8); text-decoration: none; margin-right: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+        .card { background: white; border-radius: 12px; padding: 30px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .card h2 { color: #1a237e; margin-bottom: 16px; font-size: 1.4em; border-bottom: 2px solid #e8eaf6; padding-bottom: 10px; }
+        .card h3 { color: #283593; margin: 18px 0 10px; font-size: 1.1em; }
+        .flow-diagram { background: #263238; color: #a5d6a7; padding: 20px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 0.82em; overflow-x: auto; white-space: pre; line-height: 1.6; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; }
+        th { background: #e8eaf6; color: #1a237e; padding: 10px 12px; text-align: left; }
+        td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+        .pros, .cons { padding: 16px; border-radius: 8px; }
+        .pros { background: #e8f5e9; }
+        .cons { background: #fce4ec; }
+        .pros h4 { color: #2e7d32; }
+        .cons h4 { color: #c62828; }
+        ul { padding-left: 20px; }
+        li { margin: 6px 0; }
+        .improve { background: #fff8e1; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .improve h4 { color: #f57f17; margin-bottom: 8px; }
+        footer { text-align: center; padding: 30px; color: #999; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 需求管理体系详解</h1>
+        <div class="nav"><a href="index.html">← 返回总览</a> <a href="module-data-warehouse.html">数据仓库 →</a></div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h2>模块概述</h2>
+            <p>需求管理体系覆盖ETL需求从"原始输入"到"交付闭环"的全生命周期。通过三级文档管理（intake→refined→requirements）实现需求的逐步精化，确保每个需求都有完整的文档追溯链：需求文档、SQL脚本、血缘关系、变更记录。</p>
+        </div>
+
+        <div class="card">
+            <h2>架构图 — 需求生命周期</h2>
+            <div class="flow-diagram">┌────────────────────────────────────────────────────────────────┐
+│                    需求三级管理体系                               │
+├────────────────────────────────────────────────────────────────┤
+│                                                                │
+│  intake/（收集层）          refined/（精化层）    requirements/（交付层）│
+│  ┌──────────────┐         ┌──────────────┐    ┌──────────────┐  │
+│  │ 原始输入      │  ──→   │ PRD文档       │ ──→│ 完整需求包    │  │
+│  │ (用户口述/    │ 转换    │ (字段映射/    │ 开发 │ (SQL/文档/   │  │
+│  │  文档截图/    │        │  确定度标记/  │     │  血缘/变更)  │  │
+│  │  邮件内容)    │        │  待澄清项)   │     │              │  │
+│  └──────────────┘         └──────────────┘    └──────────────┘  │
+│                                                                │
+│  requirement-converter     requirement-refiner   etl-requirement│
+│  技能                      技能                   技能           │
+└────────────────────────────────────────────────────────────────┘
+
+每个需求包（requirements/{ID}/）的标准结构：
+├── requirement.md       # 需求文档（含头部速查）
+├── tables.txt           # 涉及表清单
+├── lineage.md           # 数据血缘（Hook自动更新）
+├── changelog.md         # 变更记录
+├── permission_check.md  # 权限检查结果
+└── sql_scripts/         # SQL脚本
+    ├── *.sql            # 正式脚本
+    ├── validate_data_quality.sql
+    └── drafts/          # 草稿隔离目录
+        └── *_draft.sql</div>
+        </div>
+
+        <div class="card">
+            <h2>核心设计</h2>
+            <h3>1. 需求ID编号规则</h3>
+            <p>格式：<code>{三位数字}-{英文缩写}</code>，如 002-dx-model-rate、009-design-change-stats。编号连续递增，首个需求从002开始（001预留）。</p>
+
+            <h3>2. 依赖链拓扑管理</h3>
+            <p>通过 <code>requirement_patterns.md</code> 的依赖字段管理指标间关系，变更时自动识别下游影响：</p>
+            <table>
+                <tr><th>需求</th><th>下游影响</th><th>影响方式</th></tr>
+                <tr><td>004 在销型号数</td><td>005, 007</td><td>DWS表作为数据源</td></tr>
+                <tr><td>005 在产型号数</td><td>006</td><td>在产型号关联平台</td></tr>
+                <tr><td>006 平台数</td><td>008</td><td>平台数作为分母</td></tr>
+                <tr><td>007 单型号销量</td><td>008</td><td>销量数据</td></tr>
+                <tr><td>002 低效型号</td><td>无</td><td>独立计算</td></tr>
+                <tr><td>003 企划命中率</td><td>无</td><td>独立计算</td></tr>
+                <tr><td>009 设计变更</td><td>无</td><td>独立业务域</td></tr>
+            </table>
+
+            <h3>3. 草稿隔离规则</h3>
+            <p>变更生成的草稿文件统一存放在 <code>sql_scripts/drafts/</code> 目录，正式脚本在根目录。Agent生成新草稿时<strong>禁止参考drafts/下的任何文件</strong>，只参考正式脚本和需求文档。</p>
+
+            <h3>4. 头部速查同步</h3>
+            <p>每个 requirement.md 包含"当前状态速查"section，每次变更闭环时强制同步：覆盖范围、脚本清单、规则引用、销量来源。通过changelog版本号检测是否滞后。</p>
+        </div>
+
+        <div class="card">
+            <h2>数据流转图 — 需求到脚本</h2>
+            <div class="flow-diagram">用户输入
+    │
+    ├─ 口述/截图 → intake/converted/ → 标准化MD
+    │
+    ├─ 精化(可选) → refined/*_prd.md → 含字段映射的PRD
+    │
+    └─ 进入对话流程
+         │
+         ├─ 链路A新建 → A1~A7 → requirements/{新ID}/
+         │                         ├── requirement.md
+         │                         ├── sql_scripts/
+         │                         ├── lineage.md
+         │                         ├── tables.txt
+         │                         └── changelog.md
+         │
+         └─ 链路B变更 → B1~B6 → requirements/{已有ID}/
+                                   ├── sql_scripts/drafts/*_draft.sql (模式B)
+                                   ├── 或 直接修改正式脚本 (模式A)
+                                   └── changelog.md 追加记录</div>
+        </div>
+
+        <div class="card">
+            <h2>优缺点分析</h2>
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>✅ 优势</h4>
+                    <ul>
+                        <li>三级文档管理确保需求可追溯（从原始输入到最终SQL）</li>
+                        <li>草稿隔离防止"参考污染"导致的错误传播</li>
+                        <li>依赖链拓扑使变更影响一目了然</li>
+                        <li>产品线覆盖矩阵方便快速识别缺口</li>
+                        <li>标准化文档模板降低文档编写成本</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>❌ 局限</h4>
+                    <ul>
+                        <li>文件数量多（每需求5-6个文件），初次接触有学习成本</li>
+                        <li>头部速查依赖Agent主动同步，偶有滞后</li>
+                        <li>跨需求的产品线对比需要手工维护README</li>
+                        <li>无需求优先级排序机制（所有需求等价）</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>待改进项</h2>
+            <div class="improve">
+                <h4>🔧 建议</h4>
+                <ul>
+                    <li>P1：需求状态机可视化（看板视图展示各需求当前阶段）</li>
+                    <li>P1：自动检测 requirement.md 头部速查与实际脚本的偏差</li>
+                    <li>P2：引入需求优先级字段，支持排期管理</li>
+                    <li>P2：支持需求归档（已废弃的需求移入archive/目录）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <footer>ETL开发助手 · 需求管理体系详解 · 生成日期：2026-06-11</footer>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETL开发助手 - 项目总览</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #2c3e50; line-height: 1.6; }
+        .header { background: linear-gradient(135deg, #1a237e, #283593, #3949ab); color: white; padding: 60px 40px; text-align: center; }
+        .header h1 { font-size: 2.4em; margin-bottom: 10px; }
+        .header p { font-size: 1.1em; opacity: 0.9; max-width: 700px; margin: 0 auto; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+        .card { background: white; border-radius: 12px; padding: 30px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .card h2 { color: #1a237e; margin-bottom: 16px; font-size: 1.4em; border-bottom: 2px solid #e8eaf6; padding-bottom: 10px; }
+        .card h3 { color: #283593; margin: 16px 0 10px; font-size: 1.1em; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 20px 0; }
+        .stat-item { background: linear-gradient(135deg, #e8eaf6, #c5cae9); border-radius: 10px; padding: 20px; text-align: center; }
+        .stat-item .number { font-size: 2em; font-weight: bold; color: #1a237e; }
+        .stat-item .label { font-size: 0.85em; color: #5c6bc0; margin-top: 4px; }
+        .module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin: 20px 0; }
+        .module-card { background: white; border: 1px solid #e8eaf6; border-radius: 10px; padding: 24px; transition: transform 0.2s, box-shadow 0.2s; }
+        .module-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+        .module-card .icon { font-size: 2em; margin-bottom: 10px; }
+        .module-card h3 { margin-bottom: 8px; color: #1a237e; }
+        .module-card p { font-size: 0.9em; color: #666; margin-bottom: 12px; }
+        .module-card a { color: #3949ab; text-decoration: none; font-weight: 500; }
+        .module-card a:hover { text-decoration: underline; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; }
+        th { background: #e8eaf6; color: #1a237e; padding: 10px 12px; text-align: left; }
+        td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+        tr:hover td { background: #f8f9ff; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 500; }
+        .badge-green { background: #e8f5e9; color: #2e7d32; }
+        .badge-yellow { background: #fff8e1; color: #f57f17; }
+        .badge-blue { background: #e3f2fd; color: #1565c0; }
+        .tree { background: #263238; color: #a5d6a7; padding: 20px; border-radius: 8px; font-family: 'Consolas', 'Courier New', monospace; font-size: 0.85em; overflow-x: auto; white-space: pre; line-height: 1.5; }
+        .quickstart { background: #e8f5e9; border-radius: 10px; padding: 24px; margin: 16px 0; }
+        .quickstart h3 { color: #2e7d32; }
+        .quickstart ol { padding-left: 20px; }
+        .quickstart li { margin: 8px 0; }
+        .boundary { background: #fff3e0; border-radius: 10px; padding: 20px; margin: 16px 0; }
+        .boundary h3 { color: #e65100; }
+        .boundary ul { padding-left: 20px; }
+        .boundary li { margin: 6px 0; color: #bf360c; }
+        .matrix-table td { text-align: center; font-size: 0.8em; }
+        .matrix-table .check { color: #2e7d32; font-weight: bold; }
+        .matrix-table .dash { color: #bbb; }
+        footer { text-align: center; padding: 30px; color: #999; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏗️ ETL 开发助手系统</h1>
+        <p>基于 Kiro Agent 的智能ETL开发环境 — 海信内部数据工程专用</p>
+        <p style="margin-top:10px;opacity:0.7;font-size:0.9em">Apache Doris 2.1+ · Kimball维度建模 · 18个Steering规则 · 16个Skills技能 · 7个Hooks自动化</p>
+    </div>
+
+    <div class="container">
+        <!-- 项目统计 -->
+        <div class="card">
+            <h2>📊 项目统计</h2>
+            <div class="stats-grid">
+                <div class="stat-item"><div class="number">8</div><div class="label">已完成需求</div></div>
+                <div class="stat-item"><div class="number">18</div><div class="label">Steering 规则文件</div></div>
+                <div class="stat-item"><div class="number">16</div><div class="label">Skills 技能</div></div>
+                <div class="stat-item"><div class="number">7</div><div class="label">Hooks 自动化</div></div>
+                <div class="stat-item"><div class="number">28+</div><div class="label">SQL脚本</div></div>
+                <div class="stat-item"><div class="number">16</div><div class="label">覆盖产品线</div></div>
+                <div class="stat-item"><div class="number">10</div><div class="label">公共规则(PUB)</div></div>
+                <div class="stat-item"><div class="number">9</div><div class="label">需求模式(PAT)</div></div>
+            </div>
+        </div>
+
+        <!-- 5分钟上手 -->
+        <div class="card">
+            <h2>🚀 5分钟上手指南</h2>
+            <div class="quickstart">
+                <h3>场景一：提一个新ETL需求</h3>
+                <ol>
+                    <li>对Agent说 "新需求" 或引用 <code>#etl-requirement</code></li>
+                    <li>描述指标名称、业务含义、覆盖产品线</li>
+                    <li>Agent按 A1→A7 流程引导你逐步确认（分类→澄清→匹配→设计→生成）</li>
+                    <li>最终产出：SQL脚本 + requirement.md + lineage.md + changelog.md</li>
+                </ol>
+            </div>
+            <div class="quickstart">
+                <h3>场景二：修改已有指标逻辑</h3>
+                <ol>
+                    <li>对Agent说 "修改002的xx逻辑" 或引用refined PRD文档</li>
+                    <li>Agent走链路B：定位→澄清→影响分析→交付模式选择→执行→闭环</li>
+                    <li>复杂变更用草稿模式：Agent生成draft → 你手工合入 → Agent验证</li>
+                </ol>
+            </div>
+            <div class="quickstart">
+                <h3>场景三：投喂知识 / 审计项目</h3>
+                <ol>
+                    <li>投喂：说 "投喂知识" → 选类型（表/规则/模式）→ 录入 → 校验 → 写入</li>
+                    <li>审计：说 "执行项目审计" → 自动检查7个维度 → 生成交互式HTML报告</li>
+                    <li>文档：说 "生成项目文档" → 生成本套文档</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- 模块导航 -->
+        <div class="card">
+            <h2>📦 模块架构导航</h2>
+            <div class="module-grid">
+                <div class="module-card">
+                    <div class="icon">🔀</div>
+                    <h3>需求处理链路</h3>
+                    <p>v3.0 骨架先行 + 多指标编排，分叉链路（新建A/变更B），9+状态门禁</p>
+                    <a href="module-pipeline.html">查看详情 →</a>
+                </div>
+                <div class="module-card">
+                    <div class="icon">📐</div>
+                    <h3>Steering 规则体系</h3>
+                    <p>18个规则文件，三种加载模式（always/fileMatch/manual），分层治理</p>
+                    <a href="module-steering.html">查看详情 →</a>
+                </div>
+                <div class="module-card">
+                    <div class="icon">⚡</div>
+                    <h3>Skills 技能 + Hooks</h3>
+                    <p>16个技能定义 + 7个自动化Hook，覆盖需求全生命周期</p>
+                    <a href="module-skills-hooks.html">查看详情 →</a>
+                </div>
+                <div class="module-card">
+                    <div class="icon">📋</div>
+                    <h3>需求管理体系</h3>
+                    <p>8个已闭环需求，依赖链拓扑，产品线覆盖矩阵，统一文档规范</p>
+                    <a href="module-requirements.html">查看详情 →</a>
+                </div>
+                <div class="module-card">
+                    <div class="icon">🏛️</div>
+                    <h3>数据仓库架构</h3>
+                    <p>ODS→DWD→DWS→ADS→DIM五层架构，Doris 2.1+，Kimball维度建模</p>
+                    <a href="module-data-warehouse.html">查看详情 →</a>
+                </div>
+                <div class="module-card">
+                    <div class="icon">🔍</div>
+                    <h3>SQL质量管控</h3>
+                    <p>17个实战模板，编码规范，自动快检Hook，幂等性保障</p>
+                    <a href="module-sql-quality.html">查看详情 →</a>
+                </div>
+                <div class="module-card">
+                    <div class="icon">🔄</div>
+                    <h3>变更管理与知识管理</h3>
+                    <p>6种变更类型，草稿隔离，经验沉淀，知识健康检查，反馈闭环</p>
+                    <a href="module-change-management.html">查看详情 →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 需求总览 -->
+        <div class="card">
+            <h2>📋 需求总览</h2>
+            <table>
+                <tr><th>需求ID</th><th>指标名称</th><th>分层</th><th>状态</th><th>产品线</th><th>脚本数</th><th>依赖</th></tr>
+                <tr><td>002</td><td>低效型号占比与新品规划命中率</td><td>DWD→DWS→ADS</td><td><span class="badge badge-green">已闭环</span></td><td>内9+外7</td><td>5</td><td>无</td></tr>
+                <tr><td>003</td><td>企划命中率</td><td>DWS→ADS</td><td><span class="badge badge-yellow">待建表</span></td><td>1</td><td>4</td><td>无</td></tr>
+                <tr><td>004</td><td>在销型号数</td><td>DWS→ADS</td><td><span class="badge badge-green">已闭环</span></td><td>内9+外7</td><td>3</td><td>无</td></tr>
+                <tr><td>005</td><td>在产型号数</td><td>DWS→ADS</td><td><span class="badge badge-green">已闭环</span></td><td>内9+外7</td><td>3</td><td>004</td></tr>
+                <tr><td>006</td><td>平台数</td><td>DWS→ADS</td><td><span class="badge badge-green">已闭环</span></td><td>内8+外7</td><td>5</td><td>005</td></tr>
+                <tr><td>007</td><td>单型号销量</td><td>DWS→ADS</td><td><span class="badge badge-green">已闭环</span></td><td>内8+外7</td><td>3</td><td>004</td></tr>
+                <tr><td>008</td><td>单平台销量</td><td>DWS→ADS</td><td><span class="badge badge-green">已闭环</span></td><td>内8+外7</td><td>3</td><td>006,007</td></tr>
+                <tr><td>009</td><td>设计变更统计</td><td>ADS直查</td><td><span class="badge badge-green">已闭环</span></td><td>1(IRS)</td><td>2</td><td>无</td></tr>
+            </table>
+        </div>
+
+        <!-- 指标依赖链 -->
+        <div class="card">
+            <h2>🔗 指标依赖链</h2>
+            <div class="tree">004 在销型号数（基础型号范围）
+  ├──→ 005 在产型号数（从在销筛选在产阶段）
+  ├──→ 007 单型号销量（在销型号作为分母）
+  └──→ 006 平台数-产品平台数（在产型号关联平台）
+           └──→ 008 单平台销量（平台数+销量作为分母）
+
+002 低效型号占比+新品命中率（独立，依赖BP/LX规划量）
+003 企划命中率（独立，央空日立专属）
+009 设计变更统计（独立，IRS业务域）</div>
+        </div>
+
+        <!-- 产品线覆盖矩阵 -->
+        <div class="card">
+            <h2>📊 产品线覆盖矩阵</h2>
+            <table class="matrix-table">
+                <tr><th>产品线</th><th>002低效</th><th>003企划</th><th>004在销</th><th>005在产</th><th>006平台</th><th>007单型号</th><th>008单平台</th></tr>
+                <tr><td>冰箱（内销）</td><td class="check">✅</td><td class="dash">—</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>冷柜（内销）</td><td class="check">✅</td><td class="dash">—</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>洗衣机（内销）</td><td class="check">✅</td><td class="dash">—</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>家用空调（内销）</td><td class="check">✅</td><td class="dash">—</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>中央空调/日立</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>平板电视（内销）</td><td class="check">✅</td><td class="dash">—</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>厨电（内销）</td><td class="check">✅</td><td class="dash">—</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>激光家用（内销）</td><td class="check">✅</td><td class="dash">—</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>冰箱（外销）</td><td class="check">✅</td><td class="dash">—</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>冷柜（外销）</td><td class="check">✅</td><td class="dash">—</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>洗衣机（外销）</td><td class="check">✅</td><td class="dash">—</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>家用空调（外销）</td><td class="check">✅</td><td class="dash">—</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>平板电视（外销）</td><td class="check">✅</td><td class="dash">—</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>厨电（外销）</td><td class="check">✅</td><td class="dash">—</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+                <tr><td>激光（外销）</td><td class="check">✅</td><td class="dash">—</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+            </table>
+        </div>
+
+        <!-- 项目文件结构 -->
+        <div class="card">
+            <h2>📁 项目文件结构</h2>
+            <div class="tree">KrioCase2/
+├── .kiro/
+│   ├── steering/          # 18个规则文件（always/fileMatch/manual三模式）
+│   ├── skills/            # 16个技能定义
+│   ├── hooks/             # 7个自动化Hook
+│   ├── data/              # 运行时数据（投喂日志、度量、反馈）
+│   └── specs/             # Kiro Spec（etl-developer-assistant）
+├── requirements/          # 8个需求（002~009），含SQL脚本/文档/血缘
+│   ├── 002-dx-model-rate/
+│   ├── 003-qihua-hit-rate/
+│   ├── 004-sale-model-count/
+│   ├── 005-zcmodel-count/
+│   ├── 006-platform-count/
+│   ├── 007-single-model-sales/
+│   ├── 008-single-platform-sales/
+│   └── 009-design-change-stats/
+├── intake/                # 需求收集（原始→converted标准化）
+├── refined/               # 需求精化（PRD级文档，含字段映射和确定度）
+├── feedback/              # 反馈案例分析
+├── audit-feedback/        # 审计报告存档（交互式HTML）
+└── project-docs/          # 项目文档（本目录）</div>
+        </div>
+
+        <!-- 系统边界 -->
+        <div class="card">
+            <h2>⚠️ 已知边界与不支持项</h2>
+            <div class="boundary">
+                <h3>当前不支持</h3>
+                <ul>
+                    <li>实时ETL / CDC流处理（仅支持批处理调度模式）</li>
+                    <li>自动执行SQL到生产环境（只生成脚本，部署需人工操作）</li>
+                    <li>跨集群数据同步（限单Doris集群范围）</li>
+                    <li>非结构化数据处理（如图片、日志解析）</li>
+                    <li>自动数据质量告警（当前仅生成验证SQL，不自动执行）</li>
+                </ul>
+            </div>
+            <div class="boundary">
+                <h3>已知局限</h3>
+                <ul>
+                    <li>知识库为静态文件，不支持多人并行编辑（无锁机制）</li>
+                    <li>模式匹配基于关键词重叠度，不支持语义相似度匹配</li>
+                    <li>MCP仅接通PostgreSQL的table_metadata表，非直连Doris</li>
+                    <li>长SQL输出偶有截断风险，需分段确认</li>
+                    <li>外部技能引入、对话样本训练尚在规划中</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 成熟度评价 -->
+        <div class="card">
+            <h2>🎯 项目成熟度评价</h2>
+            <table>
+                <tr><th>维度</th><th>评分</th><th>说明</th></tr>
+                <tr><td>需求覆盖度</td><td>⭐⭐⭐⭐☆</td><td>7/8需求已闭环，003待建表；产品线覆盖16条（内9+外7）</td></tr>
+                <tr><td>流程成熟度</td><td>⭐⭐⭐⭐⭐</td><td>v3.0对话流程完善（骨架先行+多指标编排+反例澄清）</td></tr>
+                <tr><td>知识沉淀度</td><td>⭐⭐⭐⭐☆</td><td>10条公共规则+9个模式+17个SQL模板+表结构MCP验证</td></tr>
+                <tr><td>自动化程度</td><td>⭐⭐⭐⭐☆</td><td>7个Hook覆盖关键环节，但缺少CI/CD自动部署</td></tr>
+                <tr><td>质量保障</td><td>⭐⭐⭐⭐☆</td><td>自动快检+审计+度量闭环，但缺少自动化集成测试</td></tr>
+                <tr><td>可维护性</td><td>⭐⭐⭐⭐⭐</td><td>分层规则+统一文档模板+变更管理+知识健康检查</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <footer>
+        <p>ETL开发助手 · 项目文档 · 生成日期：2026-06-11 · 基于项目实际状态自动生成</p>
+    </footer>
+</body>
+</html>

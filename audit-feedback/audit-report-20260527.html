@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETL项目审计报告 - 2026-05-27</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; }
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+h1 { text-align: center; color: #1a73e8; margin: 20px 0; font-size: 1.8em; }
+h2 { color: #333; margin: 20px 0 10px; border-bottom: 2px solid #1a73e8; padding-bottom: 5px; }
+h3 { color: #555; margin: 15px 0 8px; }
+.summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+.card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
+.card .score { font-size: 2.5em; font-weight: bold; }
+.card .label { color: #666; font-size: 0.9em; margin-top: 5px; }
+.score-high { color: #34a853; }
+.score-mid { color: #fbbc04; }
+.score-low { color: #ea4335; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🔍 ETL项目审计报告</h1>
+<p style="text-align:center;color:#666;">审计日期: 2026-05-27 | 项目: ETL开发助手 | 需求数: 8</p>
+
+<!-- 总体评分卡 -->
+<div class="summary-cards">
+<div class="card"><div class="score score-high">8.5</div><div class="label">代码质量</div></div>
+<div class="card"><div class="score score-high">8.0</div><div class="label">文档完整性</div></div>
+<div class="card"><div class="score score-mid">7.5</div><div class="label">一致性</div></div>
+<div class="card"><div class="score score-high">8.5</div><div class="label">可维护性</div></div>
+<div class="card"><div class="score score-high">8.0</div><div class="label">项目完整度</div></div>
+<div class="card"><div class="score score-mid">7.5</div><div class="label">依赖与幂等</div></div>
+<div class="card"><div class="score score-high">8.0</div><div class="label">变更管理</div></div>
+</div>
+<div style="text-align:center;margin:10px 0;font-size:1.2em;"><strong>综合评分: 8.0 / 10</strong></div>
+
+<!-- 雷达图 -->
+<div style="max-width:500px;margin:20px auto;background:white;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+<canvas id="radarChart"></canvas>
+</div>
+
+<!-- 与上次审计对比 -->
+<h2>📈 与上次审计对比（2026-05-15）</h2>
+<div style="background:white;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1);margin:15px 0;">
+<table style="width:100%;border-collapse:collapse;">
+<tr style="background:#f0f4f8;"><th style="padding:8px;text-align:left;">对比项</th><th style="padding:8px;">上次(0515)</th><th style="padding:8px;">本次(0527)</th><th style="padding:8px;">变化</th></tr>
+<tr><td style="padding:8px;">需求数</td><td style="padding:8px;text-align:center;">8</td><td style="padding:8px;text-align:center;">8</td><td style="padding:8px;text-align:center;">—</td></tr>
+<tr><td style="padding:8px;">已完成需求</td><td style="padding:8px;text-align:center;">6</td><td style="padding:8px;text-align:center;">6</td><td style="padding:8px;text-align:center;">—</td></tr>
+<tr><td style="padding:8px;">新增变更记录</td><td style="padding:8px;text-align:center;">—</td><td style="padding:8px;text-align:center;">002#004外销草稿</td><td style="padding:8px;text-align:center;">🆕</td></tr>
+<tr><td style="padding:8px;">模式库条目</td><td style="padding:8px;text-align:center;">7</td><td style="padding:8px;text-align:center;">8</td><td style="padding:8px;text-align:center;">+1(PAT-008)</td></tr>
+<tr><td style="padding:8px;">Steering文件数</td><td style="padding:8px;text-align:center;">16</td><td style="padding:8px;text-align:center;">16</td><td style="padding:8px;text-align:center;">—</td></tr>
+</table>
+</div>
+
+<h2>📋 各需求逐项检查结果</h2>
+<style>
+.check-table { width: 100%; border-collapse: collapse; margin: 10px 0; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.check-table th, .check-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.85em; }
+.check-table th { background: #f0f4f8; font-weight: 600; }
+.pass { color: #34a853; font-weight: bold; }
+.fail { color: #ea4335; font-weight: bold; }
+.warn { color: #fbbc04; font-weight: bold; }
+.issue-row { background: white; border-radius: 8px; padding: 12px 16px; margin: 8px 0; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.issue-row .priority { font-weight: bold; min-width: 30px; }
+.p0 { color: #ea4335; } .p1 { color: #fbbc04; } .p2 { color: #1a73e8; } .p3 { color: #666; }
+.issue-row .desc { flex: 1; min-width: 200px; }
+.issue-row select, .issue-row input { padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85em; }
+.issue-row select { width: 100px; }
+.issue-row input { width: 180px; }
+.issue-row button { padding: 4px 12px; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em; }
+.issue-row button:hover { background: #1557b0; }
+</style>
+
+<h3>002-dx-model-rate（低效型号占比与新品规划命中率）</h3>
+<table class="check-table">
+<tr><th>检查项</th><th>结果</th><th>说明</th></tr>
+<tr><td>requirement.md</td><td class="pass">PASS</td><td>完整，含验收标准全部勾选</td></tr>
+<tr><td>tables.txt</td><td class="pass">PASS</td><td>存在且非空</td></tr>
+<tr><td>lineage.md</td><td class="pass">PASS</td><td>含Mermaid图+字段级血缘，700+行，质量优秀</td></tr>
+<tr><td>sql_scripts (≥1)</td><td class="pass">PASS</td><td>9个SQL文件（含正式+草稿）</td></tr>
+<tr><td>validate_data_quality.sql</td><td class="pass">PASS</td><td>6项质量检查</td></tr>
+<tr><td>changelog.md</td><td class="pass">PASS</td><td>4条变更记录，含草稿状态标记</td></tr>
+<tr><td>permission_check.md</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>草稿闭环状态</td><td class="warn">WARN</td><td>dwd_wx_draft和dws_wx_draft标记为"🔄草稿迭代中"，尚未合入</td></tr>
+</table>
+
+<h3>003-qihua-hit-rate（企划命中率）</h3>
+<table class="check-table">
+<tr><th>检查项</th><th>结果</th><th>说明</th></tr>
+<tr><td>requirement.md</td><td class="warn">WARN</td><td>验收标准全部未勾选（状态为"需求分析完成"，但SQL已开发）</td></tr>
+<tr><td>tables.txt</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>lineage.md</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>sql_scripts (≥1)</td><td class="pass">PASS</td><td>4个SQL文件含create_tables.sql</td></tr>
+<tr><td>validate_data_quality.sql</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>changelog.md</td><td class="pass">PASS</td><td>9条详细调整记录，质量优秀</td></tr>
+<tr><td>permission_check.md</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>create_tables.sql</td><td class="pass">PASS</td><td>新需求有建表DDL</td></tr>
+</table>
+
+<h3>004-sale-model-count（在销型号数）</h3>
+<table class="check-table">
+<tr><th>检查项</th><th>结果</th><th>说明</th></tr>
+<tr><td>requirement.md</td><td class="pass">PASS</td><td>完整，验收标准全部勾选</td></tr>
+<tr><td>tables.txt</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>lineage.md</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>sql_scripts (≥1)</td><td class="pass">PASS</td><td>5个SQL文件</td></tr>
+<tr><td>validate_data_quality.sql</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>changelog.md</td><td class="pass">PASS</td><td>7条变更记录，含厨电扩展闭环</td></tr>
+<tr><td>permission_check.md</td><td class="pass">PASS</td><td>存在</td></tr>
+</table>
+
+<h3>005-zcmodel-count（在产型号数）</h3>
+<table class="check-table">
+<tr><th>检查项</th><th>结果</th><th>说明</th></tr>
+<tr><td>requirement.md</td><td class="pass">PASS</td><td>完整，验收标准全部勾选</td></tr>
+<tr><td>tables.txt</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>lineage.md</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>sql_scripts (≥1)</td><td class="pass">PASS</td><td>5个SQL文件</td></tr>
+<tr><td>validate_data_quality.sql</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>changelog.md</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>permission_check.md</td><td class="pass">PASS</td><td>存在</td></tr>
+</table>
+
+<h3>006-platform-count（平台数）</h3>
+<table class="check-table">
+<tr><th>检查项</th><th>结果</th><th>说明</th></tr>
+<tr><td>requirement.md</td><td class="pass">PASS</td><td>完整，验收标准全部勾选</td></tr>
+<tr><td>tables.txt</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>lineage.md</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>sql_scripts (≥1)</td><td class="pass">PASS</td><td>5个SQL文件</td></tr>
+<tr><td>validate_data_quality.sql</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>changelog.md</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>permission_check.md</td><td class="pass">PASS</td><td>存在</td></tr>
+</table>
+
+<h3>007-single-model-sales（单型号销量）</h3>
+<table class="check-table">
+<tr><th>检查项</th><th>结果</th><th>说明</th></tr>
+<tr><td>requirement.md</td><td class="pass">PASS</td><td>完整，验收标准全部勾选</td></tr>
+<tr><td>tables.txt</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>lineage.md</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>sql_scripts (≥1)</td><td class="pass">PASS</td><td>3个SQL文件</td></tr>
+<tr><td>validate_data_quality.sql</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>changelog.md</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>permission_check.md</td><td class="pass">PASS</td><td>存在</td></tr>
+</table>
+
+<h3>008-single-platform-sales（单平台销量）</h3>
+<table class="check-table">
+<tr><th>检查项</th><th>结果</th><th>说明</th></tr>
+<tr><td>requirement.md</td><td class="pass">PASS</td><td>完整，验收标准全部勾选</td></tr>
+<tr><td>tables.txt</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>lineage.md</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>sql_scripts (≥1)</td><td class="pass">PASS</td><td>3个SQL文件</td></tr>
+<tr><td>validate_data_quality.sql</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>changelog.md</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>permission_check.md</td><td class="pass">PASS</td><td>存在</td></tr>
+</table>
+
+<h3>009-design-change-stats（设计变更统计）</h3>
+<table class="check-table">
+<tr><th>检查项</th><th>结果</th><th>说明</th></tr>
+<tr><td>requirement.md</td><td class="pass">PASS</td><td>完整，含10张报表详细定义</td></tr>
+<tr><td>tables.txt</td><td class="pass">PASS</td><td>存在</td></tr>
+<tr><td>lineage.md</td><td class="warn">WARN</td><td>仅有流转概览，缺少字段级血缘映射表</td></tr>
+<tr><td>sql_scripts (≥1)</td><td class="pass">PASS</td><td>1个SQL文件（BI数据集，无需建表）</td></tr>
+<tr><td>validate_data_quality.sql</td><td class="fail">FAIL</td><td>缺失数据质量检查脚本</td></tr>
+<tr><td>changelog.md</td><td class="pass">PASS</td><td>存在，1条记录</td></tr>
+<tr><td>permission_check.md</td><td class="fail">FAIL</td><td>缺失权限检查文档</td></tr>
+</table>
+
+<h2>⚠️ 问题清单（含处理意见）</h2>
+<div id="issues-container">
+
+<div class="issue-row" data-id="1">
+<span class="priority p1">P1</span>
+<span class="desc"><strong>009</strong> 缺失 validate_data_quality.sql 数据质量检查脚本</span>
+<select class="status-select"><option value="待处理">待处理</option><option value="已处理">已处理</option><option value="不处理">不处理</option><option value="延后">延后</option></select>
+<input type="text" class="note-input" placeholder="备注...">
+<button onclick="saveIssue(1)">保存</button>
+</div>
+
+<div class="issue-row" data-id="2">
+<span class="priority p1">P1</span>
+<span class="desc"><strong>009</strong> 缺失 permission_check.md 权限检查文档</span>
+<select class="status-select"><option value="待处理">待处理</option><option value="已处理">已处理</option><option value="不处理">不处理</option><option value="延后">延后</option></select>
+<input type="text" class="note-input" placeholder="备注...">
+<button onclick="saveIssue(2)">保存</button>
+</div>
+
+<div class="issue-row" data-id="3">
+<span class="priority p1">P1</span>
+<span class="desc"><strong>009</strong> lineage.md 缺少字段级血缘映射表（仅有流转概览）</span>
+<select class="status-select"><option value="待处理">待处理</option><option value="已处理">已处理</option><option value="不处理">不处理</option><option value="延后">延后</option></select>
+<input type="text" class="note-input" placeholder="备注...">
+<button onclick="saveIssue(3)">保存</button>
+</div>
+
+<div class="issue-row" data-id="4">
+<span class="priority p2">P2</span>
+<span class="desc"><strong>003</strong> 验收标准全部未勾选（状态为"需求分析完成"，SQL已开发但未标记完成）</span>
+<select class="status-select"><option value="待处理">待处理</option><option value="已处理">已处理</option><option value="不处理">不处理</option><option value="延后">延后</option></select>
+<input type="text" class="note-input" placeholder="备注...">
+<button onclick="saveIssue(4)">保存</button>
+</div>
+
+<div class="issue-row" data-id="5">
+<span class="priority p2">P2</span>
+<span class="desc"><strong>002</strong> 外销草稿(dwd_wx_draft/dws_wx_draft)标记为"草稿迭代中"，需跟进合入或废弃</span>
+<select class="status-select"><option value="待处理">待处理</option><option value="已处理">已处理</option><option value="不处理">不处理</option><option value="延后">延后</option></select>
+<input type="text" class="note-input" placeholder="备注...">
+<button onclick="saveIssue(5)">保存</button>
+</div>
+
+<div class="issue-row" data-id="6">
+<span class="priority p2">P2</span>
+<span class="desc"><strong>全局</strong> table_permissions.csv 中notes列存在编码乱码（GBK→UTF-8转换问题）</span>
+<select class="status-select"><option value="待处理">待处理</option><option value="已处理">已处理</option><option value="不处理">不处理</option><option value="延后">延后</option></select>
+<input type="text" class="note-input" placeholder="备注...">
+<button onclick="saveIssue(6)">保存</button>
+</div>
+
+<div class="issue-row" data-id="7">
+<span class="priority p2">P2</span>
+<span class="desc"><strong>002</strong> DWD层SQL(dwd_ipd_ipm_bp_lx_model_mid_dd.sql)文件头注释格式不够规范（缺功能描述）</span>
+<select class="status-select"><option value="待处理">待处理</option><option value="已处理">已处理</option><option value="不处理">不处理</option><option value="延后">延后</option></select>
+<input type="text" class="note-input" placeholder="备注...">
+<button onclick="saveIssue(7)">保存</button>
+</div>
+
+<div class="issue-row" data-id="8">
+<span class="priority p3">P3</span>
+<span class="desc"><strong>002</strong> DWD层SQL中使用了无意义别名(t1/t2)，建议改为有业务含义的别名</span>
+<select class="status-select"><option value="待处理">待处理</option><option value="已处理">已处理</option><option value="不处理">不处理</option><option value="延后">延后</option></select>
+<input type="text" class="note-input" placeholder="备注...">
+<button onclick="saveIssue(8)">保存</button>
+</div>
+
+<div class="issue-row" data-id="9">
+<span class="priority p3">P3</span>
+<span class="desc"><strong>004/005</strong> 草稿文件(chudian_draft)已合入正式脚本但草稿文件仍保留，建议添加"已合入"注释标记</span>
+<select class="status-select"><option value="待处理">待处理</option><option value="已处理">已处理</option><option value="不处理">不处理</option><option value="延后">延后</option></select>
+<input type="text" class="note-input" placeholder="备注...">
+<button onclick="saveIssue(9)">保存</button>
+</div>
+
+<div class="issue-row" data-id="10">
+<span class="priority p3">P3</span>
+<span class="desc"><strong>全局</strong> mcp.json中包含数据库连接密码明文，建议使用环境变量替代</span>
+<select class="status-select"><option value="待处理">待处理</option><option value="已处理">已处理</option><option value="不处理">不处理</option><option value="延后">延后</option></select>
+<input type="text" class="note-input" placeholder="备注...">
+<button onclick="saveIssue(10)">保存</button>
+</div>
+
+</div>
+
+<h2>✨ 亮点总结</h2>
+<div style="background:white;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1);margin:15px 0;">
+<ul style="list-style:none;padding:0;">
+<li style="padding:8px 0;border-bottom:1px solid #f0f0f0;">✅ <strong>血缘文档质量优秀</strong> — 002需求lineage.md超700行，含完整Mermaid图+字段级血缘+差异对比表</li>
+<li style="padding:8px 0;border-bottom:1px solid #f0f0f0;">✅ <strong>变更管理规范</strong> — 003需求changelog记录9次调整，每次含问题描述+解决方式+影响文件</li>
+<li style="padding:8px 0;border-bottom:1px solid #f0f0f0;">✅ <strong>草稿模式执行到位</strong> — 002/004/005均采用模式B（草稿→合入→验证），changelog有状态标记</li>
+<li style="padding:8px 0;border-bottom:1px solid #f0f0f0;">✅ <strong>数据质量检查覆盖率高</strong> — 7/8个需求有validate_data_quality.sql（仅009缺失）</li>
+<li style="padding:8px 0;border-bottom:1px solid #f0f0f0;">✅ <strong>模式库自学习运转良好</strong> — requirement_patterns.md已积累8个模式签名，含依赖关系</li>
+<li style="padding:8px 0;border-bottom:1px solid #f0f0f0;">✅ <strong>Steering规则体系完善</strong> — 16个规则文件分层管理（always/fileMatch/manual），有降级决策框架</li>
+<li style="padding:8px 0;border-bottom:1px solid #f0f0f0;">✅ <strong>Hook自动化配置合理</strong> — 8个hook覆盖SQL审查、血缘更新、健康检查等场景，JSON格式均合法</li>
+<li style="padding:8px 0;">✅ <strong>SQL幂等性良好</strong> — 所有DWS/ADS脚本均采用DELETE+INSERT模式，分区条件互斥</li>
+</ul>
+</div>
+
+<h2>📌 行动计划</h2>
+<table class="check-table">
+<tr><th>优先级</th><th>行动项</th><th>负责方</th><th>预计完成</th></tr>
+<tr><td class="p1">P1</td><td>为009补充validate_data_quality.sql和permission_check.md</td><td>Agent</td><td>下次触发009变更时</td></tr>
+<tr><td class="p1">P1</td><td>为009补充lineage.md字段级血缘映射表</td><td>Agent</td><td>下次触发009变更时</td></tr>
+<tr><td class="p2">P2</td><td>更新003 requirement.md状态为"已完成开发"并勾选验收标准</td><td>用户确认</td><td>本周</td></tr>
+<tr><td class="p2">P2</td><td>跟进002外销草稿合入进度或标记废弃</td><td>用户</td><td>本迭代</td></tr>
+<tr><td class="p2">P2</td><td>修复table_permissions.csv编码问题（重新导出为UTF-8）</td><td>Agent</td><td>下次权限检查时</td></tr>
+<tr><td class="p3">P3</td><td>为已合入的草稿文件添加"已合入正式脚本"头注释</td><td>Agent</td><td>低优先级</td></tr>
+<tr><td class="p3">P3</td><td>mcp.json密码改为环境变量引用</td><td>用户</td><td>低优先级</td></tr>
+</table>
+
+<h2>📊 需求完成度统计</h2>
+<div style="max-width:600px;margin:20px auto;background:white;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+<canvas id="barChart"></canvas>
+</div>
+
+</div><!-- end container -->
+
+<script>
+// 雷达图
+const radarCtx = document.getElementById('radarChart').getContext('2d');
+new Chart(radarCtx, {
+  type: 'radar',
+  data: {
+    labels: ['代码质量', '文档完整性', '一致性', '可维护性', '项目完整度', '依赖与幂等', '变更管理'],
+    datasets: [{
+      label: '本次审计(0527)',
+      data: [8.5, 8.0, 7.5, 8.5, 8.0, 7.5, 8.0],
+      backgroundColor: 'rgba(26, 115, 232, 0.2)',
+      borderColor: '#1a73e8',
+      pointBackgroundColor: '#1a73e8'
+    }]
+  },
+  options: {
+    scales: { r: { min: 0, max: 10, ticks: { stepSize: 2 } } },
+    plugins: { legend: { display: false } }
+  }
+});
+
+// 柱状图
+const barCtx = document.getElementById('barChart').getContext('2d');
+new Chart(barCtx, {
+  type: 'bar',
+  data: {
+    labels: ['002', '003', '004', '005', '006', '007', '008', '009'],
+    datasets: [{
+      label: '文档完整度(%)',
+      data: [95, 85, 100, 100, 100, 100, 100, 70],
+      backgroundColor: '#1a73e8'
+    },{
+      label: 'SQL质量(%)',
+      data: [85, 90, 90, 90, 90, 90, 90, 85],
+      backgroundColor: '#34a853'
+    }]
+  },
+  options: {
+    scales: { y: { min: 0, max: 100 } },
+    plugins: { legend: { position: 'bottom' } }
+  }
+});
+</script>
+
+<div style="text-align:center;margin:30px 0;">
+<button onclick="exportFeedback()" style="padding:12px 32px;background:#1a73e8;color:white;border:none;border-radius:6px;font-size:1em;cursor:pointer;box-shadow:0 2px 6px rgba(26,115,232,0.3);">📤 导出反馈报告</button>
+<button onclick="resetAll()" style="padding:12px 32px;background:#ea4335;color:white;border:none;border-radius:6px;font-size:1em;cursor:pointer;margin-left:12px;">🗑️ 重置所有状态</button>
+</div>
+
+<script>
+// 导出反馈为Markdown文本
+function exportFeedback() {
+  var data = JSON.parse(localStorage.getItem('audit_issues_20260527') || '{}');
+  var lines = ['# 审计反馈导出 - 2026-05-27\n'];
+  lines.push('| 编号 | 优先级 | 问题描述 | 处理意见 | 备注 | 保存时间 |');
+  lines.push('|------|--------|----------|----------|------|----------|');
+  var rows = document.querySelectorAll('.issue-row');
+  rows.forEach(function(row) {
+    var id = row.getAttribute('data-id');
+    var priority = row.querySelector('.priority').textContent;
+    var desc = row.querySelector('.desc').textContent.trim();
+    var status = data[id] ? data[id].status : '待处理';
+    var note = data[id] ? (data[id].note || '-') : '-';
+    var time = data[id] ? data[id].savedAt.substring(0,16) : '-';
+    lines.push('| ' + id + ' | ' + priority + ' | ' + desc + ' | ' + status + ' | ' + note + ' | ' + time + ' |');
+  });
+  lines.push('\n---\n导出时间: ' + new Date().toLocaleString('zh-CN'));
+  var blob = new Blob([lines.join('\n')], {type: 'text/markdown;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'audit-feedback-export-20260527.md';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// 重置所有状态
+function resetAll() {
+  if (confirm('确定要重置所有处理意见吗？')) {
+    localStorage.removeItem('audit_issues_20260527');
+    location.reload();
+  }
+}
+
+// localStorage持久化
+function saveIssue(id) {
+  const row = document.querySelector('[data-id="' + id + '"]');
+  const status = row.querySelector('.status-select').value;
+  const note = row.querySelector('.note-input').value;
+  const data = JSON.parse(localStorage.getItem('audit_issues_20260527') || '{}');
+  data[id] = { status: status, note: note, savedAt: new Date().toISOString() };
+  localStorage.setItem('audit_issues_20260527', JSON.stringify(data));
+  if (status === '已处理') row.style.background = '#f0fff0';
+  else if (status === '不处理') row.style.background = '#fff0f0';
+  else if (status === '延后') row.style.background = '#fffff0';
+  else row.style.background = 'white';
+  alert('已保存');
+}
+
+// 页面加载时恢复状态
+window.addEventListener('load', function() {
+  var data = JSON.parse(localStorage.getItem('audit_issues_20260527') || '{}');
+  Object.keys(data).forEach(function(id) {
+    var row = document.querySelector('[data-id="' + id + '"]');
+    if (row) {
+      row.querySelector('.status-select').value = data[id].status;
+      row.querySelector('.note-input').value = data[id].note || '';
+      if (data[id].status === '已处理') row.style.background = '#f0fff0';
+      else if (data[id].status === '不处理') row.style.background = '#fff0f0';
+      else if (data[id].status === '延后') row.style.background = '#fffff0';
+    }
+  });
+});
+</script>
+</body>
+</html>

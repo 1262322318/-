@@ -1,0 +1,158 @@
+# XuebinLV IPM域源系统缓存（source-systems.yaml）
+# 只存"坑和经验"，字段列表走平台 API。
+
+systems:
+  - id: "mr"
+    name: "管报系统（管理报表）"
+    入湖就绪: "07:00"
+    入湖方式: "全量快照"
+    tables:
+      - name: "ods.ods_mr_v_app_fm_imat_saledata"
+        用途: "实际销量/收入/成本主表，按月度×物料粒度"
+        坑:
+          - "matnr是物料编码，需通过MDG（dim_product_base_info_dd）桥接到产品型号"
+          - "不与dim_ipd_productmodel_dd直接关联，必须走MDG桥梁"
+          - "日立口径需关联MDG取sale_model_code后再聚合"
+          - "yearmonth为varchar(6)格式YYYYMM，时间比较需注意格式转换"
+
+  - id: "mdg"
+    name: "MDG主数据"
+    入湖就绪: "06:00"
+    入湖方式: "增量同步"
+    tables:
+      - name: "dw.dim_product_base_info_dd"
+        用途: "产品主数据桥梁表，连接管报物料→产品型号→销售型号"
+        坑:
+          - "product_type_code必须过滤IN ('FERT','ZTAO')，否则会关联到半成品"
+          - "delete_flag必须排除'Y'，否则关联到已删除物料"
+          - "model_name可能为空（部分历史物料），需COALESCE处理"
+          - "日立走sale_model_code，其他产品线走model_name"
+
+  - id: "plm_bd"
+    name: "白电PLM系统"
+    入湖就绪: "06:30"
+    入湖方式: "增量同步"
+    tables:
+      - name: "dim.dim_ipd_productmodel_dd"
+        用途: "白电产品型号基础信息（生命周期/品牌/上市时间/产品分类）"
+        坑:
+          - "PG00029生命周期状态为中文字符串，不同产品线状态名称可能不一致"
+          - "PG00025实际上市时间可能为NULL（未上市型号）"
+          - "PG00002/PG00003/PG00004为大类/中类/小类，产品线分类的核心字段"
+          - "ID字段为主键，关联salemodel_dd.PRODUCTMODEL_ID"
+      - name: "dim.dim_ipd_salemodel_dd"
+        用途: "白电销售型号基础信息（销售型号编码/归属营销部/模块组合标记）"
+        坑:
+          - "HX00379='是'表示模块组合，多数指标需排除"
+          - "HX00020是首年规划量，企划命中率的核心字段"
+          - "PC00001品类细分字段是区分冰箱vs冷柜（冷冻箱小类）的关键"
+          - "PRODUCTMODEL_ID关联productmodel_dd.ID"
+      - name: "dim.dim_ipd_productplatform_dd"
+        用途: "白电产品平台基础信息（平台名称/状态）"
+        坑:
+          - "平台有4个来源系统（HDRP/JTPLM/RDM/PLM），需去重"
+
+  - id: "plm_sx"
+    name: "视像科技PLM系统（JTPLM）"
+    入湖就绪: "06:30"
+    入湖方式: "增量同步"
+    tables:
+      - name: "dim.dim_ipd_jtplm_his_productmodel_dd"
+        用途: "视像科技产品型号（含屏幕尺寸/平台/生命周期等）"
+        坑:
+          - "lifecycle_status字段为生命周期状态（视像科技专用，与白电PLM状态名不同）"
+          - "his_pmdproductlinename是产品线字段，需通过生产版本关联获取"
+          - "title字段是产品型号描述，关联GSS订单时用"
+      - name: "dim.dim_ipd_jtplm_his_productversion_dd"
+        用途: "视像科技生产版本表"
+        坑:
+          - "modelname关联productmodel.title获取产品线属性"
+          - "his_pmdproductlinename在生产版本表上，不在产品型号表上"
+      - name: "dim.dim_ipd_tv_model_nengxiao_nd"
+        用途: "能效机→原型机映射关系"
+        坑:
+          - "model_nengxiao→model映射，COALESCE优先取原型机名称"
+
+  - id: "plm_project"
+    name: "PLM项目管理系统"
+    入湖就绪: "07:00"
+    入湖方式: "增量同步"
+    tables:
+      - name: "odsplm_bm_hbmtprojectkpi"
+        用途: "PLM项目基础信息（立项/鉴定/结题日期、项目类别、事业部）"
+        坑:
+          - "日期字段可能含JSON格式或特殊编码，需解析"
+          - "项目类别需筛选'应市'，排除预研/平台类"
+          - "计划日期和实际日期可能为空（进行中项目）"
+      - name: "odsplm_bm_hbmtprojectadjust"
+        用途: "项目暂停/恢复/终止调整记录"
+        坑:
+          - "暂停和恢复需配对计算，同一项目可能多次暂停"
+          - "adjusttype字段区分暂停/恢复/终止类型"
+          - "调整日期可能乱序，需按时间排序后配对"
+
+  - id: "gss"
+    name: "GSS外销订单系统"
+    入湖就绪: "08:00"
+    入湖方式: "增量同步"
+    tables:
+      - name: "ods.odsgss_im_sale_prod_header"
+        用途: "空调外销排产单头表"
+        坑:
+          - "sale_stat状态枚举值多（1~31），需按业务需要筛选"
+      - name: "ods.odsgss_im_sale_prod_line"
+        用途: "空调外销排产单行表"
+        坑:
+          - "h_spec关联产品型号表PG00061"
+          - "item_type区分整机/内机/外机，影响空调内外机转换计算"
+      - name: "ods.odsgss_im_order_agreement"
+        用途: "冰冷洗外销协议订单"
+        坑:
+          - "状态通过dic表翻译，需关联odsgss_im_grs_dic"
+      - name: "ods.odsgss_im_sales_order_title"
+        用途: "电视外销订单"
+        坑:
+          - "PRODUCT_CODE是生产版本号，需关联MDG的short_desc_zh转产品型号"
+          - "无法映射时截取括号前部分作为型号名"
+
+  - id: "aowei"
+    name: "奥维云网（第三方行业数据）"
+    入湖就绪: "不定期（周度更新）"
+    入湖方式: "全量覆盖"
+    tables:
+      - name: "ads.ads_ipd_ipm_aowei_wd"
+        用途: "奥维行业监测数据底表（已清洗入库）"
+        坑:
+          - "外部数据，品类/品牌名称可能与内部系统不一致，需映射"
+          - "周度数据转月度时注意跨月周的处理"
+
+  - id: "holiday"
+    name: "假日/工作日系统"
+    入湖就绪: "N/A（维表）"
+    入湖方式: "全量快照"
+    tables:
+      - name: "ods.odsrdm_holiday"
+        用途: "工作日/节假日维表，项目实施率中+3工作日计算"
+        坑:
+          - "需确认假日表覆盖的年份范围"
+
+  - id: "scheduler"
+    name: "调度系统（DolphinScheduler）"
+    入湖就绪: "N/A（参数注入）"
+    入湖方式: "N/A"
+    tables: []
+    全局坑:
+      - "GP_START_DT传参格式为'yyyymmddHH:mm:ss'（如2026-07-0800:00:00），日期与时间之间无空格"
+      - "GP_START_DT本身代表昨天，不需要再DATE_SUB(..., INTERVAL 1 DAY)"
+      - "禁止用SUBSTRING按位置截取年月日，必须用DATE_FORMAT/YEAR/MONTH等函数提取"
+      - "取月份：DATE_FORMAT('${GP_START_DT}', '%m')；取年份：YEAR('${GP_START_DT}')"
+
+关联关系:
+  - key: "ods管报.matnr = MDG.product_code"
+    注意: "物料编码为VARCHAR(40)，注意前导零和空格"
+  - key: "MDG.model_name = dim_ipd_productmodel_dd.PG00061"
+    注意: "型号名称匹配，可能存在大小写/空格差异"
+  - key: "dim_ipd_salemodel_dd.PRODUCTMODEL_ID = dim_ipd_productmodel_dd.ID"
+    注意: "销售型号归属产品型号的核心关联"
+  - key: "GSS排产行表.h_spec = dim_ipd_productmodel_dd.PG00061"
+    注意: "空调外销排产单的型号关联路径"

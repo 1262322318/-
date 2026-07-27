@@ -1,0 +1,5 @@
+源表（只读）:
+ads.ads_ipd_irs_design_change_kccl_dd
+
+目标表:
+无（本需求只生成查询SQL数据集，不创建实体表）

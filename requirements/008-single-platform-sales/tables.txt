@@ -1,0 +1,23 @@
+# 涉及数据表清单 - 单平台销量
+
+## 源表（数据读取）
+dws.dws_ipd_ipm_dxhxl_detail_dd
+dws.dws_ipd_ipm_platform_detail_dd
+dws.dws_ipd_ipm_sales_detail_mid_dd
+dws.dws_ipd_ipm_dptxl_detail_dd
+ads.ads_ipd_ipm_platform_result_dd
+ads.ads_ipd_ipm_platform_library_result_dd
+dim.dim_ipd_td_weidu_nd
+dw.dim_date_nd
+ods.ods_feishu_base_P8vTbFzrTaWtQLspDwgcpbm8nng_tblugJ2ghgEELtWU
+ods.odsmr_v_hitach_ykfpmxb
+
+## 目标表（数据写入）
+dws.dws_ipd_ipm_dptxl_detail_dd
+ads.ads_ipd_ipm_dptxl_result_dd
+
+## 说明
+# 1. 每行一个表，格式为 database.table_name
+# 2. 单平台销量依赖单型号销量明细和平台数结果
+# 3. dws.dws_ipd_ipm_dptxl_detail_dd 既是源表也是目标表（ADS层读取DWS层数据）
+# 4. 日立使用独立管报数据源（odsmr_v_hitach_ykfpmxb）

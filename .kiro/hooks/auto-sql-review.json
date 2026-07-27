@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "SQL保存自动快检+血缘更新",
+      "description": "SQL文件保存时自动执行：1.轻量级快速检查（关键字大写/MDG过滤/字段对齐）；2.更新对应需求的lineage.md血缘文档。合并原auto-sql-review和auto-update-lineage两个hook，避免重复触发。",
+      "trigger": "PostFileSave",
+      "matcher": "requirements/[^/]*/sql_scripts/[^/]*\\.sql$",
+      "action": {
+        "type": "agent",
+        "prompt": "SQL文件已保存，请依次执行以下两步：\n\n【第一步：轻量快检】只检查以下3类高频问题并简洁报告：\n1. **关键字大写**：扫描是否有小写的 select/from/where/join/group by/order by/insert/into/case/when/then/else/end/left/right/inner/on/and/or/as/in/not/null/coalesce/sum/count/max/min/avg/distinct/union/having/limit/delete/drop/create/table/if/exists/partition/distributed。只报告前5处违规。\n2. **MDG过滤遗漏**：如果SQL中引用了 dw.dim_product_base_info_dd 表，检查是否包含 product_type_code IN ('FERT','ZTAO') AND delete_flag != 'Y' 过滤条件。\n3. **INSERT-SELECT字段数对齐**：检查每个INSERT INTO语句的字段列表数量是否与对应SELECT的表达式数量一致。\n\n输出格式（简洁）：\n```\n⚡ SQL快检结果：{文件名}\n✅ 关键字大写：通过 / ⚠️ 发现{N}处小写关键字（前5处：第X行 xxx）\n✅ MDG过滤：通过 / 未涉及 / ⚠️ 缺少过滤条件\n✅ 字段对齐：通过 / ⚠️ INSERT({N}字段) vs SELECT({M}表达式) 不匹配\n```\n如果全部通过，只输出一行：`⚡ SQL快检通过 ✅`\n\n【第二步：血缘更新】根据修改后的SQL内容，使用fsWrite更新对应需求目录下的 lineage.md 血缘关系文档。解析SQL中的源表、目标表和字段级血缘关系。不要使用任何Python脚本，直接通过Agent能力完成。\n\n注意：不要给出修复建议，不要修改SQL文件本身。"
+      },
+      "enabled": true
+    }
+  ]
+}

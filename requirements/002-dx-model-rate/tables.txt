@@ -1,0 +1,23 @@
+# 涉及数据表清单 - 低效型号占比与新品规划命中率
+
+## 源表（数据读取）
+ods.ods_mr_v_app_fm_imat_saledata
+dim.dim_ipd_productmodel_dd
+dim.dim_ipd_salemodel_dd
+dw.dim_product_base_info_dd
+dwd.dwd_ipd_ipm_bp_lx_model_mid_dd
+ods.odshdrp_hisense_basis_point_target
+dim.dim_ipd_jtplm_his_productmodel_dd
+dim.dim_ipd_tv_model_nengxiao_nd
+dim.dim_ipd_td_weidu_nd
+dw.dim_date_nd
+ods.ods_feishu_base_P8vTbFzrTaWtQLspDwgcpbm8nng_tbl8PBYKby97MVvy
+
+## 目标表（数据写入）
+dwd.dwd_ipd_ipm_bp_lx_model_mid_dd
+dws.dws_ipd_ipm_dxmodel_detail_dd
+ads.ads_ipd_ipm_dxmodel_result_dd
+
+## 说明
+# 1. 每行一个表，格式为 database.table_name
+# 2. dwd表既是源表也是目标表（BP/LX数据写入后被DWS读取）

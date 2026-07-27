@@ -1,0 +1,28 @@
+# 涉及数据表清单 - 在销型号数
+
+## 源表（数据读取）
+dim.dim_ipd_productmodel_dd
+dim.dim_ipd_productionversion_dd
+dim.dim_ipd_jtplm_his_productversion_dd
+dim.dim_ipd_tv_new_oldmodel_nd
+dim.dim_ipd_salemodel_dd
+dw.dim_product_base_info_dd
+dws.dws_fi_mr_bxp_dklmx_di
+dws.dws_fi_mr_bxp_yxccpmx_all_di
+dwd.dwd_ipd_ipm_bd_s810_ztsd_zcpkc_rd_dd
+dwd.dwd_ipd_ipm_bd_s810_zhd_zfi013_rd_dd
+dwd.dwd_ipd_ipm_bd_s810_zbi_zrfi010z_d_rd_dd
+test.dwfi_fa_tf_acp_prostockdetail
+ods.odss900_mchb
+ods.odss900_mchbh
+dws.dws_ipd_ipm_sale_model_detail_dd
+dws.dws_ipd_ipm_salemodelid_dd
+
+## 目标表（数据写入）
+dws.dws_ipd_ipm_sale_model_detail_dd
+ads.ads_ipd_ipm_sale_model_result_dd
+
+## 说明
+# 1. 每行一个表，格式为 database.table_name
+# 2. dws.dws_ipd_ipm_sale_model_detail_dd 既是源表也是目标表（历史数据自引用）
+# 3. 库存数据来源多个系统（冰箱大库龄、寄售、海外、基地、在途、空调自有、OEM）

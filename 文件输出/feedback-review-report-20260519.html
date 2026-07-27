@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>反馈复盘报告 - 2026-05-19</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%); color: white; padding: 35px; border-radius: 12px; margin-bottom: 25px; }
+        .header h1 { font-size: 24px; margin-bottom: 8px; }
+        .header .subtitle { opacity: 0.9; font-size: 14px; }
+        .header .meta { margin-top: 12px; display: flex; gap: 15px; flex-wrap: wrap; }
+        .header .meta span { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+        .section { background: white; border-radius: 10px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .section h2 { font-size: 18px; color: #1976d2; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #1976d2; }
+        .section h3 { font-size: 15px; color: #555; margin: 12px 0 8px; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 12px 0; }
+        .metric-card { background: linear-gradient(135deg, #f0f4ff, #e3ecff); padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #d0deff; }
+        .metric-card .value { font-size: 24px; font-weight: 700; color: #1976d2; }
+        .metric-card .label { font-size: 12px; color: #666; margin-top: 4px; }
+        .table-simple { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+        .table-simple th, .table-simple td { padding: 8px 10px; border: 1px solid #e0e0e0; text-align: left; }
+        .table-simple th { background: #f5f7fa; font-weight: 600; color: #555; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin: 2px; }
+        .tag-green { background: #e8f5e9; color: #2e7d32; }
+        .tag-orange { background: #fff3e0; color: #e65100; }
+        .tag-blue { background: #e3f2fd; color: #1565c0; }
+        .tag-red { background: #ffebee; color: #c62828; }
+        .tag-purple { background: #f3e5f5; color: #6a1b9a; }
+        .alert-box { padding: 10px 14px; border-radius: 6px; margin: 10px 0; font-size: 13px; }
+        .alert-info { background: #e3f2fd; border-left: 3px solid #1976d2; }
+        .alert-warning { background: #fff3e0; border-left: 3px solid #ff9800; }
+        .alert-success { background: #e8f5e9; border-left: 3px solid #4caf50; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+        .progress-bar { height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; margin: 6px 0; }
+        .progress-fill { height: 100%; border-radius: 3px; }
+        .priority-p0 { border-left: 4px solid #c62828; padding-left: 12px; margin: 8px 0; }
+        .priority-p1 { border-left: 4px solid #ff9800; padding-left: 12px; margin: 8px 0; }
+        .priority-p2 { border-left: 4px solid #1976d2; padding-left: 12px; margin: 8px 0; }
+        .empty-state { text-align: center; padding: 30px; color: #999; font-style: italic; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+    <h1>📋 反馈复盘报告</h1>
+    <div class="subtitle">单机复盘 — 聚合本机度量数据与反馈记录</div>
+    <div class="meta">
+        <span>📅 生成时间：2026-05-19</span>
+        <span>👤 操作人：lvxuebin</span>
+        <span>📊 度量样本：1条</span>
+        <span>💬 反馈记录：0条</span>
+        <span>⚠️ 样本不足，仅做初步聚合</span>
+    </div>
+</div>
+
+<!-- 1. 概览 -->
+<div class="section">
+    <h2>1. 数据概览</h2>
+    <div class="alert-box alert-warning">
+        <strong>⚠️ 样本不足提示：</strong>当前仅有1条度量样本，统计结果仅供参考。建议积累≥5条样本后再做正式复盘。
+    </div>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="value">1</div>
+            <div class="label">已完成需求数</div>
+        </div>
+        <div class="metric-card">
+            <div class="value">1 / 0</div>
+            <div class="label">链路A / 链路B</div>
+        </div>
+        <div class="metric-card">
+            <div class="value">55 min</div>
+            <div class="label">平均耗时</div>
+        </div>
+        <div class="metric-card">
+            <div class="value">11</div>
+            <div class="label">平均交互轮次</div>
+        </div>
+        <div class="metric-card">
+            <div class="value">7/14</div>
+            <div class="label">平均输入完整度</div>
+        </div>
+        <div class="metric-card">
+            <div class="value">N/A</div>
+            <div class="label">平均满意度评分</div>
+        </div>
+    </div>
+
+    <h3>需求清单</h3>
+    <table class="table-simple">
+        <tr><th>需求ID</th><th>日期</th><th>链路</th><th>轮次</th><th>耗时</th><th>输入完整度</th><th>主因</th><th>瓶颈</th></tr>
+        <tr>
+            <td>009-design-change-stats</td>
+            <td>2026-05-18</td>
+            <td><span class="tag tag-blue">A</span></td>
+            <td>11</td>
+            <td>55min</td>
+            <td>7/14（基本明确）</td>
+            <td><span class="tag tag-green">clean</span></td>
+            <td><span class="tag tag-orange">A2</span></td>
+        </tr>
+    </table>
+</div>
+
+<!-- 2. 客观数据 -->
+<div class="section">
+    <h2>2. 客观数据指标</h2>
+
+    <div class="two-col">
+        <div>
+            <h3>primary_cause 分布</h3>
+            <table class="table-simple">
+                <tr><th>归因类型</th><th>数量</th><th>占比</th></tr>
+                <tr><td><span class="tag tag-green">clean</span> 全程无修正</td><td>1</td><td>100%</td></tr>
+                <tr><td><span class="tag tag-orange">user</span> 用户侧问题</td><td>0</td><td>0%</td></tr>
+                <tr><td><span class="tag tag-purple">framework</span> 框架侧问题</td><td>0</td><td>0%</td></tr>
+                <tr><td><span class="tag tag-blue">mixed</span> 混合</td><td>0</td><td>0%</td></tr>
+            </table>
+        </div>
+        <div>
+            <h3>瓶颈阶段 Top 3</h3>
+            <table class="table-simple">
+                <tr><th>阶段</th><th>出现次数</th><th>平均耗时占比</th></tr>
+                <tr><td><span class="tag tag-orange">A2 需求澄清</span></td><td>1次</td><td>54.5%</td></tr>
+                <tr><td colspan="3" style="color:#999;text-align:center;">（样本不足，仅1条记录）</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <h3>框架侧问题 Top 5</h3>
+    <table class="table-simple">
+        <tr><th>#</th><th>问题描述</th><th>出现次数</th><th>来源阶段</th><th>严重度</th></tr>
+        <tr>
+            <td>1</td>
+            <td>interaction-metrics和feedback-collector技能未自动触发，需要用户主动检查才发现</td>
+            <td>1</td>
+            <td>A7</td>
+            <td><span class="tag tag-orange">中</span></td>
+        </tr>
+    </table>
+
+    <h3>SQL质量统计</h3>
+    <table class="table-simple">
+        <tr><th>指标</th><th>值</th></tr>
+        <tr><td>首次通过率</td><td>100%（1/1）</td></tr>
+        <tr><td>平均修订轮次</td><td>0</td></tr>
+        <tr><td>平均代码行数</td><td>350行</td></tr>
+        <tr><td>用户后续修改率</td><td>0%</td></tr>
+    </table>
+</div>
+
+<!-- 3. 主观反馈聚合 -->
+<div class="section">
+    <h2>3. 主观反馈聚合</h2>
+
+    <div class="empty-state">
+        <p style="font-size:36px;margin-bottom:10px;">📭</p>
+        <p><strong>暂无主观反馈数据</strong></p>
+        <p style="margin-top:8px;">feedback-records 目录下无 quickfeedback 或 issue 文件。</p>
+        <p style="margin-top:5px;font-size:12px;color:#aaa;">原因：009需求完成时 feedback-collector 技能未自动触发（已记录为框架侧问题）</p>
+    </div>
+
+    <div class="alert-box alert-info">
+        <strong>建议：</strong>下次需求完成后，Agent应自动询问3个快速反馈问题（评分/满意点/不爽点），确保主观数据积累。
+    </div>
+</div>
+
+<!-- 4. 交叉分析 -->
+<div class="section">
+    <h2>4. 交叉分析</h2>
+
+    <h3>客观瓶颈 vs 主观痛点</h3>
+    <table class="table-simple">
+        <tr><th>维度</th><th>客观数据</th><th>主观反馈</th><th>一致性</th></tr>
+        <tr>
+            <td>A2 需求澄清耗时长</td>
+            <td>54.5%时间占比，标记为瓶颈</td>
+            <td>无主观数据</td>
+            <td><span class="tag tag-blue">待验证</span></td>
+        </tr>
+        <tr>
+            <td>自动触发缺失</td>
+            <td>框架侧问题记录</td>
+            <td>无主观数据</td>
+            <td><span class="tag tag-blue">待验证</span></td>
+        </tr>
+    </table>
+
+    <div class="alert-box alert-warning">
+        <strong>分析受限：</strong>由于缺少主观反馈数据，无法进行客观-主观交叉验证。建议在后续需求中确保反馈采集正常执行。
+    </div>
+
+    <h3>输入完整度 vs 瓶颈关联</h3>
+    <table class="table-simple">
+        <tr><th>需求</th><th>输入完整度</th><th>瓶颈阶段</th><th>关联分析</th></tr>
+        <tr>
+            <td>009</td>
+            <td>7/14（基本明确）</td>
+            <td>A2 需求澄清</td>
+            <td>输入缺少"分析维度/核心指标/时间范围"，导致A2需要多轮澄清。但本次瓶颈主因是用户分阶段提供信息（正常业务节奏），非输入质量问题。</td>
+        </tr>
+    </table>
+</div>
+
+<!-- 5. 改进优先级 -->
+<div class="section">
+    <h2>5. 改进优先级</h2>
+
+    <h3>🚨 P0 — 建议立即处理</h3>
+    <div class="empty-state" style="padding:15px;">
+        <p>暂无P0级别改进项</p>
+        <p style="font-size:11px;color:#aaa;">P0条件：多人提到 OR 阻塞性高严重度 OR 出现≥3次</p>
+    </div>
+
+    <h3>⚠️ P1 — 建议近期处理</h3>
+    <div class="priority-p1">
+        <strong>创建 postTaskExecution Hook 自动触发度量和反馈采集</strong><br>
+        <span style="font-size:12px;color:#666;">
+            来源：009 / A7阶段 | 严重度：中 | 出现次数：1<br>
+            问题：需求完成后 interaction-metrics 和 feedback-collector 技能未自动执行<br>
+            建议操作：在 <code>.kiro/hooks/</code> 创建 postTaskExecution 类型的Hook，prompt提醒Agent执行度量记录和反馈采集
+        </span>
+    </div>
+
+    <h3>📋 P2 — 可选优化</h3>
+    <div class="priority-p2">
+        <strong>A2阶段"暂停-恢复"模式的耗时计算优化</strong><br>
+        <span style="font-size:12px;color:#666;">
+            来源：009交互分析 | 严重度：低<br>
+            问题：用户分阶段提供信息时，等待时间被计入A2耗时，导致误判为瓶颈<br>
+            建议操作：在度量记录中区分"活跃交互时间"和"等待时间"，瓶颈判定仅基于活跃时间
+        </span>
+    </div>
+</div>
+
+<!-- 6. 行动建议 -->
+<div class="section">
+    <h2>6. 行动建议</h2>
+
+    <table class="table-simple">
+        <tr><th>#</th><th>行动项</th><th>优先级</th><th>预期效果</th><th>实施方式</th></tr>
+        <tr>
+            <td>1</td>
+            <td>创建 agentStop Hook 自动提醒执行度量和反馈</td>
+            <td><span class="tag tag-orange">P1</span></td>
+            <td>确保每次需求完成后都有度量数据和反馈记录</td>
+            <td>创建 <code>.kiro/hooks/post-requirement-metrics.json</code></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>积累更多样本（目标≥5条）后再做正式复盘</td>
+            <td><span class="tag tag-blue">P2</span></td>
+            <td>统计结果更有代表性</td>
+            <td>继续正常使用Agent处理需求</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>度量记录增加"等待时间"字段</td>
+            <td><span class="tag tag-blue">P2</span></td>
+            <td>更准确的瓶颈判定</td>
+            <td>修改 <code>interaction-metrics.md</code> 的JSON Schema</td>
+        </tr>
+    </table>
+</div>
+
+<!-- 7. 原始数据附录 -->
+<div class="section">
+    <h2>附录：原始数据</h2>
+
+    <h3>index.csv 内容</h3>
+    <table class="table-simple">
+        <tr><th>requirement_id</th><th>date</th><th>operator</th><th>link_type</th><th>total_rounds</th><th>total_duration_min</th><th>input_completeness</th><th>primary_cause</th><th>bottleneck_stages</th></tr>
+        <tr><td>009-design-change-stats</td><td>2026-05-18</td><td>lvxuebin</td><td>A</td><td>11</td><td>55</td><td>7</td><td>clean</td><td>A2</td></tr>
+    </table>
+
+    <h3>framework-improvement-backlog.md 待办项</h3>
+    <table class="table-simple">
+        <tr><th>日期</th><th>需求ID</th><th>改进项</th><th>来源</th><th>严重度</th></tr>
+        <tr><td>2026-05-18</td><td>009-design-change-stats</td><td>interaction-metrics和feedback-collector技能未自动触发，需创建Hook确保需求完成后自动执行</td><td>A7</td><td>中</td></tr>
+    </table>
+
+    <h3>feedback-records/ 目录</h3>
+    <div class="alert-box alert-info">
+        目录为空（仅有README.md），无quickfeedback或issue文件。
+    </div>
+</div>
+
+<!-- FOOTER -->
+<div class="section" style="text-align:center;background:#f0f4ff;">
+    <p style="font-size:13px;color:#666;">
+        📋 反馈复盘报告 | 生成时间：2026-05-19 | 类型：单机复盘 | 样本数：1<br>
+        <span style="font-size:11px;color:#999;">由 ETL Agent feedback-review 技能自动生成</span>
+    </p>
+</div>
+
+</div><!-- end container -->
+</body>
+</html>

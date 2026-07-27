@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETL开发助手 - 框架审视报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, 'Microsoft YaHei', sans-serif; background: #f8f9fa; color: #333; line-height: 1.7; }
+        .header { background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%); color: white; padding: 50px 40px; text-align: center; }
+        .header h1 { font-size: 2.2em; margin-bottom: 8px; }
+        .header p { opacity: 0.9; }
+        .header .version { font-size: 0.85em; opacity: 0.7; margin-top: 6px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+        .section { background: white; border-radius: 10px; padding: 28px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .section h2 { color: #1565c0; font-size: 1.4em; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #bbdefb; }
+        .section h3 { color: #0d47a1; font-size: 1.1em; margin: 16px 0 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.88em; }
+        th, td { padding: 8px 10px; text-align: left; border: 1px solid #e0e0e0; }
+        th { background: #e3f2fd; color: #1565c0; }
+        tr:nth-child(even) { background: #fafafa; }
+        .score { display: inline-block; padding: 4px 12px; border-radius: 16px; font-weight: 600; font-size: 0.85em; }
+        .score-high { background: #c8e6c9; color: #2e7d32; }
+        .score-mid { background: #fff9c4; color: #f57f17; }
+        .score-low { background: #ffcdd2; color: #c62828; }
+        .flow { background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 0.8em; white-space: pre-wrap; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin: 12px 0; }
+        .card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; }
+        .card h4 { color: #1565c0; margin-bottom: 6px; }
+        .card p { font-size: 0.88em; color: #555; }
+        .proposal { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 14px 18px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+        .proposal strong { color: #2e7d32; }
+        .gap { background: #fff3e0; border-left: 4px solid #ff9800; padding: 14px 18px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+        .gap strong { color: #e65100; }
+        .done { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 14px 18px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+        .done strong { color: #2e7d32; }
+        .priority { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.78em; font-weight: 600; }
+        .p-high { background: #ffcdd2; color: #c62828; }
+        .p-mid { background: #fff9c4; color: #f57f17; }
+        .p-low { background: #c8e6c9; color: #2e7d32; }
+        .p-done { background: #e3f2fd; color: #1565c0; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>ETL开发助手 &mdash; 框架审视报告</h1>
+    <p>目标：让ETL开发工程师提效</p>
+    <div class="version">v2.4.0 | 2026-05-15</div>
+</div>
+
+<div class="container">
+
+<!-- 一、框架全景 -->
+<div class="section">
+    <h2>一、当前框架全景</h2>
+    
+    <h3>架构层次</h3>
+    <div class="flow">
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        用户交互层                                        │
+│  技能（Skills）7个 + 按钮（Hook-userTriggered）3个                      │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐     │
+│  │ETL需求   │ │知识投喂  │ │SQL审查   │ │SQL模板   │ │健康检查  │     │
+│  │处理      │ │(含校验)  │ │(6维度)   │ │提取      │ │          │     │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘     │
+│  ┌──────────┐ ┌──────────┐                                             │
+│  │项目审计  │ │更新README│                                             │
+│  └──────────┘ └──────────┘                                             │
+└─────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        行为控制层（Steering）16个文件                     │
+│                                                                          │
+│  ┌─ 流程控制 ─────────────────────────────────────────────────────┐     │
+│  │ etl_dialogue_flow（分叉链路v2.0：新建A + 变更B）               │     │
+│  │ etl_change_management（变更专属：6种类型+影响分析）             │     │
+│  │ etl_analysis / etl_clarification（分析+澄清）                   │     │
+│  │ etl_sql_generator / sql_templates（SQL生成+12个实战模板）       │     │
+│  └─────────────────────────────────────────────────────────────────┘     │
+│                                                                          │
+│  ┌─ 知识存储 ─────────────────────────────────────────────────────┐     │
+│  │ data_mapping（表映射）    business_rules（8条公共规则）          │     │
+│  │ requirement_patterns（7个模式，自学习）  table_structures（DDL） │     │
+│  └─────────────────────────────────────────────────────────────────┘     │
+│                                                                          │
+│  ┌─ 规范约束 ─────────────────────────────────────────────────────┐     │
+│  │ sql_rules / language / tech / product                            │     │
+│  │ table_validation / project_audit                                 │     │
+│  └─────────────────────────────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        自动化层（Hooks）5个                               │
+│  ┌──────────────┐ ┌──────────────┐ ┌─────────────────────────────┐     │
+│  │ 自动更新血缘 │ │ 自动健康提醒 │ │ 3个按钮(审计/检查/README)   │     │
+│  │ (fileEdited) │ │ (fileEdited) │ │ (userTriggered)             │     │
+│  └──────────────┘ └──────────────┘ └─────────────────────────────┘     │
+└─────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        数据层                                             │
+│  feeding-log.md（投喂追溯）+ feeding-counter.json + table_permissions   │
+└─────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        产出物层（Requirements）                           │
+│  7个需求模块 × (requirement.md + SQL脚本 + 表清单 + 血缘 + 变更记录     │
+│                  + 权限检查)                                             │
+└─────────────────────────────────────────────────────────────────────────┘
+    </div>
+
+    <h3>数字概览</h3>
+    <table>
+        <tr><th>类别</th><th>数量</th><th>明细</th></tr>
+        <tr><td>Steering规则文件</td><td>16个</td><td>always:11 / fileMatch:2 / manual:3</td></tr>
+        <tr><td>Skills技能</td><td>7个</td><td>全部manual模式，按需激活</td></tr>
+        <tr><td>Hooks</td><td>5个</td><td>自动触发:2 / 按钮:3</td></tr>
+        <tr><td>需求模块</td><td>7个</td><td>已完成:7（含003企划命中率）</td></tr>
+        <tr><td>公共规则</td><td>8条</td><td>PUB-001~008</td></tr>
+        <tr><td>需求模式</td><td>7个</td><td>PAT-001~007（自学习追加）</td></tr>
+        <tr><td>SQL实战模板</td><td>12个</td><td>从已有SQL提取的可复用模式</td></tr>
+        <tr><td>MCP连接</td><td>1个</td><td>PostgreSQL本地</td></tr>
+        <tr><td>数据追溯</td><td>3个文件</td><td>投喂日志 + 计数器 + 权限表</td></tr>
+    </table>
+</div>
+
+<!-- 二、各模块评分 -->
+<div class="section">
+    <h2>二、各模块成熟度评分</h2>
+    <table>
+        <tr><th>模块</th><th>评分</th><th>强项</th><th>短板</th></tr>
+        <tr>
+            <td>需求处理流程</td>
+            <td><span class="score score-high">9/10</span></td>
+            <td>分叉链路v2.0设计合理，新建/变更分流清晰，阶段门禁严格，6种变更类型全覆盖</td>
+            <td>尚未经过大量实际使用验证</td>
+        </tr>
+        <tr>
+            <td>知识管理体系</td>
+            <td><span class="score score-high">9/10</span></td>
+            <td>三层校验（实时+推理+体检），投喂日志追溯，自动健康提醒，7种推理反馈类型</td>
+            <td>缺少"知识版本回滚"能力</td>
+        </tr>
+        <tr>
+            <td>SQL生成能力</td>
+            <td><span class="score score-high">8/10</span></td>
+            <td>12个实战模板（从已有SQL提取），模板选择规则表，业务规则自动应用</td>
+            <td>复杂CTE嵌套仍需人工微调</td>
+        </tr>
+        <tr>
+            <td>SQL审查能力</td>
+            <td><span class="score score-high">8/10</span></td>
+            <td>6维度审查（规范/性能/业务/幂等/字段/可维护），100分制评分，自动修复建议</td>
+            <td>无法连接Doris验证执行计划</td>
+        </tr>
+        <tr>
+            <td>自动化程度</td>
+            <td><span class="score score-high">9/10</span></td>
+            <td>血缘自动更新、健康检查自动提醒、按钮一键操作、经验自学习沉淀</td>
+            <td>缺少SQL执行验证的自动化</td>
+        </tr>
+        <tr>
+            <td>多人协作支持</td>
+            <td><span class="score score-mid">7/10</span></td>
+            <td>投喂日志追溯、统一投喂流程、格式校验</td>
+            <td>无用户隔离、无权限控制</td>
+        </tr>
+        <tr>
+            <td>文档管理</td>
+            <td><span class="score score-high">9/10</span></td>
+            <td>README自动同步、血缘自动更新、changelog规范、权限检查自动化</td>
+            <td>无</td>
+        </tr>
+        <tr>
+            <td>质量保障</td>
+            <td><span class="score score-high">8/10</span></td>
+            <td>健康检查5维度、投喂时推理校验、项目审计、SQL审查6维度</td>
+            <td>缺少SQL生成后的"试运行验证"</td>
+        </tr>
+    </table>
+</div>
+
+<!-- 三、提效能力分析 -->
+<div class="section">
+    <h2>三、对ETL开发工程师的提效能力分析</h2>
+    
+    <h3>当前已覆盖的提效场景</h3>
+    <table>
+        <tr><th>场景</th><th>传统方式耗时</th><th>使用助手耗时</th><th>提效比</th><th>覆盖状态</th></tr>
+        <tr><td>新指标需求分析</td><td>2-4小时</td><td>20-40分钟（对话式引导）</td><td>~5x</td><td><span class="score score-high">已覆盖</span></td></tr>
+        <tr><td>已有指标变更</td><td>1-2小时</td><td>10-20分钟（自动定位+影响分析）</td><td>~5x</td><td><span class="score score-high">已覆盖</span></td></tr>
+        <tr><td>SQL脚本编写</td><td>4-8小时</td><td>1-2小时（实战模板+规则自动应用）</td><td>~4x</td><td><span class="score score-high">已覆盖</span></td></tr>
+        <tr><td>SQL Code Review</td><td>30分钟-1小时/脚本</td><td>5-10分钟（6维度自动审查）</td><td>~5x</td><td><span class="score score-high">已覆盖</span></td></tr>
+        <tr><td>文档编写</td><td>1-2小时</td><td>自动生成</td><td>~10x</td><td><span class="score score-high">已覆盖</span></td></tr>
+        <tr><td>新人上手</td><td>1-2周</td><td>1-2天（投喂知识后即可使用）</td><td>~5x</td><td><span class="score score-high">已覆盖</span></td></tr>
+        <tr><td>跨需求影响评估</td><td>1-2小时</td><td>自动分析（依赖链+下游识别）</td><td>~6x</td><td><span class="score score-high">已覆盖</span></td></tr>
+        <tr><td>知识库维护</td><td>持续人工</td><td>三层校验+自动提醒</td><td>~3x</td><td><span class="score score-high">已覆盖</span></td></tr>
+        <tr><td>SQL调试验证</td><td>30分钟-1小时</td><td>未覆盖（需Doris连接）</td><td>—</td><td><span class="score score-low">未覆盖</span></td></tr>
+    </table>
+
+    <h3>ETL开发工程师的典型工作日</h3>
+    <div class="flow">
+一天的工作                          助手能帮什么
+─────────────────────────────────────────────────────────
+09:00 接到新需求                    ✅ 需求分析+分类+澄清（链路A）
+09:30 理解业务逻辑                  ✅ 模式匹配+历史参考+依赖识别
+10:00 确认涉及的表和字段            ✅ 自动匹配+关联推理
+10:30 设计数据流转架构              ✅ 分层识别+架构设计
+11:00 编写SQL脚本                   ✅ 实战模板组合+规则自动应用
+14:00 在Doris上执行测试             ❌ 无法自动验证（需网络打通）
+14:30 SQL Code Review               ✅ 6维度自动审查+修复建议
+15:00 编写文档                      ✅ 全自动（requirement+lineage+tables）
+15:30 处理变更需求                  ✅ 变更链路B（定位→影响分析→修改）
+16:00 投喂新业务知识                ✅ 智能校验+推理反馈+日志追溯
+    </div>
+</div>
+
+<!-- 四、已完成的改进 -->
+<div class="section">
+    <h2>四、已完成的改进（v2.0→v2.4.0）</h2>
+
+    <div class="done">
+        <strong>✅ 已完成 - 分叉链路v2.0（v2.1.0）</strong><br>
+        从9状态单链路升级为分叉链路：新建链路A（A1~A7）+ 变更链路B（B1~B6）。新增etl_change_management.md定义6种变更类型。解决了"新旧需求一视同仁"的核心问题。
+    </div>
+
+    <div class="done">
+        <strong>✅ 已完成 - 知识投喂技能（v2.2.0）</strong><br>
+        支持4种投喂类型（表/规则/模式/批量），标准化采集流程，支持DDL/SQL直接粘贴解析。
+    </div>
+
+    <div class="done">
+        <strong>✅ 已完成 - 三层校验体系（v2.3.0）</strong><br>
+        实时校验→推理反馈→定期体检。7种推理类型（关联链延伸、产品线覆盖、命名一致性等）。自动健康提醒Hook。
+    </div>
+
+    <div class="done">
+        <strong>✅ 已完成 - SQL实战模板库（v2.4.0 Gap 6）</strong><br>
+        从已有7个需求的SQL中提取12个可复用模板：幂等模式、冰冷洗分类CTE、空调分类CTE、库存汇总CTE、ADS汇总模板、管报关联模板、日立口径模板等。
+    </div>
+
+    <div class="done">
+        <strong>✅ 已完成 - SQL审查技能（v2.4.0 Gap 3）</strong><br>
+        6维度审查（编码规范/性能风险/业务合规/幂等安全/字段完整/可维护性），100分制评分，支持自动修复建议。
+    </div>
+
+    <div class="done">
+        <strong>✅ 已完成 - 投喂日志追溯（v2.4.0 Gap 4）</strong><br>
+        新增feeding-log.md，每次投喂自动追加记录（时间、类型、内容摘要、写入文件、操作人）。
+    </div>
+
+    <div class="done">
+        <strong>✅ 已完成 - SQL模板提取技能（v2.4.0 Gap 1）</strong><br>
+        新增sql-template-extract技能，从已有SQL中自动识别可复用模式并写入模板库，长期维护模板库的自动化。
+    </div>
+
+    <div class="done">
+        <strong>✅ 已完成 - 快速问答优化（v2.4.0 Gap 5）</strong><br>
+        在product.md中明确"简短问题直接回答，不启动需求处理流程"的行为规则。
+    </div>
+</div>
+
+<!-- 五、剩余Gap与未来方向 -->
+<div class="section">
+    <h2>五、剩余Gap与未来改进方向</h2>
+
+    <h3>Gap 1：SQL执行验证（未解决）</h3>
+    <div class="gap">
+        <strong>问题：</strong>SQL生成后，工程师仍需手动到Doris上执行验证语法和逻辑。当前MCP只连了本地PostgreSQL，无法连接实际的Doris环境。
+    </div>
+    <div class="proposal">
+        <strong>方案：接入Doris MCP + 增加"SQL验证"步骤</strong><br>
+        在链路A的A6之后增加SQL验证步骤：用EXPLAIN语法检查SQL是否能解析通过。如果网络不通，退化为"离线语法检查"。<br>
+        <strong>优先级：</strong><span class="priority p-mid">中</span> &nbsp; <strong>阻塞因素：</strong>网络环境
+    </div>
+
+    <h3>Gap 2：知识版本回滚</h3>
+    <div class="gap">
+        <strong>问题：</strong>虽然有投喂日志追溯，但如果投喂了错误信息，目前只能手动修改steering文件回滚，缺少"一键回滚到某次投喂之前"的能力。
+    </div>
+    <div class="proposal">
+        <strong>方案：结合Git版本控制实现知识回滚</strong><br>
+        每次投喂后自动commit，回滚时通过git revert指定commit。<br>
+        <strong>优先级：</strong><span class="priority p-low">低</span> &nbsp; <strong>预估工作量：</strong>1小时
+    </div>
+
+    <h3>Gap 3：用户隔离与权限</h3>
+    <div class="gap">
+        <strong>问题：</strong>多人使用同一个助手时，无法区分不同用户的操作权限（如A只能修改冰箱相关需求，B只能修改空调相关需求）。
+    </div>
+    <div class="proposal">
+        <strong>方案：基于产品线的软隔离</strong><br>
+        在投喂和修改时增加"操作人+负责产品线"标记，非负责产品线的修改需要额外确认。<br>
+        <strong>优先级：</strong><span class="priority p-low">低</span> &nbsp; <strong>预估工作量：</strong>2小时
+    </div>
+</div>
+
+<!-- 六、框架优势总结 -->
+<div class="section">
+    <h2>六、框架优势总结</h2>
+    <div class="card-grid">
+        <div class="card">
+            <h4>✅ 分叉链路设计</h4>
+            <p>新建/变更需求走不同路径，6种变更类型全覆盖。阶段门禁确保每步都有用户确认，避免跳步。</p>
+        </div>
+        <div class="card">
+            <h4>✅ 三层校验体系</h4>
+            <p>实时校验→推理反馈→定期体检，从源头保证知识库质量。7种推理类型覆盖常见问题。</p>
+        </div>
+        <div class="card">
+            <h4>✅ 自学习机制</h4>
+            <p>每完成一个需求自动沉淀模式签名（PAT-XXX），新需求进来时自动匹配历史经验加速分析。</p>
+        </div>
+        <div class="card">
+            <h4>✅ 实战模板库</h4>
+            <p>12个从真实SQL提取的可复用模板，新需求生成SQL时直接组合，质量远超通用模板。</p>
+        </div>
+        <div class="card">
+            <h4>✅ SQL审查能力</h4>
+            <p>6维度100分制审查，覆盖规范、性能、业务合规、幂等安全等，替代部分人工Review。</p>
+        </div>
+        <div class="card">
+            <h4>✅ 文档全自动化</h4>
+            <p>requirement.md/lineage.md/tables.txt/changelog.md全自动生成和更新，Hook监控SQL变更。</p>
+        </div>
+        <div class="card">
+            <h4>✅ 影响分析能力</h4>
+            <p>变更需求时自动识别下游依赖链（004→005→006→008），评估影响等级，提示同步修改。</p>
+        </div>
+        <div class="card">
+            <h4>✅ 投喂追溯</h4>
+            <p>每次知识投喂自动记录日志（时间/类型/内容/文件/操作人），支持追溯和审计。</p>
+        </div>
+    </div>
+</div>
+
+<!-- 七、建议的下一步行动 -->
+<div class="section">
+    <h2>七、建议的下一步行动</h2>
+    <table>
+        <tr><th>步骤</th><th>行动</th><th>预期产出</th><th>优先级</th></tr>
+        <tr><td>1</td><td>用一个真实的新需求走一遍完整的链路A流程</td><td>验证分叉链路的实际效果，发现流程中的卡点</td><td><span class="priority p-high">高</span></td></tr>
+        <tr><td>2</td><td>用一个真实的变更需求走一遍链路B流程</td><td>验证变更流程的定位和修改能力</td><td><span class="priority p-high">高</span></td></tr>
+        <tr><td>3</td><td>对已有7个需求的SQL执行一次全量审查</td><td>发现已有SQL中的规范和性能问题</td><td><span class="priority p-mid">中</span></td></tr>
+        <tr><td>4</td><td>邀请另一个工程师试用，走一遍知识投喂流程</td><td>验证多人场景下的投喂体验</td><td><span class="priority p-mid">中</span></td></tr>
+        <tr><td>5</td><td>尝试打通Doris MCP连接</td><td>实现SQL执行验证自动化</td><td><span class="priority p-low">低</span></td></tr>
+    </table>
+</div>
+
+<!-- 八、版本演进时间线 -->
+<div class="section">
+    <h2>八、版本演进时间线</h2>
+    <table>
+        <tr><th>版本</th><th>日期</th><th>核心变更</th></tr>
+        <tr><td>v1.0.0</td><td>2026-04-23</td><td>项目初始化，录入7个需求的SQL和文档</td></tr>
+        <tr><td>v2.0.0</td><td>2026-05-09</td><td>Steering规则体系建立（17→12个文件优化），需求模式库</td></tr>
+        <tr><td>v2.1.0</td><td>2026-05-15</td><td>分叉链路v2.0（新建A+变更B），etl_change_management.md</td></tr>
+        <tr><td>v2.2.0</td><td>2026-05-15</td><td>知识投喂技能（4种类型+标准化流程）</td></tr>
+        <tr><td>v2.3.0</td><td>2026-05-15</td><td>三层校验体系（实时+推理+体检），自动健康提醒Hook</td></tr>
+        <tr><td>v2.4.0</td><td>2026-05-15</td><td>框架审视后全面改进：实战模板库、SQL审查、投喂日志、模板提取技能</td></tr>
+    </table>
+</div>
+
+</div><!-- end container -->
+
+<div style="text-align:center; padding:30px; color:#666; font-size:0.85em;">
+    <p>ETL开发助手 - 框架审视报告 | v2.4.0 | 2026-05-15</p>
+</div>
+</body>
+</html>

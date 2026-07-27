@@ -1,0 +1,172 @@
+# XuebinLV IPM域词根扩展（word-roots.yaml）
+# Phase 3/4 字段命名。追加到基线词根之后。
+# 同一缩写团队定义优先于基线。
+
+word_roots:
+  # ═══ 产品维度 ═══
+  - category: 产品
+    abbr: prdct
+    full_name: product
+    data_type: VARCHAR
+    domain: IPM
+    status: 启用
+
+  - category: 产品
+    abbr: salemodel
+    full_name: sale_model
+    data_type: VARCHAR
+    domain: IPM
+    status: 启用
+
+  - category: 产品
+    abbr: productline
+    full_name: product_line
+    data_type: VARCHAR
+    domain: IPM
+    status: 启用
+
+  # ═══ 指标类 ═══
+  - category: 指标
+    abbr: dxmodel
+    full_name: dx_model (低效型号)
+    data_type: VARCHAR
+    domain: IPM
+    status: 启用
+
+  - category: 指标
+    abbr: dxhxl
+    full_name: dx_hit_rate_low (单型号销量)
+    data_type: DECIMAL
+    domain: IPM
+    status: 启用
+
+  - category: 指标
+    abbr: dptxl
+    full_name: single_platform_sales (单平台销量)
+    data_type: DECIMAL
+    domain: IPM
+    status: 启用
+
+  - category: 指标
+    abbr: zcmodel
+    full_name: zc_model (在产型号)
+    data_type: VARCHAR
+    domain: IPM
+    status: 启用
+
+  - category: 指标
+    abbr: zgd
+    full_name: zhong_gao_duan (中高端)
+    data_type: VARCHAR
+    domain: IPM
+    status: 启用
+
+  # ═══ 规划量类 ═══
+  - category: 规划
+    abbr: bp
+    full_name: business_plan
+    data_type: DECIMAL
+    domain: IPM
+    status: 启用
+
+  - category: 规划
+    abbr: lx
+    full_name: li_xiang (立项)
+    data_type: DECIMAL
+    domain: IPM
+    status: 启用
+
+  - category: 规划
+    abbr: plan_sales_qty
+    full_name: planned_sales_quantity
+    data_type: DECIMAL(20,2)
+    domain: IPM
+    status: 启用
+
+  - category: 规划
+    abbr: plan_sales_amt
+    full_name: planned_sales_amount
+    data_type: DECIMAL(20,4)
+    domain: IPM
+    status: 启用
+
+  # ═══ 实际值类 ═══
+  - category: 实际
+    abbr: act_sales_qty
+    full_name: actual_sales_quantity
+    data_type: DECIMAL(20,2)
+    domain: IPM
+    status: 启用
+
+  - category: 实际
+    abbr: act_sales_amt
+    full_name: actual_sales_amount
+    data_type: DECIMAL(20,4)
+    domain: IPM
+    status: 启用
+
+  # ═══ 时间类 ═══
+  - category: 时间
+    abbr: dt_month
+    full_name: data_month
+    data_type: VARCHAR(6)
+    domain: IPM
+    status: 启用
+
+  - category: 时间
+    abbr: stat_month
+    full_name: statistics_month
+    data_type: VARCHAR(6)
+    domain: IPM
+    status: 启用
+
+  - category: 时间
+    abbr: stat_year
+    full_name: statistics_year
+    data_type: VARCHAR(4)
+    domain: IPM
+    status: 启用
+
+  # ═══ 标记类 ═══
+  - category: 标记
+    abbr: is_project
+    full_name: is_in_project_scope
+    data_type: VARCHAR(1)
+    domain: IPM
+    status: 启用
+
+  - category: 标记
+    abbr: is_odm
+    full_name: is_odm_product
+    data_type: VARCHAR(1)
+    domain: IPM
+    status: 启用
+
+  - category: 标记
+    abbr: zhibiao_type
+    full_name: indicator_type
+    data_type: VARCHAR(50)
+    domain: IPM
+    status: 启用
+
+  # ═══ 项目管理类 ═══
+  - category: 项目
+    abbr: impl_rate
+    full_name: implementation_rate
+    data_type: DECIMAL(10,4)
+    domain: IPM
+    status: 启用
+
+  - category: 项目
+    abbr: dev_cycle
+    full_name: development_cycle
+    data_type: DECIMAL(10,2)
+    domain: IPM
+    status: 启用
+
+  - category: 项目
+    abbr: pause_days
+    full_name: pause_duration_days
+    data_type: INT
+    domain: IPM
+    status: 启用

@@ -1,0 +1,12 @@
+{
+  "name": "知识库健康检查",
+  "version": "1.0.0",
+  "description": "一键执行知识库全面体检（5维度检查 + 健康评分 + 修复引导）",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "请执行知识库健康检查。读取 .kiro/steering/data_mapping.md、.kiro/steering/table_structures.md、.kiro/steering/business_rules.md、.kiro/steering/requirement_patterns.md，按照 .kiro/skills/knowledge-health-check.md 中定义的5个维度（表知识完整性、规则知识一致性、模式知识有效性、交叉一致性、覆盖度评估）逐项检查，计算健康评分（基础100分，错误项-10分/项，警告项-3分/项），输出完整的健康检查报告，最后询问用户是否需要引导修复。"
+  }
+}

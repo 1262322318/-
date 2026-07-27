@@ -1,0 +1,11 @@
+# {团队} 表目录缓存（catalog.yaml）
+# 轻量缓存：快速定位有哪些表、上游依赖。详情走平台 API。
+# depends_on：直接上游表名列表，用于生成血缘 DAG
+# 缓存可能过期，如与 API 结果矛盾以 API 为准。
+
+tables:
+  - name: # 表名
+    layer: # DIM / DWD / DWS / ADS
+    granularity: # 粒度描述
+    depends_on: [] # 直接上游表名列表（含花括号的表名需加引号）
+    notes: # API 查不到的备注（设计意图/注意事项）

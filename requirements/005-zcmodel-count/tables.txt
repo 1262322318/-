@@ -1,0 +1,15 @@
+# 涉及数据表清单 - 在产型号数
+
+## 源表（数据读取）
+dws.dws_ipd_ipm_sale_model_detail_dd
+dws.dws_ipd_ipm_zcmodel_detail_dd
+dws.dws_ipd_ipm_zcproductionversion_dd
+
+## 目标表（数据写入）
+dws.dws_ipd_ipm_zcmodel_detail_dd
+ads.ads_ipd_ipm_zcmodel_result_dd
+
+## 说明
+# 1. 每行一个表，格式为 database.table_name
+# 2. 在产型号数据来源于在销型号明细表（筛选在产阶段）
+# 3. 支持产品型号口径和生产版本口径两种统计方式

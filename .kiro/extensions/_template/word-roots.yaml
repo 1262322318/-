@@ -1,0 +1,11 @@
+# {团队}词根扩展（word-roots.yaml）
+# Phase 3/4 字段命名。追加到基线词根之后。
+# 同一缩写团队定义优先于基线。
+
+word_roots:
+  - category: # 词根分类（如：生产/质量/效率/设备）
+    abbr: # 缩写
+    full_name: # 英文全称
+    data_type: # 数据类型（VARCHAR/DECIMAL/INT/DATE）
+    domain: # 业务域
+    status: # 启用/废弃

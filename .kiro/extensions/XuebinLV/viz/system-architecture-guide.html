@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XuebinLV 能力包 — 系统架构解析报告</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif;background:#f8f9fa;color:#1a1a1a;line-height:1.7}
+.container{max-width:1100px;margin:0 auto;padding:32px 24px}
+h1{font-size:28px;margin-bottom:8px;color:#1a1a2e}
+.subtitle{color:#666;font-size:14px;margin-bottom:40px;border-bottom:2px solid #e9ecef;padding-bottom:16px}
+h2{font-size:22px;margin:48px 0 16px;color:#16213e;border-left:4px solid #4361ee;padding-left:12px}
+h3{font-size:17px;margin:24px 0 12px;color:#2d3748}
+p,li{font-size:14.5px;color:#333}
+ul,ol{padding-left:24px;margin:8px 0 16px}
+li{margin:4px 0}
+.card{background:#fff;border-radius:10px;padding:24px;margin:16px 0;box-shadow:0 1px 3px rgba(0,0,0,0.08);border:1px solid #e9ecef}
+.card-title{font-weight:600;font-size:15px;color:#4361ee;margin-bottom:8px}
+.highlight{background:#eef2ff;border-left:4px solid #4361ee;padding:12px 16px;margin:12px 0;border-radius:0 8px 8px 0;font-size:13px}
+.warn{background:#fff8e1;border-left:4px solid #f59e0b;padding:12px 16px;margin:12px 0;border-radius:0 8px 8px 0;font-size:13px}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+th{background:#f1f3f5;padding:10px 12px;text-align:left;font-weight:600;border-bottom:2px solid #dee2e6}
+td{padding:8px 12px;border-bottom:1px solid #e9ecef}
+tr:hover td{background:#f8f9fa}
+code{background:#f1f3f5;padding:2px 6px;border-radius:3px;font-size:12.5px;font-family:'JetBrains Mono',Consolas,monospace}
+pre{background:#1a1a2e;color:#e7e9ea;padding:16px;border-radius:8px;overflow-x:auto;font-size:12.5px;line-height:1.5;margin:12px 0}
+.flow-box{background:#fff;border:2px solid #4361ee;border-radius:12px;padding:20px;margin:16px 0;text-align:center}
+.flow-box .step{display:inline-block;background:#4361ee;color:#fff;padding:6px 14px;border-radius:20px;margin:4px;font-size:12px}
+.flow-box .arrow{display:inline-block;color:#4361ee;font-size:18px;margin:0 4px;vertical-align:middle}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;margin:2px}
+.tag-blue{background:#dbeafe;color:#1d4ed8}
+.tag-green{background:#dcfce7;color:#166534}
+.tag-orange{background:#fef3c7;color:#92400e}
+.tag-purple{background:#ede9fe;color:#5b21b6}
+.toc{background:#fff;border-radius:10px;padding:20px 24px;margin-bottom:32px;border:1px solid #e9ecef}
+.toc a{color:#4361ee;text-decoration:none;font-size:14px;display:block;padding:4px 0}
+.toc a:hover{text-decoration:underline}
+.file-tree{font-family:monospace;font-size:13px;background:#1a1a2e;color:#a5b4fc;padding:16px;border-radius:8px;line-height:1.8}
+.file-tree .dir{color:#fbbf24}
+.file-tree .file{color:#86efac}
+.file-tree .comment{color:#6b7280;font-style:italic}
+.scenario{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:12px 0}
+.scenario-title{font-weight:600;color:#166534;margin-bottom:8px}
+.badge{display:inline-block;background:#4361ee;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;margin-right:4px}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>📖 XuebinLV 能力包 — 系统架构完整解析</h1>
+<p class="subtitle">Knowledge Curator Skill + 团队能力包运作机制 | 设计思路 · 文件详解 · 调用链路 · 实战案例</p>
+
+<div class="toc">
+<strong>目录</strong>
+<a href="#s1">一、这套系统解决什么问题</a>
+<a href="#s2">二、整体架构（三层设计）</a>
+<a href="#s3">三、能力包目录结构与每个文件的作用</a>
+<a href="#s4">四、AI 处理需求时的完整调用链路</a>
+<a href="#s5">五、实战案例：002低效型号从头到尾走一遍</a>
+<a href="#s6">六、Knowledge Curator 技能的工作流程</a>
+<a href="#s7">七、知识如何自动沉淀（正循环机制）</a>
+<a href="#s8">八、team-loader 自动匹配机制</a>
+<a href="#s9">九、与 Steering 规则的协作关系</a>
+<a href="#s10">十、Hook 自动触发机制</a>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<h2 id="s1">一、这套系统解决什么问题</h2>
+
+<div class="card">
+<div class="card-title">核心痛点</div>
+<p>通用 AI 懂 SQL 语法，但不懂你的业务：</p>
+<ul>
+<li>"管报物料要先走 MDG 桥梁表才能关联到产品型号" — AI 不知道</li>
+<li>"日立走 sale_model_code 口径，不走 model_name" — AI 不知道</li>
+<li>"比率型指标跨维度不能 AVG，要回到分子分母" — AI 可能犯错</li>
+<li>"冰箱和冷柜的区分要看 PC00001 品类细分字段" — AI 猜不到</li>
+</ul>
+</div>
+
+<div class="card">
+<div class="card-title">解决方案</div>
+<p>把这些<strong>"AI 推不出来的领域经验"</strong>写成结构化文件，让 AI 在处理需求时<strong>自动读取</strong>，而不是每次都从头问你。</p>
+<div class="highlight">
+<strong>一句话定义</strong>：能力包 = AI 的领域记忆模块。做得越多，沉淀越多，AI 越准，你的交互越少。
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<h2 id="s2">二、整体架构（三层设计）</h2>
+
+<div class="flow-box">
+<div style="margin-bottom:12px;font-weight:600;color:#4361ee">系统运作的三层结构</div>
+<div style="text-align:left;max-width:700px;margin:0 auto">
+<pre style="background:#fff;color:#333;border:1px solid #e9ecef;font-size:13px">
+┌─────────────────────────────────────────────────────────┐
+│  第1层：Knowledge Curator（Skill 技能）                   │
+│  职责：知识的输入 / 提取 / 冲突检测 / 写入               │
+│  触发：用户丢材料 或 需求闭环后自动提取                   │
+│  文件：.kiro/skills/knowledge-curator/SKILL.md           │
+└────────────────────────────┬────────────────────────────┘
+                             │ 写入（diff预览→确认→落盘）
+                             ▼
+┌─────────────────────────────────────────────────────────┐
+│  第2层：团队能力包（extensions/XuebinLV/）               │
+│  职责：结构化存储领域知识（指标/术语/坑/模式/规则）       │
+│  特点：按标准格式组织，AI 可自动索引读取                  │
+│  文件：15+ 个 YAML/MD 文件，按功能分类                   │
+└────────────────────────────┬────────────────────────────┘
+                             │ 被自动读取（team-loader匹配）
+                             ▼
+┌─────────────────────────────────────────────────────────┐
+│  第3层：ETL 开发流程（etl_dialogue_flow 各阶段）          │
+│  职责：处理需求时，自动加载对应能力包辅助决策             │
+│  效果：AI 知道该用什么表、怎么关联、有什么坑              │
+└─────────────────────────────────────────────────────────┘
+</pre>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<h2 id="s3">三、能力包目录结构与每个文件的作用</h2>
+
+<div class="file-tree">
+<span class="dir">extensions/XuebinLV/</span><br>
+├── <span class="file">extension.json</span> <span class="comment">← 能力包元信息（名称/版本/关键词/加载映射）</span><br>
+│<br>
+│ <span class="comment">── 语义理解层（AI 的"大脑"）──</span><br>
+├── <span class="file">vocabulary.yaml</span> <span class="comment">← 业务术语消歧（15条）：低效型号≠滞销型号</span><br>
+├── <span class="dir">metrics/</span> <span class="comment">← 指标语义层（基础→派生→复合，共13个指标）</span><br>
+│   ├── <span class="file">_index.yaml</span> <span class="comment">← 快速匹配入口（synonyms关键词→定位指标）</span><br>
+│   ├── <span class="file">ipm-efficiency.yaml</span> <span class="comment">← 效率类指标完整定义</span><br>
+│   ├── <span class="file">ipm-hitrate.yaml</span> <span class="comment">← 命中率类指标定义</span><br>
+│   ├── <span class="file">ipm-project.yaml</span> <span class="comment">← 项目管理类指标定义</span><br>
+│   └── <span class="file">ipm-market.yaml</span> <span class="comment">← 市场分析类指标定义</span><br>
+├── <span class="file">dimensions.yaml</span> <span class="comment">← 维度知识（5个核心维度的跨系统对齐坑）</span><br>
+├── <span class="file">aggregation-rules.yaml</span> <span class="comment">← 聚合规则（8条non_additive + 5条反模式红线）</span><br>
+├── <span class="dir">business-rules/</span> <span class="comment">← 业务规则（产品线分类 + 时间窗口）</span><br>
+│   ├── <span class="file">product-line.yaml</span> <span class="comment">← 9+7条产品线的CASE WHEN分类逻辑</span><br>
+│   └── <span class="file">time-rules.yaml</span> <span class="comment">← BP/LX选择/保护期/工作日+3/暂停配对</span><br>
+│<br>
+│ <span class="comment">── 缓存层（快速定位，详情走API）──</span><br>
+├── <span class="file">catalog.yaml</span> <span class="comment">← 表目录缓存（22张表+depends_on血缘）</span><br>
+├── <span class="file">source-systems.yaml</span> <span class="comment">← 源系统经验（8系统16表的"坑"）</span><br>
+│<br>
+│ <span class="comment">── 经验层（AI 的"记忆"）──</span><br>
+├── <span class="dir">cases/</span> <span class="comment">← 项目案例（决策/踩坑/可复用经验）</span><br>
+│   ├── <span class="file">_index.yaml</span> <span class="comment">← 案例索引（8个项目）</span><br>
+│   └── <span class="file">002-dx-model-rate.yaml</span> <span class="comment">← 详情案例（4决策+5踩坑）</span><br>
+├── <span class="dir">patterns/</span> <span class="comment">← 设计模式（可复用的ETL方案）</span><br>
+│   ├── <span class="file">multi-product-line-branch.md</span> <span class="comment">← 多产品线分叉统一汇总</span><br>
+│   └── <span class="file">bp-lx-priority-select.md</span> <span class="comment">← BP/LX优先选择</span><br>
+│<br>
+│ <span class="comment">── 规范保障层（AI 的"纪律"）──</span><br>
+├── <span class="file">word-roots.yaml</span> <span class="comment">← 字段命名词根（22条缩写约定）</span><br>
+├── <span class="dir">gates/</span><br>
+│   └── <span class="file">extra-checks.md</span> <span class="comment">← 闸门额外检查项（G0+G2各6-7条）</span><br>
+└── <span class="dir">prd-guide/</span><br>
+    └── <span class="file">extra-collection-items.md</span> <span class="comment">← PRD额外采集项（11项必采/视情况）</span><br>
+</div>
+
+<h3>每个文件的核心价值（一句话）</h3>
+<table>
+<tr><th>文件</th><th>解决什么问题</th><th>实际效果</th></tr>
+<tr><td><code>extension.json</code></td><td>告诉系统"这个能力包覆盖什么领域"</td><td>自动匹配：用户提到"IPM/命中率/低效"时自动加载本包</td></tr>
+<tr><td><code>vocabulary.yaml</code></td><td>防止术语混淆</td><td>AI 不会把"低效型号"和"滞销型号"搞混</td></tr>
+<tr><td><code>metrics/_index.yaml</code></td><td>快速定位指标对应的表和字段</td><td>用户说"单型号销量"→AI 立刻知道看 dws_ipd_ipm_dxhxl_detail_dd.avg_model_sales</td></tr>
+<tr><td><code>metrics/{domain}.yaml</code></td><td>指标的完整定义（公式/来源/层次关系）</td><td>AI 知道"低效占比=低效数/在销数"，derives_from追溯到基础度量</td></tr>
+<tr><td><code>dimensions.yaml</code></td><td>维度的跨系统对齐坑</td><td>AI 知道"产品线不是维表，是CASE WHEN动态计算"</td></tr>
+<tr><td><code>aggregation-rules.yaml</code></td><td>防止比率取平均的致命错误</td><td>AI 生成SQL时自动用 SUM(分子)/SUM(分母) 而不是 AVG(rate)</td></tr>
+<tr><td><code>business-rules/</code></td><td>产品线分类和时间规则</td><td>AI 知道冰箱vs冷柜的冷冻箱细分规则、BP/LX选择条件</td></tr>
+<tr><td><code>catalog.yaml</code></td><td>快速知道有哪些表可用</td><td>AI 不用去猜表名，直接从缓存找到目标表和上游依赖</td></tr>
+<tr><td><code>source-systems.yaml</code></td><td>记录源表的"坑"</td><td>AI 自动加 product_type_code IN ('FERT','ZTAO') 过滤条件</td></tr>
+<tr><td><code>cases/</code></td><td>历史项目的决策和踩坑</td><td>新需求参考类似项目的做法，避免重复踩坑</td></tr>
+<tr><td><code>patterns/</code></td><td>可复用的ETL设计方案</td><td>多产品线需求直接套用"分叉统一汇总"模式</td></tr>
+<tr><td><code>word-roots.yaml</code></td><td>字段命名一致性</td><td>新建表时字段名自动遵循 act_sales_qty / plan_sales_amt 等约定</td></tr>
+<tr><td><code>gates/extra-checks.md</code></td><td>评审时不遗漏检查项</td><td>建表前自动检查"是否包含is_project字段""日立是否走sale_model_code"</td></tr>
+<tr><td><code>prd-guide/extra-collection-items.md</code></td><td>需求采集时不遗漏</td><td>自动提醒采集"管理口径/排除条件/时间口径"等11项</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════ -->
+<h2 id="s4">四、AI 处理需求时的完整调用链路</h2>
+
+<h3>Step 1：team-loader 自动匹配</h3>
+<div class="highlight">
+<strong>触发</strong>：用户输入包含关键词（如"低效型号"、"命中率"、"奥维"）<br>
+<strong>动作</strong>：team-loader.md 扫描 extension.json 的 scope.keywords，匹配成功 → 锁定 XuebinLV 能力包<br>
+<strong>文件</strong>：<code>.kiro/steering/team-loader.md</code> + <code>extensions/XuebinLV/extension.json</code>
+</div>
+
+<h3>Step 2：按阶段加载对应文件</h3>
+<table>
+<tr><th>ETL流程阶段</th><th>加载的能力包文件</th><th>AI 获得的能力</th></tr>
+<tr><td>A1 需求分析（Phase 1）</td><td>vocabulary + metrics/_index + prd-guide + catalog + source-systems + cases</td><td>理解术语、定位指标、知道有哪些表可用</td></tr>
+<tr><td>A4 模型设计（Phase 2-3）</td><td>metrics/{domain} + dimensions + aggregation-rules + patterns + word-roots + gates</td><td>设计表结构、命名字段、选择聚合方式、检查红线</td></tr>
+<tr><td>A6 SQL生成（Phase 4）</td><td>word-roots + patterns + aggregation-rules + business-rules</td><td>写SQL时遵循命名、套用模式、应用产品线分类规则</td></tr>
+</table>
+
+<h3>Step 3：三层寻路逻辑（每次处理需求）</h3>
+<div class="card">
+<pre style="background:#f8f9fa;color:#333;border:1px solid #e9ecef">
+用户问题/需求
+    │
+    ▼ Step 1：语义理解（本地，0延迟）
+    vocabulary → 理解术语（低效型号 ≠ 滞销）
+    metrics/_index → synonyms 匹配 → 定位 table.field + 口径
+    dimensions → 确定分析维度 + 编码对齐方案
+    │
+    ▼ Step 2：快速定位（本地缓存）
+    catalog.yaml → 有哪些表可复用？上游依赖是什么？
+    source-systems.yaml → 数据从哪来、有什么坑？
+    │
+    ▼ Step 3：技术补全（MCP API，按需兜底）
+    表完整字段结构 / 数据量 / 新鲜度
+    │
+    ▼ Step 4：经验补充（本地）
+    business-rules → 产品线分类/时间窗口规则
+    aggregation-rules → 比率字段怎么聚合（防AVG反模式）
+    cases → 类似项目参考（决策/踩坑）
+    patterns → 适用的设计模式
+</pre>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<h2 id="s5">五、实战案例：002低效型号从头到尾走一遍</h2>
+
+<div class="scenario">
+<div class="scenario-title">场景：用户说"做一个低效型号占比的需求，覆盖全产品线"</div>
+</div>
+
+<h3>1. 语义理解阶段</h3>
+<div class="card">
+<p><strong>AI 读取</strong>：<code>vocabulary.yaml</code></p>
+<ul>
+<li>识别"低效型号"定义：上市满保护期后，实际累计销量低于累计规划量的产品型号</li>
+<li>区分于"滞销型号"和"库存积压型号"</li>
+</ul>
+<p><strong>AI 读取</strong>：<code>metrics/_index.yaml</code></p>
+<ul>
+<li>匹配到"低效型号占比" → type=复合指标, table=ads.ads_ipd_ipm_dxmodel_result_dd, field=dx_model_rate</li>
+<li>跟踪 derives_from → 低效型号数 → 实际销量 + 规划销量（基础度量）</li>
+</ul>
+</div>
+
+<h3>2. 表匹配阶段</h3>
+<div class="card">
+<p><strong>AI 读取</strong>：<code>catalog.yaml</code></p>
+<ul>
+<li>目标表：ads.ads_ipd_ipm_dxmodel_result_dd（ADS, 月×产品线×事业部）</li>
+<li>上游依赖：dws.dws_ipd_ipm_dxmodel_detail_dd ← dwd.dwd_ipd_ipm_bp_lx_model_mid_dd ← 多张源表</li>
+</ul>
+<p><strong>AI 读取</strong>：<code>source-systems.yaml</code></p>
+<ul>
+<li>管报系统坑：matnr 需通过 MDG 桥接，不直接关联 dim 表</li>
+<li>MDG 坑：必须过滤 product_type_code IN ('FERT','ZTAO') AND delete_flag != 'Y'</li>
+<li>日立特殊：走 sale_model_code 口径，create_company='RILI'</li>
+</ul>
+</div>
+
+<h3>3. 模型设计阶段</h3>
+<div class="card">
+<p><strong>AI 读取</strong>：<code>patterns/multi-product-line-branch.md</code></p>
+<ul>
+<li>识别信号命中：覆盖≥3条产品线 → 套用"多产品线分叉统一汇总"模式</li>
+<li>决策：每条产品线独立 DELETE+INSERT 段落，ADS 层统一聚合</li>
+</ul>
+<p><strong>AI 读取</strong>：<code>patterns/bp-lx-priority-select.md</code></p>
+<ul>
+<li>规划量需要 DWD 中间表，展开 BP 和 LX 为统一月度×型号粒度</li>
+<li>DWS 层按"立项首月在本年→用LX，否则→用BP"规则选择</li>
+</ul>
+<p><strong>AI 读取</strong>：<code>aggregation-rules.yaml</code></p>
+<ul>
+<li>dx_model_rate 是不可加型：numerator=dx_model_cnt, denominator=total_model_cnt</li>
+<li>跨产品线聚合时必须 SUM(dx_model_cnt)/SUM(total_model_cnt)，禁止 AVG(dx_model_rate)</li>
+</ul>
+<p><strong>AI 读取</strong>：<code>dimensions.yaml</code></p>
+<ul>
+<li>产品线不是维表 → CASE WHEN 动态计算（PUB-003/PUB-006）</li>
+<li>日立走 sale_model_code 口径，不走产品型号</li>
+</ul>
+</div>
+
+<h3>4. SQL生成阶段</h3>
+<div class="card">
+<p><strong>AI 读取</strong>：<code>word-roots.yaml</code></p>
+<ul>
+<li>字段命名：act_sales_qty（实际销量）、plan_sales_qty（规划销量）、is_project（保护期标记）</li>
+</ul>
+<p><strong>AI 读取</strong>：<code>business-rules/product-line.yaml</code></p>
+<ul>
+<li>冰箱：PG00002='控温储藏类产品' AND PG00003='家用冰箱' AND PG00004 IN ('冷藏冷冻箱','冷藏箱')</li>
+<li>冷柜：冷冻箱 + PC00001≠'冰箱' 或 家用冷柜 或 冰吧</li>
+<li>排除条件：gorenje + ODM + 模块组合 + 委外</li>
+</ul>
+<p><strong>AI 读取</strong>：<code>business-rules/time-rules.yaml</code></p>
+<ul>
+<li>BP/LX选择：CASE WHEN 立项首月年份=当前年 THEN LX ELSE BP</li>
+<li>保护期：上市≤3月 → is_project='Y'</li>
+</ul>
+</div>
+
+<h3>5. 闭环检查阶段</h3>
+<div class="card">
+<p><strong>AI 读取</strong>：<code>gates/extra-checks.md</code></p>
+<ul>
+<li>✅ 是否明确管理口径？</li>
+<li>✅ DWS 表是否包含 is_project 字段？</li>
+<li>✅ 日立是否走了 sale_model_code 口径？</li>
+<li>✅ 聚合规则中比率字段是否保留分子分母？</li>
+</ul>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<h2 id="s6">六、Knowledge Curator 技能的工作流程</h2>
+
+<h3>触发方式（两种）</h3>
+<table>
+<tr><th>方式</th><th>场景</th><th>示例</th></tr>
+<tr><td><span class="badge">主动投喂</span></td><td>用户直接丢材料给 AI</td><td>"把这个加到知识库"、"记一下这个坑"</td></tr>
+<tr><td><span class="badge">需求闭环</span></td><td>A7/B5 步骤自动触发</td><td>需求完成后 AI 自动扫描产出，提取可沉淀内容</td></tr>
+</table>
+
+<h3>完整执行流程（6步）</h3>
+<div class="flow-box">
+<span class="step">1.接收材料</span><span class="arrow">→</span>
+<span class="step">2.识别分类</span><span class="arrow">→</span>
+<span class="step">3.冲突检测</span><span class="arrow">→</span>
+<span class="step">4.结构化生成</span><span class="arrow">→</span>
+<span class="step">5.Diff预览</span><span class="arrow">→</span>
+<span class="step">6.确认写入</span>
+</div>
+
+<div class="card">
+<div class="card-title">知识类型自动识别（11种）</div>
+<table>
+<tr><th>类型</th><th>识别信号</th><th>目标文件</th></tr>
+<tr><td>新指标</td><td>含公式、口径、投入/产出/比率</td><td>metrics/ + _index.yaml</td></tr>
+<tr><td>聚合规则</td><td>含比率、不可加、分子分母</td><td>aggregation-rules.yaml</td></tr>
+<tr><td>新术语</td><td>业务用语解释、易混淆概念</td><td>vocabulary.yaml</td></tr>
+<tr><td>源系统经验</td><td>某表的坑、注意事项</td><td>source-systems.yaml</td></tr>
+<tr><td>设计模式</td><td>可复用的 ETL/建模方案</td><td>patterns/{name}.md</td></tr>
+<tr><td>业务规则</td><td>状态机、时间规则、口径规则</td><td>business-rules/*.yaml</td></tr>
+<tr><td>新表上线</td><td>CREATE TABLE</td><td>catalog.yaml</td></tr>
+<tr><td>项目经验</td><td>决策原因、踩坑、复用经验</td><td>cases/{project}.yaml</td></tr>
+<tr><td>新词根</td><td>字段缩写约定</td><td>word-roots.yaml</td></tr>
+<tr><td>维度经验</td><td>编码对齐、跨系统坑</td><td>dimensions.yaml</td></tr>
+<tr><td>闸门检查项</td><td>评审必检项</td><td>gates/extra-checks.md</td></tr>
+</table>
+</div>
+
+<div class="warn">
+<strong>安全约束</strong>：所有变更必须经用户确认（diff 预览），永不自动覆盖已有知识。口径冲突时阻塞等待决策。
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<h2 id="s7">七、知识如何自动沉淀（正循环机制）</h2>
+
+<div class="card">
+<pre style="background:#f8f9fa;color:#333;border:1px solid #e9ecef">
+做需求（ETL流程 A1→A7 / B1→B5）
+    │
+    ├── 过程中产生的知识：
+    │   · requirement.md 中的指标定义 → metrics/
+    │   · SQL 中的 CREATE TABLE → catalog.yaml
+    │   · 发现的源表坑 → source-systems.yaml
+    │   · 新出现的业务术语 → vocabulary.yaml
+    │
+    ▼ A7/B5 完成后自动触发
+┌─────────────────────────────────────┐
+│  Knowledge Curator 需求闭环模式     │
+│  · 扫描 requirement.md + SQL        │
+│  · 与能力包现有内容比对             │
+│  · 生成变更清单 → Diff 预览         │
+│  · 用户确认后写入                   │
+│  · extension.json version +1        │
+└─────────────────────────────────────┘
+    │
+    ▼ 下次新需求进来时
+AI 自动读取更新后的能力包 → 更准确、更少交互
+    │
+    ▼ 循环 ♻️
+</pre>
+</div>
+
+<div class="highlight">
+<strong>飞轮效应</strong>：12个需求做完后，能力包积累了 13 个指标定义 + 22 张表目录 + 8 个系统的坑 + 2 个设计模式 + 8 个案例。第13个需求进来时，AI 已经"认识"这个领域了。
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<h2 id="s8">八、team-loader 自动匹配机制</h2>
+
+<div class="card">
+<div class="card-title">匹配逻辑（按优先级）</div>
+<table>
+<tr><th>优先级</th><th>方式</th><th>示例</th></tr>
+<tr><td>1</td><td>手动指定</td><td>用户说"使用 XuebinLV 能力包"</td></tr>
+<tr><td>2</td><td>关键词自动匹配</td><td>用户输入含"IPM/命中率/低效" → 匹配 extension.json 的 scope.keywords</td></tr>
+<tr><td>3</td><td>项目路径匹配</td><td>项目名含 ipm_* / ipd_* → 匹配 scope.project_patterns</td></tr>
+</table>
+</div>
+
+<div class="card">
+<div class="card-title">加载映射（匹配成功后按阶段读取）</div>
+<table>
+<tr><th>阶段</th><th>读取文件</th></tr>
+<tr><td>PRD分析 / Phase 1</td><td>vocabulary + prd-guide/</td></tr>
+<tr><td>架构设计 / Phase 2</td><td>patterns/</td></tr>
+<tr><td>详细设计 / Phase 3</td><td>word-roots + patterns/ + gates/</td></tr>
+<tr><td>SQL生成 / Phase 4</td><td>word-roots + patterns/ + business-rules/ + aggregation-rules</td></tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<h2 id="s9">九、与 Steering 规则的协作关系</h2>
+
+<div class="card">
+<div class="card-title">Steering 规则 vs 能力包：分工不同</div>
+<table>
+<tr><th>维度</th><th>Steering 规则（.kiro/steering/）</th><th>能力包（extensions/XuebinLV/）</th></tr>
+<tr><td>定位</td><td>全局行为规范（所有需求都适用）</td><td>领域专属知识（特定团队/业务域）</td></tr>
+<tr><td>加载方式</td><td>always / fileMatch / manual</td><td>按 team-loader 匹配后按阶段加载</td></tr>
+<tr><td>内容类型</td><td>流程规则、编码规范、对话流程、安全规则</td><td>指标定义、源表的坑、设计模式、术语</td></tr>
+<tr><td>维护方</td><td>项目级（所有人共用）</td><td>团队级（各团队独立维护）</td></tr>
+<tr><td>token占用</td><td>always文件每轮都加载</td><td>匹配后才加载，不匹配=0 token</td></tr>
+</table>
+</div>
+
+<div class="highlight">
+<strong>协作关系</strong>：Steering 的 <code>business_rules.md</code>（PUB-001~010）定义了跨需求公共规则的"编号和摘要"，能力包的 <code>business-rules/*.yaml</code> 存储了团队视角下这些规则的"具体实现细节和应用注意事项"。两者互补，不重复。
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<h2 id="s10">十、Hook 自动触发机制</h2>
+
+<div class="card">
+<div class="card-title">sync-knowledge-pack.kiro.hook</div>
+<p><strong>触发时机</strong>：agentStop（AI 完成一次对话后）</p>
+<p><strong>动作</strong>：检查本次对话是否涉及以下变更，如有则提醒用户是否同步能力包：</p>
+<ol>
+<li>新增了指标或需求</li>
+<li>修改了已有指标的公式/口径</li>
+<li>新建了 DWS/ADS 表</li>
+<li>修改了产品线分类规则或公共规则</li>
+<li>发现了新的源系统坑</li>
+</ol>
+<p><strong>效果</strong>：确保每次有业务变更时，能力包不会"忘记更新"。</p>
+</div>
+
+<div class="card">
+<div class="card-title">完整的触发→同步链路</div>
+<pre style="background:#f8f9fa;color:#333;border:1px solid #e9ecef">
+需求闭环（A7/B5）
+    │
+    ▼ Hook 触发（agentStop）
+"本次变更涉及新建表/新指标，是否同步能力包？"
+    │
+    ▼ 用户确认"是"
+Knowledge Curator 需求闭环模式启动
+    │
+    ▼ 扫描本次产出 → 比对能力包 → Diff 预览
+    │
+    ▼ 用户确认写入
+catalog.yaml 追加新表 / metrics/ 追加新指标 / source-systems 追加新坑
+    │
+    ▼ extension.json version patch+1
+完成
+</pre>
+</div>
+
+<!-- 结尾 -->
+<div style="margin-top:60px;padding:24px;background:#f1f3f5;border-radius:10px;text-align:center;color:#666;font-size:13px">
+<p>生成时间：2026-07-09 | 能力包版本：1.1.0 | 覆盖 12 个已完成需求</p>
+<p>文件路径：<code>.kiro/extensions/XuebinLV/viz/system-architecture-guide.html</code></p>
+</div>
+
+</div>
+</body>
+</html>

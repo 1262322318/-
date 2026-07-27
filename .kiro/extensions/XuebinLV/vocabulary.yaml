@@ -1,0 +1,79 @@
+# XuebinLV IPM域业务概念词表（vocabulary.yaml）
+# Phase 1 语义消歧参考
+# 可计算的指标/度量定义见 metrics/ 目录，本表只放业务概念消歧
+
+vocabulary:
+  - term: 低效型号
+    definition: 上市满保护期后，实际累计销量低于累计规划量（BP或LX）的产品型号
+    confused_with: [滞销型号, 库存积压型号]
+    related_metrics: [低效型号占比]
+
+  - term: 保护期
+    definition: 新品上市后给予的免统计缓冲期，保护期内不判定为低效（各产品线不同，通常3-6个月）
+    confused_with: [上市期, 试销期]
+    related_metrics: [低效型号占比, 新品命中率]
+
+  - term: 产品型号口径
+    definition: 以dim.dim_ipd_productmodel_dd的产品型号为管理粒度（冰冷洗/家空/视像/厨电/激光适用）
+    confused_with: [销售型号编码口径]
+    related_metrics: []
+
+  - term: 销售型号编码口径
+    definition: 以dim.dim_ipd_salemodel_dd的销售型号编码为管理粒度（日立/央空专用）
+    confused_with: [产品型号口径]
+    related_metrics: []
+
+  - term: BP规划量
+    definition: 来自HDRP系统的年度Business Plan规划销量，按12个月分配
+    confused_with: [LX立项规划量]
+    related_metrics: [规划销量]
+
+  - term: LX立项规划量
+    definition: 来自产品型号/销售型号维表的36个月规划字段（HX00506~HX00541），从立项首月开始
+    confused_with: [BP规划量]
+    related_metrics: [规划销量]
+
+  - term: 管报数据
+    definition: ods.ods_mr_v_app_fm_imat_saledata，海信内部管理报表实际销量数据（含销量/收入/成本）
+    confused_with: [财务报表, GSS订单]
+    related_metrics: [实际销量, 实际销额]
+
+  - term: 企划命中率
+    definition: 见 metrics/ipm-hitrate.yaml。产品从立项到各阶段实际销量与首年规划量的比较
+    confused_with: [新品命中率, 低效型号占比]
+    related_metrics: [企划命中率]
+
+  - term: 在销型号
+    definition: 生命周期未进入"停止服务"且库存未清零的产品型号（或销售型号）
+    confused_with: [在产型号, 全量型号]
+    related_metrics: [在销型号数]
+
+  - term: 在产型号
+    definition: 从在销型号中筛选生命周期处于量产/小批量/停止生产阶段的型号（排除代工/委外）
+    confused_with: [在销型号]
+    related_metrics: [在产型号数]
+
+  - term: 应市项目
+    definition: PLM系统中项目类别为"应市"的研发项目，区别于预研/平台类项目
+    confused_with: [预研项目, 平台项目]
+    related_metrics: [项目开发周期, 项目按计划实施率]
+
+  - term: 奥维数据
+    definition: 第三方市场研究机构奥维云网提供的行业零售监测数据（含线上线下渠道）
+    confused_with: [管报数据, 内部销售数据]
+    related_metrics: [品牌占有率, 市场份额]
+
+  - term: is_project标记
+    definition: DWS明细表中标识该记录是否纳入ADS统计的字段，'N'=纳入统计，'Y'=不纳入（保留供追溯）
+    confused_with: [数据过滤, 删除标记]
+    related_metrics: []
+
+  - term: 模块组合
+    definition: 销售型号维表中HX00379='是'标识的组合套装产品，多数指标中需排除
+    confused_with: [套装产品, ZTAO]
+    related_metrics: []
+
+  - term: 能效机
+    definition: 视像科技（电视）中为满足能效标准而衍生的型号，统计时需转换回原型机
+    confused_with: [原型机]
+    related_metrics: []

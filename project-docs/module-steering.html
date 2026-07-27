@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steering 规则体系详解 - ETL开发助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #2c3e50; line-height: 1.6; }
+        .header { background: linear-gradient(135deg, #1a237e, #283593, #3949ab); color: white; padding: 40px; }
+        .header h1 { font-size: 2em; }
+        .header .nav { margin-top: 10px; }
+        .header .nav a { color: rgba(255,255,255,0.8); text-decoration: none; margin-right: 20px; }
+        .header .nav a:hover { color: white; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+        .card { background: white; border-radius: 12px; padding: 30px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .card h2 { color: #1a237e; margin-bottom: 16px; font-size: 1.4em; border-bottom: 2px solid #e8eaf6; padding-bottom: 10px; }
+        .card h3 { color: #283593; margin: 18px 0 10px; font-size: 1.1em; }
+        .flow-diagram { background: #263238; color: #a5d6a7; padding: 20px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 0.82em; overflow-x: auto; white-space: pre; line-height: 1.6; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; }
+        th { background: #e8eaf6; color: #1a237e; padding: 10px 12px; text-align: left; }
+        td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 500; }
+        .badge-green { background: #e8f5e9; color: #2e7d32; }
+        .badge-blue { background: #e3f2fd; color: #1565c0; }
+        .badge-orange { background: #fff3e0; color: #e65100; }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+        .pros, .cons { padding: 16px; border-radius: 8px; }
+        .pros { background: #e8f5e9; }
+        .cons { background: #fce4ec; }
+        .pros h4 { color: #2e7d32; }
+        .cons h4 { color: #c62828; }
+        ul { padding-left: 20px; }
+        li { margin: 6px 0; }
+        .improve { background: #fff8e1; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .improve h4 { color: #f57f17; margin-bottom: 8px; }
+        footer { text-align: center; padding: 30px; color: #999; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📐 Steering 规则体系详解</h1>
+        <div class="nav"><a href="index.html">← 返回总览</a> <a href="module-skills-hooks.html">Skills技能 →</a></div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h2>模块概述</h2>
+            <p>Steering规则体系是ETL开发助手的"大脑配置层"，通过18个Markdown文件定义Agent的行为边界、业务知识、对话流程和质量标准。规则按加载模式分为三级（always自动加载、fileMatch条件加载、manual手动引用），实现了上下文精准投放和token节省的平衡。</p>
+        </div>
+
+        <div class="card">
+            <h2>架构图 — 规则分层与依赖</h2>
+            <div class="flow-diagram">                        ┌─────────────────────────────────┐
+                        │  Always 层（每次自动加载，10个）  │
+                        │  约占 Token 预算的 60%           │
+                        └──────────────┬──────────────────┘
+                                       │
+              ┌────────────────────────┼────────────────────────┐
+              ▼                        ▼                        ▼
+┌──────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐
+│ 流程控制类        │  │ 知识库类              │  │ 行为约束类            │
+│                  │  │                      │  │                      │
+│ etl_dialogue_flow│  │ data_mapping         │  │ safety               │
+│ etl_analysis_    │  │ business_rules       │  │ language             │
+│   clarification  │  │ requirement_patterns │  │ output_safety        │
+│ edit_consistency │  │ product              │  │ edit_consistency     │
+└──────────────────┘  └──────────────────────┘  └──────────────────────┘
+
+              ┌─────────────────────────────────────────────────┐
+              │  FileMatch 层（SQL文件在上下文时加载，3个）        │
+              │  sql_rules + sql_templates + etl_sql_generator   │
+              └─────────────────────────────────────────────────┘
+
+              ┌─────────────────────────────────────────────────┐
+              │  Manual 层（手动或流程引导加载，4个）               │
+              │  etl_change_management + table_structures        │
+              │  + table_validation + project_audit              │
+              └─────────────────────────────────────────────────┘</div>
+        </div>
+
+        <div class="card">
+            <h2>核心设计 — 文件清单与职责</h2>
+            <h3>Always 模式（10个，每次自动加载）</h3>
+            <table>
+                <tr><th>文件</th><th>职责</th><th>关键内容</th></tr>
+                <tr><td>language.md</td><td>语言规范</td><td>强制中文交流</td></tr>
+                <tr><td>product.md</td><td>产品概述</td><td>核心功能、技术栈、调度参数、进化机制</td></tr>
+                <tr><td>data_mapping.md</td><td>数据映射</td><td>关键词→表映射、表间关联、核心SQL</td></tr>
+                <tr><td>business_rules.md</td><td>业务规则</td><td>10条公共规则PUB-001~010</td></tr>
+                <tr><td>safety.md</td><td>安全规则</td><td>修改前必须确认</td></tr>
+                <tr><td>etl_dialogue_flow.md</td><td>对话流程</td><td>v3.0状态机、链路A/B、门禁规则</td></tr>
+                <tr><td>etl_analysis_clarification.md</td><td>分析澄清</td><td>关键词提取、模糊度评分、澄清问题</td></tr>
+                <tr><td>edit_consistency.md</td><td>修改一致性</td><td>同类问题全量修复、闭环检查清单</td></tr>
+                <tr><td>output_safety.md</td><td>输出安全</td><td>分段输出规则、乱码恢复协议</td></tr>
+                <tr><td>requirement_patterns.md</td><td>模式库</td><td>9个已有模式PAT-001~009、自学习规则</td></tr>
+            </table>
+
+            <h3>FileMatch 模式（3个，SQL文件触发）</h3>
+            <table>
+                <tr><th>文件</th><th>触发条件</th><th>职责</th></tr>
+                <tr><td>sql_rules.md</td><td><code>**/*.sql</code></td><td>编码规范、Doris类型映射、命名规范</td></tr>
+                <tr><td>sql_templates.md</td><td><code>**/*.sql</code></td><td>17个实战SQL模板</td></tr>
+                <tr><td>etl_sql_generator.md</td><td><code>**/*.sql</code></td><td>SQL生成流程（模板选择→变量替换→输出）</td></tr>
+            </table>
+
+            <h3>Manual 模式（4个，手动引用）</h3>
+            <table>
+                <tr><th>文件</th><th>何时引用</th><th>职责</th></tr>
+                <tr><td>etl_change_management.md</td><td>链路B自动加载</td><td>6种变更类型、草稿规则、影响分析</td></tr>
+                <tr><td>table_structures.md</td><td>需要表语义时</td><td>表业务语义索引</td></tr>
+                <tr><td>table_validation.md</td><td>权限检查时</td><td>MCP验证+CSV权限</td></tr>
+                <tr><td>project_audit.md</td><td>审计时</td><td>7维度审计规则</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>核心设计决策</h2>
+            <h3>降级决策框架</h3>
+            <p>将规则从always降级到fileMatch/manual前，必须评估4个维度：</p>
+            <table>
+                <tr><th>维度</th><th>判定标准</th></tr>
+                <tr><td>调用频率</td><td>最近10次对话中实际引用次数（0次=低频，≥5次=高频）</td></tr>
+                <tr><td>遗忘风险</td><td>降级后用户忘记引用的概率</td></tr>
+                <tr><td>影响范围</td><td>缺失规则时可能导致的错误类型和严重度</td></tr>
+                <tr><td>预防方案</td><td>降级后如何防止遗忘</td></tr>
+            </table>
+            <p style="margin-top:10px"><strong>永不降级的规则</strong>：safety.md、language.md、etl_dialogue_flow.md</p>
+
+            <h3>自学习机制</h3>
+            <p><code>requirement_patterns.md</code> 支持自学习：每次需求完成后自动追加模式签名（PAT-0XX），包含触发关键词、涉及表、分层路径、应用规则等。超过20条时按"最后命中时间"判定inactive。</p>
+        </div>
+
+        <div class="card">
+            <h2>优缺点分析</h2>
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>✅ 优势</h4>
+                    <ul>
+                        <li>三级加载模式精准控制token消耗</li>
+                        <li>规则间依赖关系清晰（README.md有依赖图）</li>
+                        <li>降级决策有框架约束，防止随意调整</li>
+                        <li>自学习模式库持续积累领域知识</li>
+                        <li>安全规则不可降级，保障操作安全</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>❌ 局限</h4>
+                    <ul>
+                        <li>always层10个文件仍占用较大token预算</li>
+                        <li>规则间可能存在微妙冲突（如output_safety的分段 vs 用户急需快速输出）</li>
+                        <li>手动引用的manual文件依赖用户记忆或Agent提醒</li>
+                        <li>规则文件增多后维护成本上升</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>待改进项</h2>
+            <div class="improve">
+                <h4>🔧 建议</h4>
+                <ul>
+                    <li>P1：探索规则动态加载机制（根据当前对话主题只加载相关规则子集）</li>
+                    <li>P1：增加规则冲突检测工具（自动发现规则间矛盾）</li>
+                    <li>P2：规则版本管理（支持回滚到历史版本）</li>
+                    <li>P2：规则使用率统计（数据驱动的降级决策）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <footer>ETL开发助手 · Steering规则体系详解 · 生成日期：2026-06-11</footer>
+</body>
+</html>

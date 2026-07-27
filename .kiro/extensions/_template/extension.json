@@ -1,0 +1,27 @@
+{
+  "name": "{team_id}",
+  "display_name": "{团队能力包展示名}",
+  "version": "0.1.0",
+  "team": "{团队名}",
+  "maintainers": ["{负责人1}", "{负责人2}"],
+  "last_updated": "YYYY-MM-DD",
+
+  "scope": {
+    "keywords": ["{业务域关键词1}", "{关键词2}"],
+    "project_patterns": ["{prefix}_*"]
+  },
+
+  "capabilities": {
+    "vocabulary":       { "file": "vocabulary.md",       "used_in": ["phase1"], "description": "术语消歧" },
+    "word_roots":       { "file": "word-roots.md",       "used_in": ["phase3", "phase4"], "merge_strategy": "append_to_base", "description": "字段命名词根" },
+    "patterns":         { "dir":  "patterns/",           "used_in": ["phase2", "phase3", "phase4"], "description": "设计与加工模式" },
+    "gates":            { "file": "gates/extra-checks.md", "used_in": ["all_gates"], "merge_strategy": "append", "description": "闸门额外检查" },
+    "prd_guide":        { "file": "prd-guide/extra-collection-items.md", "used_in": ["phase1"], "description": "PRD额外采集项" },
+
+    "metrics":          { "dir":  "metrics/",            "used_in": ["phase1", "phase2", "phase3"], "description": "指标语义层" },
+    "catalog_cache":    { "file": "catalog.yaml",        "used_in": ["phase1", "phase2", "phase3"], "description": "表目录缓存" },
+    "source_systems":   { "file": "source-systems.yaml", "used_in": ["phase1", "phase2"], "description": "源系统经验缓存" },
+    "business_rules":   { "dir":  "business-rules/",     "used_in": ["phase1", "phase3", "phase4"], "description": "业务规则" },
+    "cases":            { "dir":  "cases/",              "used_in": ["phase1", "phase2", "phase3"], "description": "项目案例库" }
+  }
+}

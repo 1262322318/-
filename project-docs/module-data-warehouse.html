@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据仓库架构详解 - ETL开发助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #2c3e50; line-height: 1.6; }
+        .header { background: linear-gradient(135deg, #1a237e, #283593, #3949ab); color: white; padding: 40px; }
+        .header h1 { font-size: 2em; }
+        .header .nav { margin-top: 10px; }
+        .header .nav a { color: rgba(255,255,255,0.8); text-decoration: none; margin-right: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+        .card { background: white; border-radius: 12px; padding: 30px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .card h2 { color: #1a237e; margin-bottom: 16px; font-size: 1.4em; border-bottom: 2px solid #e8eaf6; padding-bottom: 10px; }
+        .card h3 { color: #283593; margin: 18px 0 10px; font-size: 1.1em; }
+        .flow-diagram { background: #263238; color: #a5d6a7; padding: 20px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 0.82em; overflow-x: auto; white-space: pre; line-height: 1.6; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; }
+        th { background: #e8eaf6; color: #1a237e; padding: 10px 12px; text-align: left; }
+        td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+        .pros, .cons { padding: 16px; border-radius: 8px; }
+        .pros { background: #e8f5e9; }
+        .cons { background: #fce4ec; }
+        .pros h4 { color: #2e7d32; }
+        .cons h4 { color: #c62828; }
+        ul { padding-left: 20px; }
+        li { margin: 6px 0; }
+        .improve { background: #fff8e1; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .improve h4 { color: #f57f17; margin-bottom: 8px; }
+        .layer-box { border: 2px solid #c5cae9; border-radius: 8px; padding: 16px; margin: 12px 0; }
+        .layer-box h4 { color: #1a237e; margin-bottom: 8px; }
+        footer { text-align: center; padding: 30px; color: #999; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏛️ 数据仓库架构详解</h1>
+        <div class="nav"><a href="index.html">← 返回总览</a> <a href="module-sql-quality.html">SQL质量 →</a></div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h2>模块概述</h2>
+            <p>数据仓库采用经典的Kimball维度建模方法论，构建ODS→DWD→DWS→ADS→DIM五层架构。基于Apache Doris 2.1+ MPP引擎，面向海信集团产品效率管理域（IPM），覆盖冰箱、冷柜、洗衣机、空调、日立、视像科技、厨电、激光共8大事业部16条产品线。</p>
+        </div>
+
+        <div class="card">
+            <h2>架构图 — 五层分层模型</h2>
+            <div class="flow-diagram">┌─────────────────────────────────────────────────────────────────┐
+│                        数据消费层                                  │
+│  BI报表（信数平台）  │  数据分析  │  监控告警                       │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │ 读取
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  ADS 应用层  │ 面向报表/看板 │ 汇总指标 │ 维度交叉               │
+│  ads.ads_ipd_ipm_*_result_dd                                    │
+│  粒度：事业部×产品线×内外销×月                                     │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │ 聚合 (SUM/COUNT DISTINCT/AVG)
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  DWS 汇总层  │ 面向分析 │ 明细保留 │ is_project标记              │
+│  dws.dws_ipd_ipm_*_detail_dd                                   │
+│  粒度：型号级（一行=一个产品型号/销售型号×月）                      │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │ 关联+计算
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  DWD 明细层  │ 清洗+整合 │ 多源合一 │ 标准化字段                  │
+│  dwd.dwd_ipd_ipm_bp_lx_model_mid_dd (BP/LX规划量拆月)          │
+│  粒度：型号×月                                                   │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │ 清洗
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  ODS 操作层  │ 原始数据 │ 全量/增量同步 │ 保持源系统结构          │
+│  ods.ods_mr_v_app_fm_imat_saledata (管报销量)                   │
+│  ods.odsgss_im_* (GSS外销订单)                                  │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │ 同步
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  DIM 维度层（贯穿全链路）                                         │
+│  dim.dim_ipd_productmodel_dd        (白电产品型号)               │
+│  dim.dim_ipd_salemodel_dd           (白电销售型号)               │
+│  dim.dim_ipd_jtplm_his_productmodel_dd (视像产品型号)            │
+│  dim.dim_ipd_productplatform_dd     (产品平台)                   │
+│  dw.dim_product_base_info_dd        (MDG桥梁表)                  │
+└─────────────────────────────────────────────────────────────────┘</div>
+        </div>
+
+        <div class="card">
+            <h2>核心设计</h2>
+            <h3>1. 各层职责与关键表</h3>
+            <div class="layer-box">
+                <h4>ODS层 — 原始数据</h4>
+                <table>
+                    <tr><th>表</th><th>用途</th><th>更新方式</th></tr>
+                    <tr><td>ods.ods_mr_v_app_fm_imat_saledata</td><td>管报实际销量（内销+GSS到货确认）</td><td>每月全量</td></tr>
+                    <tr><td>ods.odsgss_im_sale_prod_*</td><td>GSS空调排产单（头+行+开发行）</td><td>增量</td></tr>
+                    <tr><td>ods.odsgss_im_order_agreement</td><td>冰冷洗外销协议订单</td><td>增量</td></tr>
+                    <tr><td>ods.odsgss_im_sales_order_title</td><td>电视外销订单</td><td>增量</td></tr>
+                </table>
+            </div>
+            <div class="layer-box">
+                <h4>DWD层 — 清洗整合</h4>
+                <table>
+                    <tr><th>表</th><th>用途</th><th>核心逻辑</th></tr>
+                    <tr><td>dwd.dwd_ipd_ipm_bp_lx_model_mid_dd</td><td>BP/LX规划量分月中间表</td><td>36个月规划字段行转列（SPLIT+LATERAL VIEW）</td></tr>
+                </table>
+            </div>
+            <div class="layer-box">
+                <h4>DWS层 — 汇总分析（核心层）</h4>
+                <table>
+                    <tr><th>表</th><th>指标</th><th>粒度</th></tr>
+                    <tr><td>dws_ipd_ipm_dxmodel_detail_dd</td><td>低效型号+新品命中率</td><td>型号×月</td></tr>
+                    <tr><td>dws_ipd_ipm_sale_model_detail_dd</td><td>在销型号数</td><td>型号×月×日</td></tr>
+                    <tr><td>dws_ipd_ipm_zcmodel_detail_dd</td><td>在产型号数</td><td>型号×月×日</td></tr>
+                    <tr><td>dws_ipd_ipm_platform_detail_dd</td><td>产品平台数</td><td>平台×月</td></tr>
+                    <tr><td>dws_ipd_ipm_dxhxl_detail_dd</td><td>单型号销量</td><td>型号×月</td></tr>
+                    <tr><td>dws_ipd_ipm_qihua_hit_detail_dd</td><td>企划命中率</td><td>销售型号×月</td></tr>
+                </table>
+            </div>
+
+            <h3>2. 核心设计模式</h3>
+            <table>
+                <tr><th>模式</th><th>说明</th><th>应用场景</th></tr>
+                <tr><td>DELETE+INSERT幂等</td><td>先删当月数据再插入，保证重跑安全</td><td>所有DWS/ADS脚本</td></tr>
+                <tr><td>is_project标记</td><td>全量保留+标记筛选，不丢数据</td><td>所有DWS明细表</td></tr>
+                <tr><td>test库中间表</td><td>DROP IF EXISTS + CTAS，替代临时表</td><td>多步计算场景</td></tr>
+                <tr><td>MDG桥梁关联</td><td>管报→MDG→型号名/销售型号编码</td><td>所有涉及销量的脚本</td></tr>
+                <tr><td>BP/LX规划量选择</td><td>首月在本年用LX，否则用BP</td><td>低效型号、新品命中率</td></tr>
+            </table>
+
+            <h3>3. 产品线管理口径</h3>
+            <table>
+                <tr><th>产品线</th><th>管理口径</th><th>实际销量来源</th></tr>
+                <tr><td>冰箱/冷柜/洗衣机</td><td>产品型号口径（PG00061）</td><td>内销:管报 / 外销:GSS协议</td></tr>
+                <tr><td>中央空调/日立</td><td>销售型号编码口径（PG00068）</td><td>内销:管报 / 外销:GSS排产</td></tr>
+                <tr><td>平板电视</td><td>产品型号口径（title）</td><td>内销:管报 / 外销:GSS订单</td></tr>
+                <tr><td>厨电</td><td>产品型号口径（PG00061）</td><td>内销:管报 / 外销:GSS协议</td></tr>
+                <tr><td>激光</td><td>产品型号口径（PG00061）</td><td>内销:管报 / 外销:GSS订单</td></tr>
+                <tr><td>家用空调</td><td>产品型号口径（PG00061）</td><td>内销:管报 / 外销:GSS排产</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>数据流转图 — 典型指标链路</h2>
+            <div class="flow-diagram">以"低效型号占比"为例：
+
+源数据：
+  dim.dim_ipd_productmodel_dd (产品型号属性) ─┐
+  dim.dim_ipd_salemodel_dd (销售型号属性)  ───┤
+  ods.ods_mr_v_app_fm_imat_saledata (管报) ───┼─→ DWS层计算
+  dwd.dwd_ipd_ipm_bp_lx_model_mid_dd (规划) ─┤
+  dw.dim_product_base_info_dd (MDG桥梁) ──────┘
+
+DWS层计算（dws_ipd_ipm_dxmodel_detail_dd）：
+  1. 产品型号CTE → 产品线分类 + 保护期初判
+  2. 管报CTE → MDG关联 → 按型号汇总实际销量
+  3. 规划量CTE → BP/LX选择 → 按型号汇总规划量
+  4. 最终SELECT → 完成率 = 实际/规划 → is_dx判定
+
+ADS层汇总（ads_ipd_ipm_dxmodel_result_dd）：
+  5. 从DWS取 is_project='N' 的数据
+  6. COUNT(is_dx='Y') / COUNT(*) = 低效占比
+  7. 按 事业部×产品线×内外销 维度交叉输出</div>
+        </div>
+
+        <div class="card">
+            <h2>优缺点分析</h2>
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>✅ 优势</h4>
+                    <ul>
+                        <li>五层架构职责清晰，各层可独立演进</li>
+                        <li>DWS全量保留+标记筛选，支持灵活口径切换</li>
+                        <li>DELETE+INSERT幂等，脚本可安全重跑</li>
+                        <li>产品线分类规则统一管理（PUB-003/006），一处修改全局生效</li>
+                        <li>MDG桥梁表解耦了管报和型号系统的直接依赖</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>❌ 局限</h4>
+                    <ul>
+                        <li>DELETE+INSERT模式在大数据量时性能不如UPSERT</li>
+                        <li>test库中间表占用集群资源，无自动清理机制</li>
+                        <li>跨产品线SQL高度相似但未抽象为通用框架</li>
+                        <li>没有数据质量自动监控（只有手动验证SQL）</li>
+                        <li>历史数据回刷需手动调整参数重跑</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>待改进项</h2>
+            <div class="improve">
+                <h4>🔧 建议</h4>
+                <ul>
+                    <li>P1：引入数据质量自动监控（源目标记录数对比、空值率检测）</li>
+                    <li>P1：test库中间表增加TTL自动清理机制</li>
+                    <li>P2：探索产品线SQL模板化（减少重复代码）</li>
+                    <li>P2：增加SLA监控（脚本执行时长告警）</li>
+                    <li>P3：考虑引入物化视图优化高频ADS查询</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <footer>ETL开发助手 · 数据仓库架构详解 · 生成日期：2026-06-11</footer>
+</body>
+</html>

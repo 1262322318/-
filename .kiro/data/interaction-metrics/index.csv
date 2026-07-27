@@ -1,0 +1,4 @@
+requirement_id,date,operator,link_type,total_rounds,total_duration_min,input_completeness,primary_cause,bottleneck_stages
+009-design-change-stats,2026-05-18,lvxuebin,A,11,55,7,clean,A2
+004-005-chudian,2026-05-20,lvxuebin,B,2,3,12,clean,
+002-dx-model-rate-chudian,2026-05-20,lvxuebin,B,3,5,11,clean,

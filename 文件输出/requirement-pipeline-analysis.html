@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETL助手 - 需求处理链路详解</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #333; line-height: 1.7; }
+        .header { background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 50%, #e53935 100%); color: white; padding: 50px 40px; text-align: center; }
+        .header h1 { font-size: 2.2em; margin-bottom: 8px; }
+        .header p { font-size: 1.1em; opacity: 0.9; }
+        .header .version { font-size: 0.85em; opacity: 0.7; margin-top: 6px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+        .section { background: white; border-radius: 10px; padding: 28px; margin-bottom: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .section h2 { color: #b71c1c; font-size: 1.5em; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #ffcdd2; }
+        .section h3 { color: #c62828; font-size: 1.15em; margin: 18px 0 10px; }
+        .section h4 { color: #d32f2f; margin: 12px 0 6px; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; }
+        th, td { padding: 9px 11px; text-align: left; border: 1px solid #e0e0e0; }
+        th { background: #ffebee; color: #b71c1c; font-weight: 600; }
+        tr:nth-child(even) { background: #fafafa; }
+        .flow { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 18px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 0.82em; white-space: pre-wrap; overflow-x: auto; }
+        .info { background: #e3f2fd; border-left: 4px solid #1565c0; padding: 14px 18px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+        .info strong { color: #0d47a1; }
+        .solution { background: #e8f5e9; border-left: 4px solid #4caf50; padding: 14px 18px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+        .solution strong { color: #2e7d32; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75em; font-weight: 500; }
+        .badge-ok { background: #c8e6c9; color: #2e7d32; }
+        .badge-new { background: #e3f2fd; color: #1565c0; }
+        .step-num { display: inline-block; width: 28px; height: 28px; background: #b71c1c; color: white; border-radius: 50%; text-align: center; line-height: 28px; font-weight: bold; font-size: 0.85em; margin-right: 8px; }
+        .toc { background: #fce4ec; border-radius: 8px; padding: 18px; margin-bottom: 24px; }
+        .toc a { color: #c62828; text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .toc ul { list-style: none; padding: 0; }
+        .toc li { padding: 3px 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
+        .compare-box { border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; }
+        .compare-box.linkA { background: #e3f2fd; border-color: #1565c0; }
+        .compare-box.linkB { background: #fff3e0; border-color: #ff9800; }
+        .compare-box h4 { margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>需求处理链路详解</h1>
+    <p>分叉链路v2.0 &bull; 新建链路A + 变更链路B &bull; 阶段门禁</p>
+    <div class="version">v2.4.0 | 2026-05-15</div>
+</div>
+
+<div class="container">
+
+<div class="toc">
+    <strong>目录</strong>
+    <ul>
+        <li><a href="#overview">一、链路全景（分叉链路v2.0）</a></li>
+        <li><a href="#classify">二、需求分类判定（状态2.5）</a></li>
+        <li><a href="#linkA">三、链路A：新建需求流程（A1~A7）</a></li>
+        <li><a href="#linkB">四、链路B：变更需求流程（B1~B6）</a></li>
+        <li><a href="#rules">五、规则文件调用关系</a></li>
+        <li><a href="#examples">六、典型场景走查</a></li>
+    </ul>
+</div>
+
+<!-- 一、链路全景 -->
+<div class="section" id="overview">
+    <h2>一、链路全景（分叉链路v2.0）</h2>
+    <div class="info">
+        <strong>核心设计：</strong>在需求接收后增加"需求分类判定"（状态2.5），将需求分流到"新建链路A"或"变更链路B"，每条链路有独立的澄清维度和处理步骤。每一步必须获得用户明确确认后才能进入下一阶段。
+    </div>
+    <div class="flow">
+用户输入需求描述
+    │
+    ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│ 状态1：初始状态                                                      │
+│ 行为：简短问候 + 请求用户描述需求                                     │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│ 状态2：需求接收（关键词提取）                                        │
+│ 规则文件：etl_analysis.md + requirement_patterns.md                   │
+│ 行为：提取关键词（业务词/技术词/时间词/指标词）                       │
+│       识别是否提及已有需求ID或指标名称                                 │
+│       识别动词类型（新建类/变更类/修复类）                             │
+└────────────────────────────────┬────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│ 状态2.5：需求分类判定 【核心分叉点】                                 │
+│ 规则文件：requirement_patterns.md                                     │
+│ 行为：按7条优先级规则判定需求类型                                     │
+│       向用户确认分类结果                                              │
+└───────────┬───────────────────────────────────┬─────────────────────┘
+            │ A. 全新需求                        │ B. 变更需求
+            ▼                                    ▼
+┌───────────────────────┐          ┌───────────────────────────────────┐
+│ 链路A：新建需求流程    │          │ 链路B：变更需求流程               │
+│ A1 依赖识别           │          │ B1 定位已有资产                   │
+│ A2 需求澄清           │          │ B2 变更澄清                      │
+│ A3 数据表匹配          │          │ B3 影响分析                       │
+│ A4 分层识别与架构设计  │          │ B4 执行修改                       │
+│ A5 需求确认（最终汇总）│          │ B5 文档更新                       │
+│ A6 SQL生成             │          │ B6 下游同步（可选）               │
+│ A7 文档生成+经验沉淀   │          │                                   │
+└───────────────────────┘          └───────────────────────────────────┘
+    </div>
+</div>
+
+<!-- 二、需求分类判定 -->
+<div class="section" id="classify">
+    <h2>二、需求分类判定（状态2.5）</h2>
+    <p>这是分叉链路的核心节点，通过以下7条优先级规则判定需求类型：</p>
+    
+    <table>
+        <tr><th>优先级</th><th>判定条件</th><th>分类结果</th><th>进入链路</th></tr>
+        <tr><td>1</td><td>提及已有需求ID（如"004"、"002"）+ 变更动词</td><td>变更需求</td><td>链路B</td></tr>
+        <tr><td>2</td><td>提及已有指标名称 + 变更动词（修改/加/改/删/调整/扩展）</td><td>变更需求</td><td>链路B</td></tr>
+        <tr><td>3</td><td>包含Bug/错误/问题/不对/修复 + 提及已有指标</td><td>变更需求（Bug修复）</td><td>链路B</td></tr>
+        <tr><td>4</td><td>包含"新增/新建/创建/开发" + 未命中任何已有模式</td><td>全新需求（独立型）</td><td>链路A</td></tr>
+        <tr><td>5</td><td>包含"新增" + 命中已有模式 + "基于/参考/类似"</td><td>全新需求（依赖型）</td><td>链路A</td></tr>
+        <tr><td>6</td><td>命中已有模式（≥60%）+ 无变更动词</td><td>全新需求（相似型）</td><td>链路A</td></tr>
+        <tr><td>7</td><td>无法判定</td><td>询问用户</td><td>等待确认</td></tr>
+    </table>
+
+    <h3>动词库</h3>
+    <div class="compare">
+        <div class="compare-box linkA">
+            <h4>新建动词库</h4>
+            <p>新增（指标/需求）、新建、创建、开发、做一个、统计一个</p>
+        </div>
+        <div class="compare-box linkB">
+            <h4>变更动词库</h4>
+            <p>修改、改、调整、优化、加、新增（字段/逻辑/产品线）、删除、去掉、修复、修正、扩展、补充、完善、更新</p>
+        </div>
+    </div>
+
+    <h3>判定后输出模板</h3>
+    <div class="flow">
+【需求分类判定】
+
+我判断这是一个 [全新需求/变更需求]：
+- 类型：[独立型新指标 / 依赖型新指标 / 相似型新指标 / 逻辑变更 / 产品线扩展 / 字段新增 / Bug修复 / 规则变更]
+- 关联需求：[无 / 需求ID]
+- 判定依据：[说明为什么这样判定]
+
+请确认是否正确？如果不对请告诉我正确的类型。
+    </div>
+</div>
+
+<!-- 三、链路A -->
+<div class="section" id="linkA">
+    <h2>三、链路A：新建需求流程（A1~A7）</h2>
+
+    <h3><span class="step-num">A1</span>依赖识别</h3>
+    <table>
+        <tr><th>项目</th><th>内容</th></tr>
+        <tr><td>触发条件</td><td>需求分类为"全新需求"且用户已确认</td></tr>
+        <tr><td>规则文件</td><td>requirement_patterns.md（依赖字段）</td></tr>
+        <tr><td>Agent行为</td><td>检查新需求是否依赖已有DWS/ADS表；识别上游需求和上游表；识别参考需求</td></tr>
+        <tr><td>输出</td><td>依赖类型（独立/依赖型/相似型）+ 上游需求 + 参考需求</td></tr>
+    </table>
+
+    <h3><span class="step-num">A2</span>需求澄清（新建专属）</h3>
+    <table>
+        <tr><th>需求子类型</th><th>澄清方式</th><th>必问项</th></tr>
+        <tr><td>独立型</td><td>完整澄清（7项）</td><td>指标名称/计算公式/覆盖产品线/管理口径/时间粒度/数据来源/特殊规则</td></tr>
+        <tr><td>依赖型</td><td>差异澄清（3项）</td><td>与上游的关系/筛选聚合条件/新增的业务规则</td></tr>
+        <tr><td>相似型</td><td>差异澄清（2项）</td><td>与参考需求的差异/新增的维度或指标</td></tr>
+    </table>
+    <div class="info">
+        <strong>交互规则：</strong>每次最多问3个问题，每个问题必须等用户回答后再问下一批，用户回答后立即总结确认。
+    </div>
+
+    <h3><span class="step-num">A3</span>数据表匹配</h3>
+    <table>
+        <tr><th>项目</th><th>内容</th></tr>
+        <tr><td>规则文件</td><td>data_mapping.md + etl_analysis.md</td></tr>
+        <tr><td>独立型</td><td>完整匹配（主表+维度表+JOIN）</td></tr>
+        <tr><td>依赖型</td><td>从上游表推导（上游DWS表作为源）</td></tr>
+        <tr><td>相似型</td><td>参考历史需求的表组合</td></tr>
+    </table>
+
+    <h3><span class="step-num">A4</span>分层识别与架构设计</h3>
+    <table>
+        <tr><th>项目</th><th>内容</th></tr>
+        <tr><td>规则文件</td><td>etl_analysis.md（分层识别部分）</td></tr>
+        <tr><td>Agent行为</td><td>确定目标分层（DWD/DWS/ADS）、设计数据流转路径、确定是否需要建新表</td></tr>
+    </table>
+
+    <h3><span class="step-num">A5</span>需求确认（最终汇总）</h3>
+    <div class="flow">
+【需求分析汇总 — 最终确认】
+
+1. 需求类型：[全新需求 - 独立型/依赖型/相似型]
+2. 指标名称：[名称]
+3. 业务含义：[一句话描述]
+4. 计算公式：[公式]
+5. 覆盖产品线：[列表]
+6. 数据流转：[路径]
+7. 涉及表：[源表→目标表]
+8. 应用规则：[PUB-XXX列表]
+9. 需要新建的表：[列表]
+
+确认无误后我将开始生成SQL脚本和文档。
+    </div>
+
+    <h3><span class="step-num">A6</span>SQL生成</h3>
+    <table>
+        <tr><th>项目</th><th>内容</th></tr>
+        <tr><td>规则文件</td><td>sql_templates.md + etl_sql_generator.md + sql_rules.md + business_rules.md</td></tr>
+        <tr><td>Agent行为</td><td>如需建表生成create_tables.sql → 生成DWS层SQL → 生成ADS层SQL → 生成validate_data_quality.sql</td></tr>
+        <tr><td>输出位置</td><td>requirements/{ID}/sql_scripts/</td></tr>
+    </table>
+
+    <h3><span class="step-num">A7</span>文档生成 + 经验沉淀</h3>
+    <table>
+        <tr><th>项目</th><th>内容</th></tr>
+        <tr><td>文档生成</td><td>requirement.md / tables.txt / lineage.md / permission_check.md / changelog.md</td></tr>
+        <tr><td>经验沉淀</td><td>提取模式签名追加到 requirement_patterns.md（自学习）</td></tr>
+    </table>
+</div>
+
+<!-- 四、链路B -->
+<div class="section" id="linkB">
+    <h2>四、链路B：变更需求流程（B1~B6）</h2>
+
+    <h3><span class="step-num">B1</span>定位已有资产</h3>
+    <table>
+        <tr><th>项目</th><th>内容</th></tr>
+        <tr><td>Agent行为</td><td>读取对应需求的requirement.md和SQL脚本，向用户展示当前逻辑概要</td></tr>
+        <tr><td>输出</td><td>需求ID + 涉及SQL脚本列表 + 当前逻辑概要</td></tr>
+    </table>
+
+    <h3><span class="step-num">B2</span>变更澄清</h3>
+    <p>根据变更类型（6种）使用不同的澄清维度：</p>
+    <table>
+        <tr><th>变更类型</th><th>代码</th><th>必问项</th></tr>
+        <tr><td>逻辑变更</td><td>CHG-01</td><td>修改哪个计算逻辑？新的逻辑是什么？是否影响ADS层？</td></tr>
+        <tr><td>产品线扩展</td><td>CHG-02</td><td>新增哪条产品线？分类规则？数据来源？管理口径？特殊剔除？</td></tr>
+        <tr><td>字段新增</td><td>CHG-03</td><td>新增什么字段？数据类型？计算逻辑？是否需要ALTER TABLE？</td></tr>
+        <tr><td>Bug修复</td><td>CHG-04</td><td>错误现象？期望正确结果？错误数据样例？</td></tr>
+        <tr><td>规则变更</td><td>CHG-05</td><td>哪条公共规则变更？新规则内容？影响哪些需求？</td></tr>
+        <tr><td>口径调整</td><td>CHG-06</td><td>当前口径？目标口径？影响的产品线？历史数据处理？</td></tr>
+    </table>
+
+    <h3><span class="step-num">B3</span>影响分析</h3>
+    <table>
+        <tr><th>项目</th><th>内容</th></tr>
+        <tr><td>规则文件</td><td>requirement_patterns.md（依赖字段）</td></tr>
+        <tr><td>Agent行为</td><td>定位SQL中的具体修改位置 → 检查下游需求是否受影响 → 评估是否需要修改表结构</td></tr>
+    </table>
+    <h4>下游依赖链</h4>
+    <div class="flow">
+004 在销型号数
+  → 005 在产型号数（依赖004的DWS表）
+  → 007 单型号销量（依赖004的型号数作为分母）
+
+005 在产型号数
+  → 006 平台数（依赖005的在产型号关联平台）
+
+006 平台数
+  → 008 单平台销量（依赖006的平台数作为分母）
+
+007 单型号销量
+  → 008 单平台销量（依赖007的销量数据）
+    </div>
+    <h4>影响等级判定</h4>
+    <table>
+        <tr><th>等级</th><th>条件</th><th>处理方式</th></tr>
+        <tr><td>高</td><td>修改了DWS表的字段定义或核心计算逻辑</td><td>必须同步修改所有下游</td></tr>
+        <tr><td>中</td><td>修改了筛选条件但不影响输出字段</td><td>提示用户确认是否影响下游</td></tr>
+        <tr><td>低</td><td>只修改了注释/格式/非核心字段</td><td>无需同步</td></tr>
+    </table>
+
+    <h3><span class="step-num">B4</span>执行修改</h3>
+    <table>
+        <tr><th>项目</th><th>内容</th></tr>
+        <tr><td>修改原则</td><td>精准修改（str_replace定位），保留注释，幂等性，向后兼容</td></tr>
+        <tr><td>注释规范</td><td><code>-- [CHANGE] 2026-05-15 变更说明（变更类型：CHG-XX）</code></td></tr>
+    </table>
+
+    <h3><span class="step-num">B5</span>文档更新</h3>
+    <table>
+        <tr><th>项目</th><th>内容</th></tr>
+        <tr><td>Agent行为</td><td>更新changelog.md（记录变更）+ 更新requirement.md（如业务规则变化）+ lineage.md由Hook自动触发</td></tr>
+    </table>
+
+    <h3><span class="step-num">B6</span>下游同步（可选）</h3>
+    <table>
+        <tr><th>项目</th><th>内容</th></tr>
+        <tr><td>触发条件</td><td>B3中识别到有下游影响</td></tr>
+        <tr><td>Agent行为</td><td>询问用户是否需要同步修改下游 → 如需要：对每个受影响的下游重复B4-B5</td></tr>
+    </table>
+</div>
+
+<!-- 五、规则文件调用关系 -->
+<div class="section" id="rules">
+    <h2>五、规则文件调用关系</h2>
+    <table>
+        <tr><th>步骤</th><th>调用的规则文件</th><th>用途</th></tr>
+        <tr><td>状态2 需求接收</td><td>etl_analysis.md</td><td>关键词提取（业务词/技术词/时间词/指标词权重表）</td></tr>
+        <tr><td>状态2.5 分类判定</td><td>requirement_patterns.md</td><td>7个模式的触发关键词比对 + 依赖关系</td></tr>
+        <tr><td>A1 依赖识别</td><td>requirement_patterns.md</td><td>依赖字段查找上游需求</td></tr>
+        <tr><td>A2 需求澄清</td><td>etl_clarification.md</td><td>模糊度评分 + 问题模板</td></tr>
+        <tr><td>A3 表匹配</td><td>data_mapping.md + etl_analysis.md</td><td>关键词→表映射 + JOIN关系</td></tr>
+        <tr><td>A4 分层识别</td><td>etl_analysis.md</td><td>关键词→分层映射规则</td></tr>
+        <tr><td>A6 SQL生成</td><td>sql_templates.md + etl_sql_generator.md + sql_rules.md + business_rules.md</td><td>模板选择 + 变量替换 + 规范 + 规则应用</td></tr>
+        <tr><td>B1 定位资产</td><td>（直接读取需求目录文件）</td><td>requirement.md + SQL脚本</td></tr>
+        <tr><td>B2 变更澄清</td><td>etl_change_management.md</td><td>6种变更类型的专属澄清维度</td></tr>
+        <tr><td>B3 影响分析</td><td>requirement_patterns.md</td><td>依赖字段 → 下游需求识别</td></tr>
+    </table>
+</div>
+
+<!-- 六、典型场景走查 -->
+<div class="section" id="examples">
+    <h2>六、典型场景走查</h2>
+
+    <h3>场景1：全新独立指标</h3>
+    <div class="info">
+        <strong>用户输入：</strong>"新增一个中高端型号数占比指标"
+    </div>
+    <table>
+        <tr><th>步骤</th><th>Agent行为</th></tr>
+        <tr><td>状态2</td><td>提取关键词：中高端、型号数、占比</td></tr>
+        <tr><td>状态2.5</td><td>包含"新增" + 未命中已有模式 → 全新需求（独立型）</td></tr>
+        <tr><td>A1</td><td>依赖识别：无上游依赖（独立型）</td></tr>
+        <tr><td>A2</td><td>完整澄清7项：指标含义？计算公式？覆盖产品线？...</td></tr>
+        <tr><td>A3</td><td>匹配表：dim_ipd_productmodel_dd + ods管报 + MDG</td></tr>
+        <tr><td>A4</td><td>分层：DWS → ADS</td></tr>
+        <tr><td>A5</td><td>汇总确认</td></tr>
+        <tr><td>A6</td><td>生成SQL（建表+DWS+ADS+validate）</td></tr>
+        <tr><td>A7</td><td>生成文档 + 追加PAT-008到模式库</td></tr>
+    </table>
+
+    <h3>场景2：依赖型新指标</h3>
+    <div class="info">
+        <strong>用户输入：</strong>"基于在销型号数做一个在产型号数"
+    </div>
+    <table>
+        <tr><th>步骤</th><th>Agent行为</th></tr>
+        <tr><td>状态2</td><td>提取关键词：在销、型号数、在产</td></tr>
+        <tr><td>状态2.5</td><td>包含"新增" + 命中PAT-003 + "基于" → 全新需求（依赖型）</td></tr>
+        <tr><td>A1</td><td>依赖识别：上游=004在销型号数（dws_ipd_ipm_sale_model_detail_dd）</td></tr>
+        <tr><td>A2</td><td>差异澄清3项：与上游的关系？筛选条件？新增规则？</td></tr>
+        <tr><td>A3</td><td>从上游表推导（dws_sale_model_detail作为源）</td></tr>
+        <tr><td>A4~A7</td><td>（同链路A后续步骤）</td></tr>
+    </table>
+
+    <h3>场景3：变更需求（逻辑变更）</h3>
+    <div class="info">
+        <strong>用户输入：</strong>"004在销型号数加个出点逻辑"
+    </div>
+    <table>
+        <tr><th>步骤</th><th>Agent行为</th></tr>
+        <tr><td>状态2</td><td>提取关键词：在销、型号数、出点、004</td></tr>
+        <tr><td>状态2.5</td><td>提及"004" + "加" → 变更需求（字段新增CHG-03）</td></tr>
+        <tr><td>B1</td><td>读取 004/requirement.md + 004/sql_scripts/，展示当前逻辑</td></tr>
+        <tr><td>B2</td><td>变更澄清：出点逻辑的具体规则？字段类型？影响哪些INSERT？</td></tr>
+        <tr><td>B3</td><td>影响分析：004下游有005/007，评估是否影响</td></tr>
+        <tr><td>B4</td><td>在已有SQL中定位并修改（str_replace精准修改）</td></tr>
+        <tr><td>B5</td><td>更新changelog.md + requirement.md</td></tr>
+        <tr><td>B6</td><td>提示用户：005/007是否需要同步修改？</td></tr>
+    </table>
+
+    <h3>场景4：Bug修复</h3>
+    <div class="info">
+        <strong>用户输入：</strong>"冰箱外销的CKD剔除逻辑有问题"
+    </div>
+    <table>
+        <tr><th>步骤</th><th>Agent行为</th></tr>
+        <tr><td>状态2</td><td>提取关键词：冰箱、外销、CKD、剔除、问题</td></tr>
+        <tr><td>状态2.5</td><td>包含"问题" + 涉及已有指标逻辑 → 变更需求（Bug修复CHG-04）</td></tr>
+        <tr><td>B1</td><td>定位涉及冰箱外销CKD的SQL（可能在004/002等多个需求中）</td></tr>
+        <tr><td>B2</td><td>Bug澄清：错误现象？期望正确结果？错误数据样例？</td></tr>
+        <tr><td>B3</td><td>影响分析：定位SQL中的具体WHERE条件</td></tr>
+        <tr><td>B4~B6</td><td>修复 → 更新文档 → 检查下游</td></tr>
+    </table>
+
+    <h3>场景5：规则变更</h3>
+    <div class="info">
+        <strong>用户输入：</strong>"PUB-003产品线分类规则要调整，冷柜的条件变了"
+    </div>
+    <table>
+        <tr><th>步骤</th><th>Agent行为</th></tr>
+        <tr><td>状态2</td><td>提取关键词：PUB-003、产品线分类、冷柜、调整</td></tr>
+        <tr><td>状态2.5</td><td>提及"PUB-003" + "调整" → 变更需求（规则变更CHG-05）</td></tr>
+        <tr><td>B1</td><td>读取business_rules.md中PUB-003的当前内容</td></tr>
+        <tr><td>B2</td><td>规则澄清：新规则内容？影响哪些需求？是否全部同步？</td></tr>
+        <tr><td>B3</td><td>影响分析：从patterns中查找引用PUB-003的需求（002/004/005/006/007/008）</td></tr>
+        <tr><td>B4</td><td>修改business_rules.md + 所有受影响的SQL</td></tr>
+        <tr><td>B5~B6</td><td>更新文档 → 批量同步下游</td></tr>
+    </table>
+</div>
+
+<!-- 全局规则 -->
+<div class="section">
+    <h2>附：全局规则</h2>
+    
+    <h3>阶段门禁（Gate）</h3>
+    <div class="solution">
+        <strong>核心原则：</strong>每个状态的退出都需要用户明确确认。Agent不得在未获确认的情况下进入下一状态。<br><br>
+        <strong>确认信号：</strong>"确认"、"可以"、"没问题"、"对的"、"正确"、"继续"<br>
+        <strong>否定信号：</strong>"不对"、"不是"、"修改"、"调整" → 停留在当前状态修正<br>
+        <strong>模糊回复：</strong>追问"请确认是否可以进入下一步？"
+    </div>
+
+    <h3>回退规则</h3>
+    <table>
+        <tr><th>用户指令</th><th>Agent行为</th></tr>
+        <tr><td>"回到上一步" / "重新来"</td><td>回退到上一状态</td></tr>
+        <tr><td>"取消" / "不做了"</td><td>回到状态1</td></tr>
+    </table>
+
+    <h3>错误处理</h3>
+    <table>
+        <tr><th>场景</th><th>处理方式</th></tr>
+        <tr><td>无法判定需求分类</td><td>直接询问用户</td></tr>
+        <tr><td>表匹配失败</td><td>提示用户确认表名</td></tr>
+        <tr><td>SQL生成失败</td><td>说明原因，建议简化</td></tr>
+    </table>
+</div>
+
+</div><!-- end container -->
+
+<div style="text-align:center; padding:30px; color:#666; font-size:0.85em;">
+    <p>ETL开发助手 - 需求处理链路详解</p>
+    <p>版本 v2.4.0 | 更新时间：2026-05-15 | 由 Kiro Agent 生成</p>
+</div>
+</body>
+</html>

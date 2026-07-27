@@ -1,0 +1,4 @@
+文件源类型,数据源名称,数据库名称,表名称,分层,主题分类,表中文名,表英文名/描述,存储模型,创建人,负责人,安全等级,重要程度,数据类型,更新方式,标签
+doris,ds_rd_rw,ads,ads_ipd_ipm_aowei_industry_brand_dd,ads,海信集团产品运营/研发产品线/产品,奥维行业总体分析（含总体渠道+品牌）,奥维行业总体分析（含"总体"渠道虚拟维度+品牌，单元格拼接格式）,DUPLICATE,gongying2,luxinping,敏感级,,,,
+doris,ds_rd_rw,ads,ads_ipd_ipm_aowei_price_spec_brand_online_dd,ads,海信集团产品运营/研发产品线/产品,奥维分价格段分品牌-线上,奥维分价格段分规格段分品牌数据-线上（含"总体"品牌行，单元格拼接格式）,DUPLICATE,gongying2,luxinping,敏感级,,,,
+doris,ds_rd_rw,ads,ads_ipd_ipm_aowei_price_spec_brand_offline_dd,ads,海信集团产品运营/研发产品线/产品,奥维分价格段分品牌-线下,奥维分价格段分规格段分品牌数据-线下（含"总体"品牌行，单元格拼接格式）,DUPLICATE,gongying2,luxinping,敏感级,,,,

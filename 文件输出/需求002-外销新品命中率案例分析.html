@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETL Agent 深度复盘 - 002外销新品命中率</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #333; line-height: 1.7; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #b71c1c 0%, #e65100 100%); color: white; padding: 40px; border-radius: 12px; margin-bottom: 30px; }
+        .header h1 { font-size: 26px; margin-bottom: 10px; }
+        .header .subtitle { opacity: 0.9; font-size: 15px; }
+        .header .meta { margin-top: 15px; display: flex; gap: 15px; flex-wrap: wrap; }
+        .header .meta span { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 13px; }
+        .section { background: white; border-radius: 12px; padding: 30px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .section h2 { font-size: 20px; color: #333; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #b71c1c; }
+        .section h3 { font-size: 16px; color: #555; margin: 20px 0 10px; }
+        .section h4 { font-size: 14px; color: #666; margin: 12px 0 8px; }
+        .chat-bubble { margin: 10px 0; padding: 12px 16px; border-radius: 12px; max-width: 90%; font-size: 14px; }
+        .chat-user { background: #e3f2fd; border-bottom-right-radius: 4px; }
+        .chat-agent { background: #f3e5f5; border-bottom-left-radius: 4px; }
+        .chat-label { font-size: 11px; color: #888; margin-bottom: 4px; font-weight: 600; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 15px 0; }
+        .metric-card { background: linear-gradient(135deg, #f8f9ff, #eef2ff); padding: 16px; border-radius: 10px; text-align: center; border: 1px solid #e0e7ff; }
+        .metric-card .value { font-size: 24px; font-weight: 700; }
+        .metric-card .label { font-size: 12px; color: #666; margin-top: 4px; }
+        .metric-card.bad .value { color: #c62828; }
+        .metric-card.warn .value { color: #e65100; }
+        .metric-card.good .value { color: #2e7d32; }
+        .tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin: 2px; }
+        .tag-red { background: #ffebee; color: #c62828; }
+        .tag-orange { background: #fff3e0; color: #e65100; }
+        .tag-blue { background: #e3f2fd; color: #1565c0; }
+        .tag-green { background: #e8f5e9; color: #2e7d32; }
+        .tag-purple { background: #f3e5f5; color: #6a1b9a; }
+        .tag-gray { background: #f5f5f5; color: #616161; }
+        .table-simple { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+        .table-simple th, .table-simple td { padding: 10px 12px; border: 1px solid #e0e0e0; text-align: left; }
+        .table-simple th { background: #f5f7fa; font-weight: 600; color: #555; }
+        .alert-box { padding: 14px 18px; border-radius: 8px; margin: 12px 0; font-size: 14px; }
+        .alert-error { background: #ffebee; border-left: 4px solid #c62828; }
+        .alert-warning { background: #fff3e0; border-left: 4px solid #ff9800; }
+        .alert-info { background: #e3f2fd; border-left: 4px solid #1976d2; }
+        .alert-success { background: #e8f5e9; border-left: 4px solid #4caf50; }
+        .issue-block { border: 1px solid #ffcdd2; border-radius: 8px; padding: 18px; margin: 15px 0; background: #fff; }
+        .issue-block h4 { color: #c62828; margin-bottom: 10px; font-size: 15px; }
+        .issue-block .sub { font-size: 13px; color: #555; margin: 6px 0; }
+        .accuracy-box { background: #f5f5f5; border: 1px dashed #bdbdbd; border-radius: 6px; padding: 12px; margin-top: 10px; font-size: 13px; color: #616161; }
+        .accuracy-box strong { color: #333; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+        .toc { background: #fafafa; padding: 20px; border-radius: 8px; }
+        .toc a { color: #b71c1c; text-decoration: none; display: block; padding: 4px 0; font-size: 14px; }
+        .toc a:hover { text-decoration: underline; }
+        .verdict { font-size: 13px; padding: 8px 12px; border-radius: 6px; margin-top: 8px; }
+        .verdict-correct { background: #e8f5e9; color: #2e7d32; }
+        .verdict-partial { background: #fff3e0; color: #e65100; }
+        .verdict-wrong { background: #ffebee; color: #c62828; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+    <h1>🔍 ETL Agent 深度复盘（问题导向）</h1>
+    <div class="subtitle">需求002扩展：国际营销外销新品规划命中率 — 8次修正的根因分析与系统性改进</div>
+    <div class="meta">
+        <span>📅 2026-05-26</span>
+        <span>🔗 链路B · CHG-02产品线扩展</span>
+        <span>⚠️ 修正8次</span>
+        <span>🔄 DWS重写3次</span>
+        <span>📊 状态：B4草稿迭代中</span>
+    </div>
+</div>
+
+<div class="section">
+    <div class="toc">
+        <h3 style="margin-bottom:10px;">📑 目录</h3>
+        <a href="#s1">一、问题全景：8次修正的时间线与分类</a>
+        <a href="#s2">二、逐条深度分析（含第三方审视）</a>
+        <a href="#s3">三、系统层面问题：Steering/Skill文件的缺陷</a>
+        <a href="#s4">四、根因模式提炼</a>
+        <a href="#s5">五、改进方案与落地路径</a>
+    </div>
+</div>
+
+<!-- ==================== SECTION 1 ==================== -->
+<div class="section" id="s1">
+    <h2>一、问题全景：8次修正的时间线与分类</h2>
+
+    <div class="metrics-grid">
+        <div class="metric-card bad"><div class="value">8</div><div class="label">用户修正次数</div></div>
+        <div class="metric-card bad"><div class="value">3</div><div class="label">DWS重写次数</div></div>
+        <div class="metric-card warn"><div class="value">3</div><div class="label">严重问题</div></div>
+        <div class="metric-card warn"><div class="value">3</div><div class="label">中等问题</div></div>
+        <div class="metric-card"><div class="value">2</div><div class="label">轻微问题</div></div>
+        <div class="metric-card good"><div class="value">1</div><div class="label">规则已落地</div></div>
+    </div>
+
+    <h3>修正时间线</h3>
+    <table class="table-simple">
+        <tr><th>#</th><th>阶段</th><th>问题摘要</th><th>严重度</th><th>Agent反应</th><th>修复轮次</th></tr>
+        <tr><td>1</td><td>B1分类</td><td>误判为"全新子指标"</td><td><span class="tag tag-orange">中</span></td><td>接受修正，重新判定</td><td>1轮</td></tr>
+        <tr><td>2</td><td>B3影响</td><td>DWD"放开筛选条件"表述不严谨</td><td><span class="tag tag-orange">中</span></td><td>接受修正，理解差异</td><td>1轮</td></tr>
+        <tr><td>3</td><td>B4-DWD</td><td>SQL括号闭合语法错误</td><td><span class="tag tag-blue">轻</span></td><td>1次str_replace修复</td><td>1轮</td></tr>
+        <tr style="background:#ffebee;"><td>4</td><td>B4-DWS</td><td>zhibiao_type='2'应为'4'，底层逻辑全错</td><td><span class="tag tag-red">严重</span></td><td>第一次只改标记值→用户再次指出→全面重写</td><td>2轮</td></tr>
+        <tr style="background:#ffebee;"><td>5</td><td>B4-DWS</td><td>8个子问题批量反馈（时间/GSS/字段/OEM等）</td><td><span class="tag tag-red">严重</span></td><td>全面重写DWS</td><td>1轮</td></tr>
+        <tr><td>6</td><td>B4-DWS</td><td>厨电产品线字段PG00003→HX00223</td><td><span class="tag tag-orange">中</span></td><td>接受修正</td><td>1轮</td></tr>
+        <tr><td>7</td><td>B4-DWS</td><td>时间字段NULL置空逻辑多余</td><td><span class="tag tag-orange">中</span></td><td>去除4处</td><td>1轮</td></tr>
+        <tr><td>8</td><td>B4-DWS</td><td>is_project中"本月上市"判断未同步去除</td><td><span class="tag tag-orange">中</span></td><td>去除5处</td><td>1轮</td></tr>
+    </table>
+
+    <h3>问题分布</h3>
+    <div class="two-col">
+        <div>
+            <h4>按阶段</h4>
+            <table class="table-simple">
+                <tr><th>阶段</th><th>问题数</th><th>占比</th></tr>
+                <tr><td>B1-B3（前期）</td><td>2</td><td>25%</td></tr>
+                <tr style="background:#ffebee;"><td><strong>B4-DWS（核心）</strong></td><td><strong>5</strong></td><td><strong>62.5%</strong></td></tr>
+                <tr><td>B4-DWD</td><td>1</td><td>12.5%</td></tr>
+            </table>
+        </div>
+        <div>
+            <h4>按根因类别</h4>
+            <table class="table-simple">
+                <tr><th>根因</th><th>问题数</th></tr>
+                <tr><td>经验过度依赖（参考错误框架）</td><td>3</td></tr>
+                <tr><td>变更影响未传播</td><td>2</td></tr>
+                <tr><td>业务理解偏差</td><td>2</td></tr>
+                <tr><td>代码生成质量</td><td>1</td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SECTION 2 ==================== -->
+<div class="section" id="s2">
+    <h2>二、逐条深度分析（含第三方审视）</h2>
+    <p style="margin-bottom:15px;color:#666;">每条分析末尾附"第三方审视"，以旁观者角度评估分析本身的准确度和完整度。</p>
+
+    <!-- 问题1 -->
+    <div class="issue-block">
+        <h4>问题#1：误判需求类型为"全新子指标"</h4>
+        <div class="sub"><strong>Agent输出：</strong>"这更像是一个基于002框架的全新子指标...考核起点也不同（+4个月 vs 内销的3个月保护期）"</div>
+        <div class="sub"><strong>用户修正：</strong>"不正确；框架不变，考核起点也一样，你的理解有问题"</div>
+        <div class="sub"><strong>直接原因：</strong>Agent将需求文件中"上市+4个月开始考核"误解为与内销不同，实际上内销也是"上市月为第0月+3个月保护期=第4个月开始"，本质相同。</div>
+        <div class="sub"><strong>深层原因：</strong>
+            <ol style="padding-left:20px;margin-top:5px;">
+                <li>Agent对内销保护期规则的理解停留在代码层面（<code>shangshi_m <= 3</code>），未转化为业务语言（"第4个月开始考核"）</li>
+                <li>需求文件用"上市+4个月"描述，Agent未做等价性判断</li>
+            </ol>
+        </div>
+        <div class="sub"><strong>涉及Steering文件：</strong><code>etl_dialogue_flow.md</code> 状态2.5判定规则 — 判定规则本身没问题，问题在于Agent对业务规则的语义理解</div>
+
+        <div class="accuracy-box">
+            <strong>🔎 第三方审视：</strong>分析基本准确。但需补充一点：Agent在判定时还说了"实际销量来源不同（管报vs GSS）"和"产品线分类规则不同"，这些确实是差异点。Agent的错误不在于识别差异，而在于<strong>将"规则差异"错误升级为"框架差异"</strong>。规则不同≠框架不同，这个区分在steering文件中没有明确定义。
+            <div class="verdict verdict-partial">分析准确度：80% — 遗漏了"规则差异vs框架差异"的区分缺失</div>
+        </div>
+    </div>
+
+    <!-- 问题2 -->
+    <div class="issue-block">
+        <h4>问题#2：DWD层"放开筛选条件"表述不严谨</h4>
+        <div class="sub"><strong>Agent输出：</strong>"DWD层：当前LX部分只取 PG00020 = '内销'，需新增外销的LX规划量展开"</div>
+        <div class="sub"><strong>用户修正：</strong>"内销是有对应的字段（36个月），而外销是一个字段根据不同的比例拆分出来，不能武断的放开筛选条件"</div>
+        <div class="sub"><strong>直接原因：</strong>Agent看到内销代码中 <code>WHERE PG00020 = '内销'</code>，直觉认为外销只需改为 <code>PG00020 = '外销'</code> 或去掉筛选。</div>
+        <div class="sub"><strong>深层原因：</strong>Agent未读取DWD脚本的具体实现（36个月字段展开逻辑），只看到了WHERE条件，未理解数据结构的本质差异。</div>
+        <div class="sub"><strong>涉及Steering文件：</strong><code>data_mapping.md</code> — 该文件记录了 <code>HX00506~HX00541</code> 为36个月规划字段，但未明确说明"这些字段只适用于内销"。<code>HX00020</code>（第一年规划销量）也有记录但未标注"外销用此字段按比例拆分"。</div>
+
+        <div class="accuracy-box">
+            <strong>🔎 第三方审视：</strong>分析准确。这里暴露了 <code>data_mapping.md</code> 的一个知识缺口：它记录了字段的存在和含义，但未记录"内外销的数据结构差异"这种<strong>使用场景约束</strong>。Agent在B2澄清阶段已经通过用户确认了解了这个差异，但在B3影响分析时又"忘了"，说明澄清结果未被有效传递到后续阶段。
+            <div class="verdict verdict-correct">分析准确度：90% — 补充了"澄清结果未传递"的问题</div>
+        </div>
+    </div>
+
+    <!-- 问题3 -->
+    <div class="issue-block">
+        <h4>问题#3：SQL括号闭合语法错误</h4>
+        <div class="sub"><strong>问题：</strong><code>IN ('控温储藏类产品','清洁卫生器具','供热采暖类产品','厨房电器类产品'</code> 的右括号被CTE闭合括号"吃掉"</div>
+        <div class="sub"><strong>直接原因：</strong>Agent在分段生成长SQL时（使用fs_write + fs_append），括号嵌套层级管理失误。</div>
+        <div class="sub"><strong>深层原因：</strong>这是LLM生成长代码时的常见问题——上下文窗口中无法"看到"前面已写的括号层级。分段写入加剧了这个问题。</div>
+        <div class="sub"><strong>涉及系统限制：</strong>fs_write限制50行，导致Agent必须分段生成，增加了括号不匹配的风险。</div>
+
+        <div class="accuracy-box">
+            <strong>🔎 第三方审视：</strong>分析准确但归因过于宽泛。具体到本case，问题出在 <code>IN (...)</code> 列表的最后一个值后面缺少 <code>)</code>，紧接着的 <code>)</code> 被误认为是IN的闭合。这不是"分段生成"导致的（这段代码在同一个append块内），而是Agent在生成时对括号计数出错。属于纯粹的代码生成质量问题，与工具限制无关。
+            <div class="verdict verdict-partial">分析准确度：60% — 错误归因于工具限制，实际是生成质量问题</div>
+        </div>
+    </div>
+
+    <!-- 问题4 -->
+    <div class="issue-block">
+        <h4>问题#4（严重）：zhibiao_type='2'应为'4'，底层逻辑全错</h4>
+        <div class="sub"><strong>Agent输出：</strong>整个DWS草稿使用了 <code>zhibiao_type = '2'</code>（低效型号占比）的框架</div>
+        <div class="sub"><strong>用户第一次修正：</strong>"zhibiao_type = '2'对应的是低效型号占比，外销是新品规划命中率，应该对应'4'"</div>
+        <div class="sub"><strong>Agent第一次反应（错误）：</strong>只把'2'替换为'4'，未修改底层逻辑</div>
+        <div class="sub"><strong>用户第二次修正：</strong>"参考需求的逻辑，不是只改 zhibiao_type = '2'"</div>
+        <div class="sub"><strong>直接原因：</strong>Agent在B4生成SQL时，参考了内销DWS脚本中<strong>最先出现的</strong>冰冷洗段落（恰好是zhibiao_type='2'），而非搜索zhibiao_type='4'的段落。</div>
+        <div class="sub"><strong>深层原因（多层）：</strong>
+            <ol style="padding-left:20px;margin-top:5px;">
+                <li><strong>Steering层面</strong>：<code>etl_change_management.md</code> 的B4执行策略中，没有要求Agent在生成前"确认参考的是哪段内销逻辑"。模式B的执行流程只说"Agent生成副本草稿"，未规定生成前的参考确认步骤。</li>
+                <li><strong>Skill层面</strong>：<code>etl-requirement.md</code> 技能文件中B4步骤只写了"执行修改（精准str_replace）"，对于模式B的草稿生成没有额外指导。</li>
+                <li><strong>Agent行为层面</strong>：Agent读取DWS正式脚本时，文件有2893行，Agent只读取了前926行（被截断），恰好只看到了zhibiao_type='2'的段落，未继续搜索'4'的段落。</li>
+            </ol>
+        </div>
+
+        <div class="alert-box alert-error">
+            <strong>连锁影响：</strong>zhibiao_type='2'和'4'的核心差异：<br>
+            ① 规划量：'2'做BP/LX选择+限本年 vs '4'只取LX+全部累计<br>
+            ② 实际销量时间：'2'限本年 vs '4'全部累计<br>
+            ③ is_project：'4'新增 shangshi_m>=13 排除超期<br>
+            这些差异全部被遗漏，导致后续修正#5中的多个子问题。
+        </div>
+
+        <div class="accuracy-box">
+            <strong>🔎 第三方审视：</strong>分析深入且准确。特别是"Agent只读取了前926行"这个发现很关键——这说明问题不仅是"经验依赖"，还有<strong>信息获取不完整</strong>的因素。Agent在面对2893行的大文件时，应该先用grep搜索 <code>zhibiao_type = '4'</code> 定位到正确段落，而非从头读取被截断。<br><br>
+            <strong>补充问题：</strong><code>sql_templates.md</code> 中没有区分"低效型号占比"和"新品命中率"的模板差异，这也是一个知识缺口。如果模板库中有"新品命中率专用模板"，Agent就不会参考错误的框架。
+            <div class="verdict verdict-correct">分析准确度：95% — 多层归因完整，补充了信息获取不完整的因素</div>
+        </div>
+    </div>
+
+    <!-- 问题5 -->
+    <div class="issue-block">
+        <h4>问题#5（严重）：8个子问题批量反馈</h4>
+        <div class="sub"><strong>用户一次性反馈了8个问题：</strong></div>
+        <table class="table-simple">
+            <tr><th>#</th><th>问题</th><th>根因</th></tr>
+            <tr><td>5-1</td><td>时间频率从"上月"改为"昨天"</td><td>未确认外销的统计频率</td></tr>
+            <tr><td>5-2</td><td>去除is_ODM逻辑</td><td>内销有ODM判定，外销需求中无此规则，Agent未对照需求</td></tr>
+            <tr><td>5-3</td><td>外层直接用product_line分支</td><td>代码可读性问题，非逻辑错误</td></tr>
+            <tr><td>5-4</td><td>空调GSS取法完全错误（最严重）</td><td>未理解家空/轻商的内外机转换方向相反</td></tr>
+            <tr><td>5-5</td><td>item_type限制去掉</td><td>Agent自行添加了需求中没有的限制条件</td></tr>
+            <tr><td>5-6</td><td>厨电用PG00003而非HX00223</td><td>未查阅table_structures.md验证字段</td></tr>
+            <tr><td>5-7</td><td>平板电视OEM用his_oembrand</td><td>未对照需求"品牌字段不取OEM品牌值"</td></tr>
+            <tr><td>5-8</td><td>激光OEM同上</td><td>同上</td></tr>
+        </table>
+
+        <div class="sub" style="margin-top:15px;"><strong>深层分析：</strong></div>
+        <div class="sub">这8个问题可以归为3个根因模式：</div>
+        <table class="table-simple">
+            <tr><th>模式</th><th>涉及子问题</th><th>说明</th></tr>
+            <tr><td><strong>A. 经验覆盖需求</strong></td><td>5-2, 5-6, 5-7, 5-8</td><td>Agent从内销逻辑中"借用"了字段/条件，未回到需求文件验证是否适用</td></tr>
+            <tr><td><strong>B. 需求理解不深</strong></td><td>5-1, 5-4, 5-5</td><td>Agent对需求文件中的规则描述理解不够深入（如家空/轻商转换方向相反）</td></tr>
+            <tr><td><strong>C. 代码风格</strong></td><td>5-3</td><td>非逻辑错误，属于可读性优化</td></tr>
+        </table>
+
+        <div class="sub" style="margin-top:15px;"><strong>涉及Steering/Skill文件：</strong></div>
+        <ul style="padding-left:20px;font-size:13px;">
+            <li><code>etl_change_management.md</code>：B4执行策略中缺少"生成后自检"步骤。如果有自检，Agent应该能发现5-6（查table_structures）和5-7/5-8（对照需求文件）</li>
+            <li><code>sql-review.md</code>：有完整的SQL审查技能，但是<strong>manual触发</strong>，不会在B4生成后自动执行。如果改为B4后自动触发sql-review的"业务合规"维度，可以捕获部分问题</li>
+            <li><code>business_rules.md</code> PUB-009：只描述了GSS排产单的基本查询方式，未描述家空/轻商的内外机转换差异。这确实是知识库缺口</li>
+            <li><code>table_structures.md</code>：HX00223字段有清楚备注"产品线"，Agent未查阅</li>
+        </ul>
+
+        <div class="accuracy-box">
+            <strong>🔎 第三方审视：</strong>分析全面。但有一个重要遗漏：<strong>为什么Agent没有在生成前读取需求文件逐条对照？</strong>回看对话，Agent在B2澄清阶段确实读取了intake文件，但到B4生成阶段时，上下文可能已经很长，intake文件的具体规则细节可能已被"挤出"有效注意力范围。这是LLM长上下文的固有限制，不完全是流程问题。<br><br>
+            <strong>改进方向：</strong>B4生成每个产品线的SQL前，应该<strong>重新读取</strong>intake文件中该产品线的对应段落，而非依赖上下文中的"记忆"。
+            <div class="verdict verdict-correct">分析准确度：85% — 遗漏了长上下文注意力衰减的因素</div>
+        </div>
+    </div>
+
+    <!-- 问题6 -->
+    <div class="issue-block">
+        <h4>问题#6：厨电产品线字段用PG00003而非HX00223</h4>
+        <div class="sub"><strong>Agent输出：</strong><code>WHERE PG00002 = '厨房电器类产品' AND PG00003 IN ('烟机','灶具',...)</code></div>
+        <div class="sub"><strong>用户修正：</strong>"产品线是 HX00223"</div>
+        <div class="sub"><strong>直接原因：</strong>Agent将需求中的"产品线"映射到了PG00003（产品中类），因为冰冷洗的逻辑中确实是用PG00003来区分。</div>
+        <div class="sub"><strong>深层原因：</strong>
+            <ol style="padding-left:20px;margin-top:5px;">
+                <li><code>table_structures.md</code> 中 HX00223 明确备注为"产品线"，Agent未查阅</li>
+                <li>这不是"知识库不足"，而是<strong>"Agent未查阅已有知识库"</strong></li>
+                <li>根本原因是经验优先——Agent基于冰冷洗的经验（产品线=PG00003），直接套用到厨电，未验证</li>
+            </ol>
+        </div>
+        <div class="sub"><strong>涉及文件：</strong><code>table_structures.md</code> 第113行明确记录 <code>HX00223 varchar(300) NULL COMMENT "产品线"</code></div>
+
+        <div class="accuracy-box">
+            <strong>🔎 第三方审视：</strong>分析准确。这是本次复盘中最清晰的一个案例——知识库有、备注清楚、Agent没查。<br><br>
+            <strong>延伸思考：</strong>为什么Agent不查？因为当前流程中没有任何机制<strong>强制</strong>Agent在使用字段前验证其含义。Agent的行为模式是"我知道产品线用PG00003"→直接用，而非"需求说产品线→我去查哪个字段是产品线→HX00223"。这是<strong>演绎推理（从经验出发）vs 归纳推理（从需求出发）</strong>的区别。
+            <div class="verdict verdict-correct">分析准确度：95%</div>
+        </div>
+    </div>
+
+    <!-- 问题7&8 -->
+    <div class="issue-block">
+        <h4>问题#7&#38;#8：时间字段NULL置空 + is_project本月判断未同步去除</h4>
+        <div class="sub"><strong>背景：</strong>修正#5-1要求"时间频率从上月改为昨天"。Agent修改了dt_month的计算，但遗留了两处关联逻辑：</div>
+        <div class="sub">① 将上市/退市时间"本月之后置为NULL"的CASE逻辑（4处）</div>
+        <div class="sub">② is_project中"本月上市不纳入"的判断（5处）</div>
+        <div class="sub"><strong>直接原因：</strong>Agent执行修正时是"点状修改"——只改了用户明确指出的点，未扫描全文找关联影响。</div>
+        <div class="sub"><strong>深层原因：</strong>
+            <ol style="padding-left:20px;margin-top:5px;">
+                <li><code>etl_change_management.md</code> 中有"影响分析"步骤（B3），但那是针对<strong>需求变更</strong>的影响分析，不是针对<strong>代码修改</strong>的影响分析</li>
+                <li>缺少一个"代码修改影响传播"机制——当修改A导致B也需要修改时，Agent应自动识别B</li>
+                <li>内销逻辑中"本月上市置NULL"和"is_project本月判断"是配套的（NULL使得shangshi_m计算为负数→触发is_project='Y'），Agent未理解这个配套关系</li>
+            </ol>
+        </div>
+
+        <div class="accuracy-box">
+            <strong>🔎 第三方审视：</strong>分析准确。补充一点：这两个问题本质上是<strong>同一个修改的两次遗漏</strong>。如果Agent在修正#5-1（时间频率变更）时，做一次全文搜索 <code>STR_TO_DATE(CONCAT(DATE_FORMAT</code>，就能一次性找到所有9处（4处字段置空+5处is_project判断），一次性全部去除。问题不在于"不知道要改"，而在于<strong>修改执行不彻底</strong>。
+            <div class="verdict verdict-correct">分析准确度：90%</div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SECTION 3 ==================== -->
+<div class="section" id="s3">
+    <h2>三、系统层面问题：Steering/Skill文件的缺陷</h2>
+    <p style="margin-bottom:15px;color:#666;">不仅是Agent的执行问题，系统配置（steering规则、skill定义、知识库）本身也有缺陷，导致Agent缺乏必要的约束和指导。</p>
+
+    <h3>3.1 etl_change_management.md 的缺陷</h3>
+    <div class="issue-block">
+        <h4>缺陷A：B4执行策略过于简略</h4>
+        <div class="sub"><strong>现状：</strong>模式B的执行流程只说"Agent生成副本草稿文件"，没有规定：</div>
+        <ul style="padding-left:20px;font-size:13px;margin:8px 0;">
+            <li>生成前应确认参考的是哪段内销逻辑（哪个zhibiao_type）</li>
+            <li>生成时应逐条对照需求文件</li>
+            <li>生成后应自检（至少做字段验证）</li>
+        </ul>
+        <div class="sub"><strong>影响：</strong>直接导致问题#4（参考错误框架）和问题#5（未对照需求）</div>
+        <div class="sub"><strong>已修复：</strong>已新增第5条"经验-需求冲突检测"规则 ✅</div>
+        <div class="sub"><strong>仍缺失：</strong>"生成前参考确认"和"生成后自检"步骤未写入</div>
+    </div>
+
+    <div class="issue-block">
+        <h4>缺陷B：缺少"代码修改影响传播"机制</h4>
+        <div class="sub"><strong>现状：</strong>B3影响分析只针对"需求变更对下游需求的影响"，不针对"一处代码修改对同文件其他位置的影响"</div>
+        <div class="sub"><strong>影响：</strong>直接导致问题#7和#8（修正不传播）</div>
+        <div class="sub"><strong>建议：</strong>在SQL修改原则中增加"修改传播检查"——每次修改后，用grep搜索相关模式，确认是否有遗漏</div>
+    </div>
+
+    <h3>3.2 etl_dialogue_flow.md 的缺陷</h3>
+    <div class="issue-block">
+        <h4>缺陷C：状态2.5判定规则缺少"规则差异vs框架差异"的区分指导</h4>
+        <div class="sub"><strong>现状：</strong>判定规则定义了"变更动词"和"新建动词"，但未定义"什么情况下差异大到应该视为新需求"</div>
+        <div class="sub"><strong>影响：</strong>导致问题#1（Agent将规则差异误判为框架差异）</div>
+        <div class="sub"><strong>建议：</strong>增加判定补充说明："数据源不同、计算公式不同、产品线规则不同 ≠ 框架不同。只有数据流转路径（DWD→DWS→ADS）或目标表结构发生变化时，才视为框架差异。"</div>
+    </div>
+
+    <h3>3.3 sql-review.md 技能的使用缺陷</h3>
+    <div class="issue-block">
+        <h4>缺陷D：SQL审查技能为manual触发，B4后不自动执行</h4>
+        <div class="sub"><strong>现状：</strong><code>sql-review.md</code> 是一个完善的6维度审查技能，但只能手动触发。B4生成草稿后，没有任何机制提醒Agent自检。</div>
+        <div class="sub"><strong>影响：</strong>如果B4后自动执行sql-review的"维度3：业务规则合规"检查，可以捕获问题#5-6（字段验证）和#5-7/#5-8（OEM逻辑）</div>
+        <div class="sub"><strong>建议方案：</strong>
+            <ul style="padding-left:20px;margin-top:5px;">
+                <li>方案A：创建Hook，在B4草稿生成后自动触发sql-review（可能过重）</li>
+                <li>方案B（推荐）：在etl_change_management.md的模式B流程中增加"B4.5 自检"步骤，Agent对生成的草稿执行轻量级自检（只检查业务合规+字段完整性）</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>3.4 data_mapping.md / business_rules.md 的知识缺口</h3>
+    <div class="issue-block">
+        <h4>缺陷E：PUB-009未描述家空/轻商内外机转换差异</h4>
+        <div class="sub"><strong>现状：</strong>PUB-009只描述了GSS排产单的基本查询方式（三表关联+状态枚举），未描述：</div>
+        <ul style="padding-left:20px;font-size:13px;margin:8px 0;">
+            <li>家空：以整机为主，内机/外机通过PC20029/pc20055映射回整机×0.5</li>
+            <li>轻商：以内机/外机为主，整机通过PC20029/pc20055拆到内机和外机</li>
+        </ul>
+        <div class="sub"><strong>影响：</strong>直接导致问题#5-4（空调GSS取法错误）</div>
+        <div class="sub"><strong>建议：</strong>扩展PUB-009，增加"家空/轻商内外机转换规则"子节</div>
+    </div>
+
+    <div class="issue-block">
+        <h4>缺陷F：data_mapping.md未记录"字段使用场景约束"</h4>
+        <div class="sub"><strong>现状：</strong>记录了字段的存在和含义，但未记录"HX00506~HX00541只适用于内销"、"HX00020用于外销按比例拆分"这类使用约束</div>
+        <div class="sub"><strong>影响：</strong>导致问题#2（Agent不理解内外销数据结构差异）</div>
+        <div class="sub"><strong>建议：</strong>在关键字段备注中增加使用场景标注</div>
+    </div>
+
+    <h3>3.5 缺陷汇总与优先级</h3>
+    <table class="table-simple">
+        <tr><th>编号</th><th>文件</th><th>缺陷</th><th>影响的问题</th><th>优先级</th><th>状态</th></tr>
+        <tr><td>A</td><td>etl_change_management.md</td><td>B4执行策略过于简略</td><td>#4, #5</td><td><span class="tag tag-red">P0</span></td><td>部分修复（第5条已加）</td></tr>
+        <tr><td>B</td><td>etl_change_management.md</td><td>缺少代码修改影响传播机制</td><td>#7, #8</td><td><span class="tag tag-orange">P1</span></td><td>待处理</td></tr>
+        <tr><td>C</td><td>etl_dialogue_flow.md</td><td>规则差异vs框架差异未区分</td><td>#1</td><td><span class="tag tag-blue">P2</span></td><td>待处理</td></tr>
+        <tr><td>D</td><td>sql-review.md + 流程</td><td>B4后无自检机制</td><td>#5-6,7,8</td><td><span class="tag tag-orange">P1</span></td><td>待处理</td></tr>
+        <tr><td>E</td><td>business_rules.md</td><td>PUB-009缺少内外机转换规则</td><td>#5-4</td><td><span class="tag tag-orange">P1</span></td><td>待处理</td></tr>
+        <tr><td>F</td><td>data_mapping.md</td><td>缺少字段使用场景约束</td><td>#2</td><td><span class="tag tag-blue">P2</span></td><td>待处理</td></tr>
+    </table>
+</div>
+
+<!-- ==================== SECTION 4 ==================== -->
+<div class="section" id="s4">
+    <h2>四、根因模式提炼</h2>
+
+    <h3>模式1：经验优先于需求（最核心）</h3>
+    <div class="alert-box alert-error">
+        <strong>表现：</strong>Agent在生成变更SQL时，默认从已有内销逻辑中"复制+微调"，而非从需求文件中"提取+构建"。<br>
+        <strong>触发条件：</strong>变更需求 + 有可参考的历史逻辑<br>
+        <strong>影响范围：</strong>问题#4, #5-2, #5-6, #5-7, #5-8, #6（共6个问题，占75%）<br>
+        <strong>本质：</strong>演绎推理（从经验出发推导）vs 归纳推理（从需求出发构建）的失衡
+    </div>
+
+    <h3>模式2：修改不传播</h3>
+    <div class="alert-box alert-warning">
+        <strong>表现：</strong>收到修正后只改用户明确指出的位置，不主动扫描全文找关联影响。<br>
+        <strong>触发条件：</strong>一个修改涉及多处代码中的同一模式<br>
+        <strong>影响范围：</strong>问题#7, #8（共2个问题）<br>
+        <strong>本质：</strong>缺少"修改后全文grep验证"的习惯
+    </div>
+
+    <h3>模式3：表面修改而非深层理解</h3>
+    <div class="alert-box alert-warning">
+        <strong>表现：</strong>收到"X应该改为Y"的修正后，只做字面替换，不分析X和Y在业务逻辑上的深层差异。<br>
+        <strong>触发条件：</strong>用户指出一个具体错误，但该错误背后有更大的逻辑差异<br>
+        <strong>影响范围：</strong>问题#4的第一次修正（只改标记值）<br>
+        <strong>本质：</strong>Agent将修正视为"纠错"而非"重新理解的信号"
+    </div>
+
+    <h3>模式间关系</h3>
+    <div class="alert-box alert-info">
+        <strong>因果链：</strong>模式1（经验优先）→ 生成了错误的SQL → 用户指出错误 → 模式3（表面修改）→ 用户再次指出 → Agent重写 → 重写时仍有遗漏 → 模式2（修改不传播）→ 用户第三次指出<br><br>
+        <strong>核心杠杆点：</strong>如果模式1被解决（生成时就正确），模式2和3就不会被触发。因此<strong>优先解决模式1</strong>。
+    </div>
+
+    <h3>与009需求的对比验证</h3>
+    <table class="table-simple">
+        <tr><th>维度</th><th>009（一次通过）</th><th>002外销（8次修正）</th><th>差异原因</th></tr>
+        <tr><td>有无历史经验可参考</td><td>无（新业务域IRS）</td><td>有（内销逻辑）</td><td>有经验反而成了陷阱</td></tr>
+        <tr><td>Agent的推理方向</td><td>归纳（从需求构建）</td><td>演绎（从经验推导）</td><td>归纳更准确但更慢</td></tr>
+        <tr><td>需求复杂度</td><td>单表10条查询</td><td>多表7产品线+不同数据源</td><td>复杂度放大了经验依赖的风险</td></tr>
+        <tr><td>Agent是否读取了需求文件</td><td>是（完整读取+逐条对照）</td><td>是（但生成时依赖"记忆"而非重新读取）</td><td>长上下文注意力衰减</td></tr>
+    </table>
+</div>
+
+<!-- ==================== SECTION 5 ==================== -->
+<div class="section" id="s5">
+    <h2>五、改进方案与落地路径</h2>
+
+    <h3>5.1 已落地的改进</h3>
+    <table class="table-simple">
+        <tr><th>改进项</th><th>落地位置</th><th>状态</th></tr>
+        <tr><td>经验-需求冲突检测规则</td><td>etl_change_management.md 第5条</td><td><span class="tag tag-green">✅ 已写入</span></td></tr>
+    </table>
+
+    <h3>5.2 待落地的改进（按优先级）</h3>
+
+    <h4>P0：B4生成前增加"参考确认"步骤</h4>
+    <div class="alert-box alert-info">
+        <strong>落地位置：</strong>etl_change_management.md → 模式B的执行流程，在第1步前插入<br>
+        <strong>规则内容：</strong>"生成草稿前，Agent必须先用grep搜索正式脚本中与本次变更对应的逻辑段落（如搜索zhibiao_type='4'定位新品命中率段），确认参考对象正确后再生成。禁止从文件开头顺序读取后直接参考。"<br>
+        <strong>预期效果：</strong>避免问题#4（参考错误框架）
+    </div>
+
+    <h4>P1：B4生成后增加"轻量自检"步骤</h4>
+    <div class="alert-box alert-info">
+        <strong>落地位置：</strong>etl_change_management.md → 模式B的执行流程，在第1步和第2步之间插入<br>
+        <strong>规则内容：</strong>"草稿生成后，Agent对每个产品线的关键字段做一次table_structures.md交叉验证（字段名→备注含义→是否与需求描述一致）。不一致的立即修正，无需等用户反馈。"<br>
+        <strong>预期效果：</strong>避免问题#5-6, #5-7, #5-8
+    </div>
+
+    <h4>P1：增加"修改传播检查"规则</h4>
+    <div class="alert-box alert-info">
+        <strong>落地位置：</strong>etl_change_management.md → SQL修改原则，新增第6条<br>
+        <strong>规则内容：</strong>"执行代码修改后，用grep搜索被修改模式在全文中的所有出现位置，确认是否有遗漏。特别是：时间相关修改→搜索所有DATE_FORMAT/STR_TO_DATE；字段相关修改→搜索该字段在全文的所有引用。"<br>
+        <strong>预期效果：</strong>避免问题#7, #8
+    </div>
+
+    <h4>P1：扩展PUB-009（空调内外机转换规则）</h4>
+    <div class="alert-box alert-info">
+        <strong>落地位置：</strong>business_rules.md → PUB-009<br>
+        <strong>内容：</strong>增加"家空/轻商内外机转换规则"子节，描述映射方向和计算方式<br>
+        <strong>预期效果：</strong>避免问题#5-4
+    </div>
+
+    <h4>P2：补充判定规则说明</h4>
+    <div class="alert-box alert-info">
+        <strong>落地位置：</strong>etl_dialogue_flow.md → 状态2.5<br>
+        <strong>内容：</strong>"数据源不同、计算公式不同、产品线规则不同 ≠ 框架不同。只有数据流转路径或目标表结构变化时才视为框架差异。"<br>
+        <strong>预期效果：</strong>避免问题#1
+    </div>
+
+    <h3>5.3 改进效果预估</h3>
+    <table class="table-simple">
+        <tr><th>指标</th><th>本次实际</th><th>改进后预期</th><th>改善幅度</th></tr>
+        <tr><td>用户修正次数</td><td style="color:#c62828;">8次</td><td style="color:#2e7d32;">≤2次</td><td>-75%</td></tr>
+        <tr><td>DWS重写次数</td><td style="color:#c62828;">3次</td><td style="color:#2e7d32;">0-1次</td><td>-67~100%</td></tr>
+        <tr><td>经验覆盖需求问题</td><td style="color:#c62828;">6个</td><td style="color:#2e7d32;">0-1个</td><td>-83~100%</td></tr>
+        <tr><td>修正不传播问题</td><td style="color:#c62828;">2个</td><td style="color:#2e7d32;">0个</td><td>-100%</td></tr>
+    </table>
+
+    <div class="alert-box alert-success">
+        <strong>核心结论：</strong>本次8个问题中，有6个（75%）可以通过"经验-需求冲突检测"（已落地）+ "B4前参考确认"（待落地）解决。剩余2个通过"修改传播检查"解决。系统性改进后，类似复杂变更需求的修正次数预期从8次降至≤2次。
+    </div>
+</div>
+
+<!-- ==================== FOOTER ==================== -->
+<div class="section" style="text-align:center;background:linear-gradient(135deg,#fafafa,#f0f0f0);">
+    <h2 style="border:none;padding:0;">📌 复盘总结</h2>
+    <div style="max-width:700px;margin:20px auto;text-align:left;">
+        <p style="margin-bottom:15px;">本次复盘的核心发现：</p>
+        <ol style="padding-left:20px;">
+            <li style="margin-bottom:10px;"><strong>问题的75%源于同一根因</strong>：经验优先于需求。Agent在有历史逻辑可参考时，倾向于"复制+微调"而非"从需求出发构建"。</li>
+            <li style="margin-bottom:10px;"><strong>不仅是Agent执行问题，也是系统配置问题</strong>：steering文件中缺少对B4生成阶段的约束（参考确认、自检、传播检查），导致Agent缺乏必要的"护栏"。</li>
+            <li style="margin-bottom:10px;"><strong>"知识库不足"的归因需要谨慎</strong>：本次问题#6（厨电字段），知识库中有清楚的备注，问题在于Agent没去查。真正的知识缺口只有PUB-009的内外机转换规则。</li>
+            <li style="margin-bottom:10px;"><strong>长上下文注意力衰减是隐性因素</strong>：Agent在B2澄清时理解了需求细节，但到B4生成时可能已"忘记"，需要在生成时重新读取需求文件的对应段落。</li>
+            <li style="margin-bottom:10px;"><strong>改进的杠杆点明确</strong>：解决模式1（经验优先）就能消除75%的问题。已落地的"冲突检测"规则 + 待落地的"参考确认"步骤，预期可将修正次数从8次降至≤2次。</li>
+        </ol>
+    </div>
+    <p style="color:#888;font-size:13px;margin-top:20px;">
+        生成时间：2026-05-26 | 复盘类型：深度问题导向 | 需求状态：B4草稿迭代中
+    </p>
+</div>
+
+</div>
+</body>
+</html>

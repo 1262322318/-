@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XuebinLV IPM研发效率 - 知识地图</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1419; color: #e7e9ea; }
+.header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 24px 32px; border-bottom: 1px solid #2d3748; }
+.header h1 { font-size: 24px; font-weight: 600; color: #fff; }
+.header .subtitle { font-size: 14px; color: #8899a6; margin-top: 4px; }
+.tabs { display: flex; gap: 0; background: #1a1f2e; border-bottom: 1px solid #2d3748; overflow-x: auto; }
+.tab { padding: 12px 20px; cursor: pointer; color: #8899a6; font-size: 13px; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.tab:hover { color: #e7e9ea; background: #252d3a; }
+.tab.active { color: #1d9bf0; border-bottom-color: #1d9bf0; }
+.content { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+.panel { display: none; }
+.panel.active { display: block; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.card { background: #1a1f2e; border-radius: 12px; padding: 20px; border: 1px solid #2d3748; }
+.card .label { font-size: 12px; color: #8899a6; margin-bottom: 4px; }
+.card .value { font-size: 28px; font-weight: 700; color: #1d9bf0; }
+.card .detail { font-size: 11px; color: #657786; margin-top: 4px; }
+.section { background: #1a1f2e; border-radius: 12px; padding: 24px; margin-bottom: 20px; border: 1px solid #2d3748; }
+.section h3 { font-size: 16px; margin-bottom: 16px; color: #e7e9ea; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: #252d3a; padding: 10px 12px; text-align: left; color: #8899a6; font-weight: 500; }
+td { padding: 10px 12px; border-bottom: 1px solid #2d3748; color: #e7e9ea; }
+tr:hover td { background: #252d3a; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin: 2px; }
+.tag-blue { background: #1d3557; color: #a8d8ea; }
+.tag-green { background: #1b4332; color: #95d5b2; }
+.tag-orange { background: #4a3000; color: #fbbf24; }
+.tag-red { background: #450a0a; color: #fca5a5; }
+.tag-purple { background: #2d1b69; color: #c4b5fd; }
+.chart-container { width: 100%; height: 400px; }
+.chart-container-lg { width: 100%; height: 600px; }
+.metric-tree { padding: 12px 0; }
+.metric-item { padding: 8px 16px; margin: 4px 0; border-left: 3px solid #2d3748; }
+.metric-item.base { border-left-color: #22c55e; }
+.metric-item.derived { border-left-color: #f59e0b; }
+.metric-item.composite { border-left-color: #ef4444; }
+.metric-name { font-weight: 600; font-size: 14px; }
+.metric-formula { font-size: 12px; color: #8899a6; margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+.anti-pattern { background: #450a0a; border: 1px solid #7f1d1d; border-radius: 8px; padding: 12px 16px; margin: 8px 0; }
+.anti-pattern .severity { color: #fca5a5; font-weight: 600; font-size: 12px; }
+.anti-pattern .detection { color: #e7e9ea; font-family: monospace; margin: 4px 0; }
+.anti-pattern .fix { color: #86efac; font-size: 12px; }
+.pit { background: #1c1917; border: 1px solid #44403c; border-radius: 8px; padding: 12px 16px; margin: 8px 0; }
+.pit .system { color: #fbbf24; font-weight: 600; font-size: 13px; }
+.pit .desc { color: #d6d3d1; font-size: 12px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📦 XuebinLV 能力包 — 知识地图</h1>
+  <div class="subtitle">IPM研发效率指标 | 版本 1.1.0 | 最后更新 2026-07-09 | 覆盖12个需求 · 22张表 · 13个指标</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPanel('overview')">总览</div>
+  <div class="tab" onclick="showPanel('metrics')">指标图谱</div>
+  <div class="tab" onclick="showPanel('lineage')">表血缘</div>
+  <div class="tab" onclick="showPanel('dimensions')">维度</div>
+  <div class="tab" onclick="showPanel('aggregation')">聚合规则</div>
+  <div class="tab" onclick="showPanel('vocabulary')">术语表</div>
+  <div class="tab" onclick="showPanel('wordroots')">词根</div>
+  <div class="tab" onclick="showPanel('sources')">源系统</div>
+  <div class="tab" onclick="showPanel('rules')">业务规则</div>
+  <div class="tab" onclick="showPanel('cases')">案例库</div>
+  <div class="tab" onclick="showPanel('patterns')">设计模式</div>
+</div>
+
+<div class="content">
+<!-- ═══ 总览面板 ═══ -->
+<div class="panel active" id="panel-overview">
+  <div class="cards">
+    <div class="card"><div class="label">指标总数</div><div class="value">13</div><div class="detail">基础4 + 派生2 + 复合7</div></div>
+    <div class="card"><div class="label">表目录</div><div class="value">22</div><div class="detail">DWD 1 · DWS 10 · ADS 11</div></div>
+    <div class="card"><div class="label">术语</div><div class="value">15</div><div class="detail">核心业务概念消歧</div></div>
+    <div class="card"><div class="label">词根</div><div class="value">22</div><div class="detail">字段命名约定</div></div>
+    <div class="card"><div class="label">源系统</div><div class="value">8</div><div class="detail">管报/MDG/PLM/GSS/奥维等</div></div>
+    <div class="card"><div class="label">聚合规则</div><div class="value">8</div><div class="detail">不可加型映射（防AVG）</div></div>
+    <div class="card"><div class="label">案例</div><div class="value">8</div><div class="detail">含1个详情案例</div></div>
+    <div class="card"><div class="label">设计模式</div><div class="value">2</div><div class="detail">多产品线分叉 + BP/LX选择</div></div>
+  </div>
+  <div class="section">
+    <h3>📊 知识覆盖度</h3>
+    <div id="chart-radar" class="chart-container"></div>
+  </div>
+  <div class="section">
+    <h3>🗓 需求时间线</h3>
+    <table>
+      <tr><th>需求ID</th><th>指标</th><th>状态</th><th>产品线数</th><th>脚本</th><th>最后更新</th></tr>
+      <tr><td>002</td><td>低效型号占比+新品命中率</td><td><span class="tag tag-green">✅ 已闭环</span></td><td>内9+外7</td><td>5</td><td>2026-06-08</td></tr>
+      <tr><td>003</td><td>企划命中率</td><td><span class="tag tag-orange">⚠️ 待建表</span></td><td>1</td><td>4</td><td>2026-06-18</td></tr>
+      <tr><td>004</td><td>在销型号数</td><td><span class="tag tag-green">✅ 已闭环</span></td><td>内9+外7</td><td>3</td><td>2026-06-08</td></tr>
+      <tr><td>005</td><td>在产型号数</td><td><span class="tag tag-green">✅ 已闭环</span></td><td>内9+外7</td><td>3</td><td>2026-06-08</td></tr>
+      <tr><td>006</td><td>平台数</td><td><span class="tag tag-green">✅ 已闭环</span></td><td>内8+外7</td><td>5</td><td>2026-06-08</td></tr>
+      <tr><td>007</td><td>单型号销量</td><td><span class="tag tag-green">✅ 已闭环</span></td><td>内8+外7</td><td>3</td><td>2026-06-08</td></tr>
+      <tr><td>008</td><td>单平台销量</td><td><span class="tag tag-green">✅ 已闭环</span></td><td>内8+外7</td><td>3</td><td>2026-06-08</td></tr>
+      <tr><td>009</td><td>设计变更统计</td><td><span class="tag tag-green">✅ 已闭环</span></td><td>1(IRS)</td><td>2</td><td>2026-05-15</td></tr>
+      <tr><td>010</td><td>奥维数据加工</td><td><span class="tag tag-green">✅ 已闭环</span></td><td>全品类</td><td>3</td><td>2026-07-01</td></tr>
+      <tr><td>011</td><td>项目平均开发周期</td><td><span class="tag tag-green">✅ 已闭环</span></td><td>2</td><td>3</td><td>2026-07-02</td></tr>
+      <tr><td>012</td><td>项目按计划实施率</td><td><span class="tag tag-green">✅ 已闭环</span></td><td>2</td><td>4</td><td>2026-07-08</td></tr>
+      <tr><td>013</td><td>奥维中间表</td><td><span class="tag tag-blue">🔵 待测试</span></td><td>5事业部</td><td>11</td><td>2026-07-08</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ 指标图谱面板 ═══ -->
+<div class="panel" id="panel-metrics">
+  <div class="section">
+    <h3>指标层次关系（力导向图）</h3>
+    <div id="chart-metrics" class="chart-container-lg"></div>
+  </div>
+  <div class="section">
+    <h3>指标清单</h3>
+    <div class="metric-tree">
+      <div class="metric-item base"><div class="metric-name">实际销量</div><div class="metric-formula">SUM(sale_qty) → ods管报</div></div>
+      <div class="metric-item base"><div class="metric-name">规划销量</div><div class="metric-formula">SUM(plan_sales_qty) → dwd BP/LX中间表</div></div>
+      <div class="metric-item base"><div class="metric-name">在销型号数</div><div class="metric-formula">COUNT(DISTINCT model) WHERE is_project='N'</div></div>
+      <div class="metric-item base"><div class="metric-name">平台数</div><div class="metric-formula">COUNT(DISTINCT platform)</div></div>
+      <div class="metric-item derived"><div class="metric-name">在产型号数</div><div class="metric-formula">← 在销型号数（筛选量产/小批量/停止生产）</div></div>
+      <div class="metric-item derived"><div class="metric-name">低效型号数</div><div class="metric-formula">← 实际销量 + 规划销量（累计实际 < 累计规划）</div></div>
+      <div class="metric-item composite"><div class="metric-name">低效型号占比</div><div class="metric-formula">低效型号数 / 在销型号数</div></div>
+      <div class="metric-item composite"><div class="metric-name">新品规划命中率</div><div class="metric-formula">命中型号数 / 新品总数</div></div>
+      <div class="metric-item composite"><div class="metric-name">企划命中率</div><div class="metric-formula">达标项目数 / 参评项目数（7阶段）</div></div>
+      <div class="metric-item composite"><div class="metric-name">单型号销量</div><div class="metric-formula">总销量 / 在销型号数（近3月滚动）</div></div>
+      <div class="metric-item composite"><div class="metric-name">单平台销量</div><div class="metric-formula">总销量 / 平台数</div></div>
+      <div class="metric-item composite"><div class="metric-name">项目平均开发周期</div><div class="metric-formula">SUM(dev_days) / COUNT(项目)</div></div>
+      <div class="metric-item composite"><div class="metric-name">项目按计划实施率</div><div class="metric-formula">(正常+结题) / (正常+延期+暂停+结题)</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 表血缘面板 ═══ -->
+<div class="panel" id="panel-lineage">
+  <div class="section">
+    <h3>数据血缘 DAG</h3>
+    <div id="chart-lineage" class="chart-container-lg"></div>
+  </div>
+</div>
+
+<!-- ═══ 维度面板 ═══ -->
+<div class="panel" id="panel-dimensions">
+  <div class="section">
+    <h3>维度知识（5个核心维度）</h3>
+    <table>
+      <tr><th>维度</th><th>维表</th><th>主键</th><th>核心坑</th></tr>
+      <tr><td>产品线</td><td>无（CASE WHEN计算）</td><td>product_line</td><td>内外销规则不同；冰箱vs冷柜需看PC00001；日立走sale_model_code口径</td></tr>
+      <tr><td>事业部</td><td>无（退化，管报d_bg）</td><td>d_bg</td><td>PLM项目管理的事业部名称可能与管报不一致</td></tr>
+      <tr><td>统计月份</td><td>dw.dim_date_nd</td><td>stat_month</td><td>VARCHAR(6)格式；GP_START_DT=昨天；近3月含当月</td></tr>
+      <tr><td>产品型号</td><td>dim.dim_ipd_productmodel_dd</td><td>ID</td><td>白电用本表，视像用JTPLM表；管报需经MDG桥梁</td></tr>
+      <tr><td>销售型号</td><td>dim.dim_ipd_salemodel_dd</td><td>ID</td><td>仅日立/央空走此口径；HX00379排除模块组合</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ 聚合规则面板 ═══ -->
+<div class="panel" id="panel-aggregation">
+  <div class="section">
+    <h3>不可加型指标映射（8条）</h3>
+    <table>
+      <tr><th>字段</th><th>分子</th><th>分母</th><th>所在表</th></tr>
+      <tr><td>dx_model_rate</td><td>dx_model_cnt</td><td>total_model_cnt</td><td>ads低效型号结果</td></tr>
+      <tr><td>hit_rate</td><td>hit_model_cnt</td><td>total_new_model_cnt</td><td>ads低效型号结果</td></tr>
+      <tr><td>qh_hit_rate</td><td>pass_model_cnt</td><td>total_eval_model_cnt</td><td>ads企划命中率</td></tr>
+      <tr><td>impl_rate</td><td>on_time_cnt</td><td>total_cnt</td><td>ads实施率</td></tr>
+      <tr><td>avg_dev_cycle</td><td>total_dev_days</td><td>project_cnt</td><td>ads开发周期</td></tr>
+      <tr><td>avg_model_sales</td><td>total_sales_qty</td><td>sale_model_cnt</td><td>dws单型号销量</td></tr>
+      <tr><td>avg_platform_sales</td><td>total_sales_qty</td><td>platform_cnt</td><td>ads单平台销量</td></tr>
+      <tr><td>share_rate</td><td>brand_retail_qty</td><td>total_retail_qty</td><td>ads品牌占有率</td></tr>
+    </table>
+  </div>
+  <div class="section">
+    <h3>🚫 反模式红线（5条）</h3>
+    <div class="anti-pattern"><div class="severity">🔴 阻塞</div><div class="detection">AVG(xxx_rate) 或 AVG(xxx_pct)</div><div class="fix">✅ 修复：SUM(numerator) / NULLIF(SUM(denominator), 0)</div></div>
+    <div class="anti-pattern"><div class="severity">🔴 阻塞</div><div class="detection">SUM(xxx_rate) 或 SUM(xxx_pct)</div><div class="fix">✅ 修复：SUM(numerator) / NULLIF(SUM(denominator), 0)</div></div>
+    <div class="anti-pattern"><div class="severity">🔴 阻塞</div><div class="detection">不同粒度表 JOIN 后直接 SUM</div><div class="fix">✅ 修复：各表先 GROUP BY 到相同粒度，再 FULL JOIN</div></div>
+    <div class="anti-pattern"><div class="severity">🔴 阻塞</div><div class="detection">AVG(avg_dev_cycle) 跨事业部聚合平均值</div><div class="fix">✅ 修复：SUM(total_dev_days) / NULLIF(SUM(project_cnt), 0)</div></div>
+    <div class="anti-pattern"><div class="severity">🟡 警告</div><div class="detection">WHERE rate > N 后再聚合</div><div class="fix">✅ 修复：先聚合再过滤，或明确这是业务需求</div></div>
+  </div>
+</div>
+
+<!-- ═══ 术语表面板 ═══ -->
+<div class="panel" id="panel-vocabulary">
+  <div class="section">
+    <h3>业务概念词表（15条）</h3>
+    <table>
+      <tr><th>术语</th><th>定义</th><th>易混淆</th></tr>
+      <tr><td>低效型号</td><td>上市满保护期后，实际累计销量低于累计规划量的产品型号</td><td>滞销型号、库存积压型号</td></tr>
+      <tr><td>保护期</td><td>新品上市后给予的免统计缓冲期（通常3-6个月）</td><td>上市期、试销期</td></tr>
+      <tr><td>产品型号口径</td><td>以dim_ipd_productmodel_dd的产品型号为管理粒度</td><td>销售型号编码口径</td></tr>
+      <tr><td>销售型号编码口径</td><td>以dim_ipd_salemodel_dd的PG00068为管理粒度（日立/央空专用）</td><td>产品型号口径</td></tr>
+      <tr><td>BP规划量</td><td>来自HDRP系统的年度Business Plan，按12个月分配</td><td>LX立项规划量</td></tr>
+      <tr><td>LX立项规划量</td><td>产品型号/销售型号维表的36个月规划字段（HX00506~HX00541）</td><td>BP规划量</td></tr>
+      <tr><td>管报数据</td><td>ods_mr_v_app_fm_imat_saledata，海信内部管理报表实际销量</td><td>财务报表、GSS订单</td></tr>
+      <tr><td>企划命中率</td><td>7阶段判定：各阶段实际销量与首年规划量的比较</td><td>新品命中率、低效占比</td></tr>
+      <tr><td>在销型号</td><td>生命周期未停止服务且库存未清零的型号</td><td>在产型号、全量型号</td></tr>
+      <tr><td>在产型号</td><td>在销中筛选量产/小批量/停止生产阶段（排除代工）</td><td>在销型号</td></tr>
+      <tr><td>应市项目</td><td>PLM中项目类别为"应市"的研发项目</td><td>预研项目、平台项目</td></tr>
+      <tr><td>奥维数据</td><td>第三方奥维云网提供的行业零售监测数据</td><td>管报数据</td></tr>
+      <tr><td>is_project标记</td><td>DWS中标识是否纳入ADS统计，N=纳入，Y=不纳入</td><td>数据过滤、删除标记</td></tr>
+      <tr><td>模块组合</td><td>HX00379='是'的组合套装产品，多数指标需排除</td><td>套装产品</td></tr>
+      <tr><td>能效机</td><td>视像/激光为满足能效标准衍生的型号，需转换回原型机</td><td>原型机</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ 词根面板 ═══ -->
+<div class="panel" id="panel-wordroots">
+  <div class="section">
+    <h3>字段命名词根（22条）</h3>
+    <table>
+      <tr><th>类别</th><th>缩写</th><th>全称</th><th>数据类型</th></tr>
+      <tr><td>产品</td><td>prdct</td><td>product</td><td>VARCHAR</td></tr>
+      <tr><td>产品</td><td>salemodel</td><td>sale_model</td><td>VARCHAR</td></tr>
+      <tr><td>产品</td><td>productline</td><td>product_line</td><td>VARCHAR</td></tr>
+      <tr><td>指标</td><td>dxmodel</td><td>dx_model (低效型号)</td><td>VARCHAR</td></tr>
+      <tr><td>指标</td><td>dxhxl</td><td>单型号销量</td><td>DECIMAL</td></tr>
+      <tr><td>指标</td><td>dptxl</td><td>单平台销量</td><td>DECIMAL</td></tr>
+      <tr><td>指标</td><td>zcmodel</td><td>在产型号</td><td>VARCHAR</td></tr>
+      <tr><td>规划</td><td>bp</td><td>business_plan</td><td>DECIMAL</td></tr>
+      <tr><td>规划</td><td>lx</td><td>立项</td><td>DECIMAL</td></tr>
+      <tr><td>实际</td><td>act_sales_qty</td><td>actual_sales_quantity</td><td>DECIMAL(20,2)</td></tr>
+      <tr><td>时间</td><td>dt_month</td><td>data_month</td><td>VARCHAR(6)</td></tr>
+      <tr><td>时间</td><td>stat_month</td><td>statistics_month</td><td>VARCHAR(6)</td></tr>
+      <tr><td>标记</td><td>is_project</td><td>is_in_project_scope</td><td>VARCHAR(1)</td></tr>
+      <tr><td>标记</td><td>zhibiao_type</td><td>indicator_type</td><td>VARCHAR(50)</td></tr>
+      <tr><td>项目</td><td>impl_rate</td><td>implementation_rate</td><td>DECIMAL(10,4)</td></tr>
+      <tr><td>项目</td><td>dev_cycle</td><td>development_cycle</td><td>DECIMAL(10,2)</td></tr>
+      <tr><td>项目</td><td>pause_days</td><td>pause_duration_days</td><td>INT</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ 源系统面板 ═══ -->
+<div class="panel" id="panel-sources">
+  <div class="section">
+    <h3>源系统一览（8个系统，16张源表）</h3>
+    <div class="pit"><div class="system">📦 管报系统（入湖07:00 全量快照）</div><div class="desc">• matnr需通过MDG桥接到产品型号，不直接关联dim表<br>• 日立需关联MDG取sale_model_code后再聚合<br>• yearmonth为VARCHAR(6)格式YYYYMM</div></div>
+    <div class="pit"><div class="system">📦 MDG主数据（入湖06:00 增量同步）</div><div class="desc">• product_type_code必须IN('FERT','ZTAO')，否则关联半成品<br>• delete_flag必须排除'Y'<br>• 日立走sale_model_code，其他走model_name</div></div>
+    <div class="pit"><div class="system">📦 白电PLM（入湖06:30 增量同步）</div><div class="desc">• PG00029生命周期状态为中文字符串<br>• HX00379='是'是模块组合<br>• HX00020首年规划量是企划命中率核心<br>• PC00001品类细分区分冰箱vs冷柜</div></div>
+    <div class="pit"><div class="system">📦 视像PLM/JTPLM（入湖06:30 增量同步）</div><div class="desc">• lifecycle_status与白电PLM状态名不同<br>• his_pmdproductlinename在生产版本表上（不在产品型号表上）<br>• 能效机→原型机需COALESCE优先取原型机名称</div></div>
+    <div class="pit"><div class="system">📦 PLM项目管理（入湖07:00 增量同步）</div><div class="desc">• 日期字段可能含JSON格式<br>• 暂停和恢复需配对计算（LEAD窗口函数）<br>• 调整记录可能乱序，需排序后配对</div></div>
+    <div class="pit"><div class="system">📦 GSS外销订单（入湖08:00 增量同步）</div><div class="desc">• sale_stat状态枚举1~31<br>• h_spec关联产品型号PG00061<br>• item_type区分整机/内机/外机（影响空调转换计算）</div></div>
+    <div class="pit"><div class="system">📦 奥维云网（不定期 周度更新 全量覆盖）</div><div class="desc">• 外部数据品类/品牌名称可能与内部不一致<br>• 周度转月度注意跨月周处理</div></div>
+    <div class="pit"><div class="system">📦 调度系统（参数注入）</div><div class="desc">• GP_START_DT格式yyyymmddHH:mm:ss（日期时间无空格）<br>• 本身代表昨天，不需再DATE_SUB<br>• 禁止SUBSTRING截取，必须用DATE_FORMAT函数</div></div>
+  </div>
+</div>
+
+<!-- ═══ 业务规则面板 ═══ -->
+<div class="panel" id="panel-rules">
+  <div class="section">
+    <h3>产品线分类规则</h3>
+    <table>
+      <tr><th>产品线</th><th>核心条件</th><th>备注</th></tr>
+      <tr><td>内销冰箱</td><td>控温储藏+家用冰箱+冷藏冷冻箱/冷藏箱；或冷冻箱+PC00001='冰箱'</td><td>PUB-003</td></tr>
+      <tr><td>内销冷柜</td><td>冷冻箱+PC00001≠冰箱；或家用冷柜；或家用展示柜+冰吧</td><td>PUB-003</td></tr>
+      <tr><td>洗衣机</td><td>清洁卫生器具+洗衣机/干衣机/护理机</td><td>PUB-003</td></tr>
+      <tr><td>家用空调</td><td>产品公司=空调+家用房间空调+分体式空调器整机</td><td>PUB-006</td></tr>
+      <tr><td>中央空调/日立</td><td>产品公司=日立+中央空调（走sale_model_code口径）</td><td>PUB-004</td></tr>
+      <tr><td>厨电</td><td>HX00223 IN (烟机/灶具/洗碗机/电热水器/燃气热水器/烤箱)</td><td>独立字段</td></tr>
+      <tr><td>激光</td><td>JTPLM产品公司=激光显示；产品线由生产版本his_pmdproductlinename精确IN匹配</td><td>家用/商用</td></tr>
+    </table>
+  </div>
+  <div class="section">
+    <h3>时间窗口规则</h3>
+    <table>
+      <tr><th>规则</th><th>逻辑</th></tr>
+      <tr><td>BP/LX选择</td><td>立项首月年份=当前年 → 用LX；否则用BP</td></tr>
+      <tr><td>保护期</td><td>上市≤3月不考核；保护期因产品线而异</td></tr>
+      <tr><td>工作日+3</td><td>项目实施率：结题日在计划日+3工作日内视为按时</td></tr>
+      <tr><td>暂停配对</td><td>暂停/恢复按LEAD窗口配对，多次暂停累加天数</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ 案例库面板 ═══ -->
+<div class="panel" id="panel-cases">
+  <div class="section">
+    <h3>项目案例索引（8个）</h3>
+    <table>
+      <tr><th>项目</th><th>参考价值</th><th>标签</th><th>摘要</th></tr>
+      <tr><td>002-dx-model-rate</td><td><span class="tag tag-red">高</span></td><td><span class="tag tag-blue">低效</span><span class="tag tag-blue">命中率</span><span class="tag tag-purple">多产品线</span></td><td>最复杂需求，内9+外7产品线，DWD→DWS→ADS全链路</td></tr>
+      <tr><td>003-qihua-hit-rate</td><td><span class="tag tag-red">高</span></td><td><span class="tag tag-blue">企划</span><span class="tag tag-blue">7阶段</span><span class="tag tag-purple">滑动窗口</span></td><td>7阶段判定复杂，滑动窗口+固定窗口双口径</td></tr>
+      <tr><td>004-sale-model-count</td><td><span class="tag tag-red">高</span></td><td><span class="tag tag-blue">在销</span><span class="tag tag-blue">库存清零</span></td><td>上游基础表，被005/007/008依赖</td></tr>
+      <tr><td>011-project-dev-cycle</td><td><span class="tag tag-red">高</span></td><td><span class="tag tag-green">PLM</span><span class="tag tag-green">暂停配对</span></td><td>PLM新数据源，暂停天数配对有坑</td></tr>
+      <tr><td>012-project-impl-rate</td><td><span class="tag tag-red">高</span></td><td><span class="tag tag-green">实施率</span><span class="tag tag-green">工作日+3</span></td><td>5种项目状态判定，工作日+3计算</td></tr>
+      <tr><td>013-aowei-market-analysis</td><td><span class="tag tag-red">高</span></td><td><span class="tag tag-orange">奥维</span><span class="tag tag-orange">7张表</span></td><td>从已有ADS再聚合，7张独立表，2模块递进</td></tr>
+    </table>
+  </div>
+  <div class="section">
+    <h3>002案例踩坑记录（详情示例）</h3>
+    <div class="pit"><div class="system">P1: 视像能效机导致销量重复</div><div class="desc">症状：电视产品线销量偏高<br>根因：能效机和原型机同时计入<br>修复：COALESCE(原型机映射, 管报型号)</div></div>
+    <div class="pit"><div class="system">P2: 管报物料无法直接关联产品型号表</div><div class="desc">症状：LEFT JOIN匹配率极低<br>根因：matnr是物料编码，必须经MDG桥梁转换<br>修复：ods管报.matnr → MDG.product_code → model_name</div></div>
+    <div class="pit"><div class="system">P3: 厨电合入后年维度汇总遗漏</div><div class="desc">症状：年维度不含厨电数据<br>根因：年维度汇总段在脚本中间，厨电段在末尾（执行顺序问题）<br>修复：年维度汇总移至脚本最末尾</div></div>
+    <div class="pit"><div class="system">P5: 日立MDG关联只能前14位匹配</div><div class="desc">症状：完整sale_model_code匹配率不到50%<br>根因：MDG product_code与salemodel_dd需截取前14位<br>修复：SUBSTRING(,1,14)匹配+限定create_company='RILI'</div></div>
+  </div>
+</div>
+
+<!-- ═══ 设计模式面板 ═══ -->
+<div class="panel" id="panel-patterns">
+  <div class="section">
+    <h3>设计模式（2个）</h3>
+    <table>
+      <tr><th>模式</th><th>适用场景</th><th>验证项目</th></tr>
+      <tr><td><strong>多产品线分叉统一汇总</strong></td><td>≥3条产品线执行相似但有差异的ETL逻辑，统一写入同一表</td><td>002/004/005/006/007/008</td></tr>
+      <tr><td><strong>BP/LX优先选择</strong></td><td>涉及规划量与实际量对比（完成率/命中率/低效判定）</td><td>002</td></tr>
+    </table>
+  </div>
+  <div class="section">
+    <h3>模式1：多产品线分叉统一汇总</h3>
+    <p style="color:#8899a6;font-size:13px;margin-bottom:12px;">核心结构：每条产品线独立 DELETE+INSERT 段落（各自CTE），ADS层统一聚合。新增产品线只需追加一个段落，不影响已有逻辑。</p>
+    <table>
+      <tr><th>决策点</th><th>方案</th><th>原因</th></tr>
+      <tr><td>各线独立INSERT vs 合并大SQL</td><td>独立INSERT</td><td>便于扩展、各段互不影响</td></tr>
+      <tr><td>DELETE范围</td><td>按company+dt_month</td><td>各线独立刷新</td></tr>
+      <tr><td>日立单独路径</td><td>是</td><td>sale_model_code口径特殊</td></tr>
+    </table>
+  </div>
+  <div class="section">
+    <h3>模式2：BP/LX优先选择</h3>
+    <p style="color:#8899a6;font-size:13px;margin-bottom:12px;">DWD层将BP和LX展开为统一月度×型号粒度中间表，DWS层按"立项首月在本年→用LX，否则→用BP"规则选择。</p>
+    <table>
+      <tr><th>场景</th><th>选择</th></tr>
+      <tr><td>LX首月在本年</td><td>用LX，从立项首月累计</td></tr>
+      <tr><td>LX首月在去年</td><td>用BP，按自然月累计</td></tr>
+      <tr><td>滞后上市</td><td>以实际上市时间开始算累计BP目标</td></tr>
+      <tr><td>外销新品命中率</td><td>仅LX（HX00020拆分12个月）</td></tr>
+      <tr><td>企划命中率</td><td>不走本模式，直接取HX00020</td></tr>
+    </table>
+  </div>
+</div>
+</div>
+
+<script>
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  event.target.classList.add('active');
+  if (id === 'overview') initRadar();
+  if (id === 'metrics') initMetricsGraph();
+  if (id === 'lineage') initLineageGraph();
+}
+
+function initRadar() {
+  var chart = echarts.init(document.getElementById('chart-radar'));
+  chart.setOption({
+    radar: { indicator: [
+      {name:'指标覆盖',max:10},{name:'表目录',max:30},{name:'术语表',max:20},
+      {name:'源系统经验',max:20},{name:'聚合规则',max:10},{name:'案例详情',max:10},
+      {name:'设计模式',max:5},{name:'维度知识',max:8}
+    ], axisName:{color:'#8899a6'}, splitLine:{lineStyle:{color:'#2d3748'}} },
+    series: [{type:'radar',data:[{value:[13,22,15,16,8,1,2,5],name:'当前覆盖',areaStyle:{color:'rgba(29,155,240,0.2)'},lineStyle:{color:'#1d9bf0'}}]}]
+  });
+}
+
+function initMetricsGraph() {
+  var chart = echarts.init(document.getElementById('chart-metrics'));
+  var data = [
+    {name:'实际销量',category:0,symbolSize:30},{name:'规划销量',category:0,symbolSize:30},
+    {name:'在销型号数',category:0,symbolSize:30},{name:'平台数',category:0,symbolSize:30},
+    {name:'在产型号数',category:1,symbolSize:25},{name:'低效型号数',category:1,symbolSize:25},
+    {name:'低效型号占比',category:2,symbolSize:40},{name:'新品命中率',category:2,symbolSize:40},
+    {name:'企划命中率',category:2,symbolSize:40},{name:'单型号销量',category:2,symbolSize:35},
+    {name:'单平台销量',category:2,symbolSize:35},{name:'项目开发周期',category:2,symbolSize:35},
+    {name:'项目实施率',category:2,symbolSize:35},{name:'品牌占有率',category:2,symbolSize:35}
+  ];
+  var links = [
+    {source:'在销型号数',target:'在产型号数'},{source:'实际销量',target:'低效型号数'},
+    {source:'规划销量',target:'低效型号数'},{source:'低效型号数',target:'低效型号占比'},
+    {source:'在销型号数',target:'低效型号占比'},{source:'实际销量',target:'新品命中率'},
+    {source:'规划销量',target:'新品命中率'},{source:'实际销量',target:'单型号销量'},
+    {source:'在销型号数',target:'单型号销量'},{source:'实际销量',target:'单平台销量'},
+    {source:'平台数',target:'单平台销量'},{source:'在产型号数',target:'平台数'}
+  ];
+  chart.setOption({
+    legend:{data:['基础度量','派生度量','复合指标'],textStyle:{color:'#8899a6'}},
+    series:[{type:'graph',layout:'force',data:data,links:links,roam:true,
+      categories:[{name:'基础度量',itemStyle:{color:'#22c55e'}},{name:'派生度量',itemStyle:{color:'#f59e0b'}},{name:'复合指标',itemStyle:{color:'#ef4444'}}],
+      force:{repulsion:300,edgeLength:120},label:{show:true,color:'#e7e9ea',fontSize:11},
+      lineStyle:{color:'#4a5568',curveness:0.1},emphasis:{focus:'adjacency'}}]
+  });
+}
+
+function initLineageGraph() {
+  var chart = echarts.init(document.getElementById('chart-lineage'));
+  var data = [
+    {name:'ODS管报',x:0,y:0,category:0},{name:'MDG桥梁',x:200,y:0,category:1},
+    {name:'白电PLM',x:0,y:100,category:0},{name:'销售型号PLM',x:0,y:200,category:0},
+    {name:'DWD BP/LX',x:400,y:50,category:2},{name:'DWS低效明细',x:600,y:0,category:3},
+    {name:'DWS在销明细',x:600,y:100,category:3},{name:'DWS在产明细',x:600,y:200,category:3},
+    {name:'DWS平台明细',x:600,y:300,category:3},{name:'DWS单型号销量',x:600,y:400,category:3},
+    {name:'ADS低效结果',x:800,y:0,category:4},{name:'ADS在销结果',x:800,y:100,category:4},
+    {name:'ADS在产结果',x:800,y:200,category:4},{name:'ADS平台结果',x:800,y:300,category:4},
+    {name:'ADS单平台',x:800,y:400,category:4},{name:'ADS奥维中间表',x:800,y:500,category:4}
+  ];
+  var links = [
+    {source:'ODS管报',target:'MDG桥梁'},{source:'MDG桥梁',target:'DWD BP/LX'},
+    {source:'白电PLM',target:'DWD BP/LX'},{source:'销售型号PLM',target:'DWD BP/LX'},
+    {source:'DWD BP/LX',target:'DWS低效明细'},{source:'MDG桥梁',target:'DWS低效明细'},
+    {source:'白电PLM',target:'DWS在销明细'},{source:'DWS在销明细',target:'DWS在产明细'},
+    {source:'DWS在产明细',target:'DWS平台明细'},{source:'DWS在销明细',target:'DWS单型号销量'},
+    {source:'DWS低效明细',target:'ADS低效结果'},{source:'DWS在销明细',target:'ADS在销结果'},
+    {source:'DWS在产明细',target:'ADS在产结果'},{source:'DWS平台明细',target:'ADS平台结果'},
+    {source:'DWS单型号销量',target:'ADS单平台'},{source:'ADS平台结果',target:'ADS单平台'}
+  ];
+  chart.setOption({
+    legend:{data:['ODS','DIM/DW','DWD','DWS','ADS'],textStyle:{color:'#8899a6'}},
+    series:[{type:'graph',layout:'none',data:data,links:links,roam:true,
+      categories:[{name:'ODS',itemStyle:{color:'#64748b'}},{name:'DIM/DW',itemStyle:{color:'#8b5cf6'}},{name:'DWD',itemStyle:{color:'#f59e0b'}},{name:'DWS',itemStyle:{color:'#3b82f6'}},{name:'ADS',itemStyle:{color:'#22c55e'}}],
+      symbolSize:35,label:{show:true,color:'#e7e9ea',fontSize:10,position:'bottom'},
+      lineStyle:{color:'#4a5568',curveness:0.1},edgeSymbol:['none','arrow'],edgeSymbolSize:8}]
+  });
+}
+
+// 初始化首页雷达图
+window.onload = function() { initRadar(); };
+</script>
+</body>
+</html>

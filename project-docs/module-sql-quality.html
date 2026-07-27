@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL质量管控详解 - ETL开发助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #2c3e50; line-height: 1.6; }
+        .header { background: linear-gradient(135deg, #1a237e, #283593, #3949ab); color: white; padding: 40px; }
+        .header h1 { font-size: 2em; }
+        .header .nav { margin-top: 10px; }
+        .header .nav a { color: rgba(255,255,255,0.8); text-decoration: none; margin-right: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+        .card { background: white; border-radius: 12px; padding: 30px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .card h2 { color: #1a237e; margin-bottom: 16px; font-size: 1.4em; border-bottom: 2px solid #e8eaf6; padding-bottom: 10px; }
+        .card h3 { color: #283593; margin: 18px 0 10px; font-size: 1.1em; }
+        .flow-diagram { background: #263238; color: #a5d6a7; padding: 20px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 0.82em; overflow-x: auto; white-space: pre; line-height: 1.6; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; }
+        th { background: #e8eaf6; color: #1a237e; padding: 10px 12px; text-align: left; }
+        td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+        .pros, .cons { padding: 16px; border-radius: 8px; }
+        .pros { background: #e8f5e9; }
+        .cons { background: #fce4ec; }
+        .pros h4 { color: #2e7d32; }
+        .cons h4 { color: #c62828; }
+        ul { padding-left: 20px; }
+        li { margin: 6px 0; }
+        .improve { background: #fff8e1; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .improve h4 { color: #f57f17; margin-bottom: 8px; }
+        .code-block { background: #263238; color: #e0e0e0; padding: 16px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 0.85em; overflow-x: auto; margin: 12px 0; }
+        .code-block .keyword { color: #82b1ff; }
+        .code-block .comment { color: #78909c; }
+        footer { text-align: center; padding: 30px; color: #999; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 SQL质量管控详解</h1>
+        <div class="nav"><a href="index.html">← 返回总览</a> <a href="module-change-management.html">变更管理 →</a></div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h2>模块概述</h2>
+            <p>SQL质量管控通过"规范+模板+自动检查"三重机制保障ETL脚本的正确性、可维护性和幂等性。核心思路是：用模板降低出错概率，用Hook自动检测遗漏，用规范统一团队风格。</p>
+        </div>
+
+        <div class="card">
+            <h2>架构图 — 质量保障体系</h2>
+            <div class="flow-diagram">┌─────────────────────────────────────────────────────────────────┐
+│                     SQL质量三重保障                                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────┐    ┌─────────────────┐    ┌────────────────┐  │
+│  │ 编码规范     │    │ 实战模板库       │    │ 自动化检查      │  │
+│  │ sql_rules.md│    │ sql_templates.md│    │ auto-sql-review│  │
+│  │             │    │                 │    │                │  │
+│  │ • 关键字大写 │    │ • 17个模板      │    │ • 保存即检查   │  │
+│  │ • 4空格缩进  │    │ • 场景推荐表    │    │ • 3项快检      │  │
+│  │ • 命名规范   │    │ • 变量替换     │    │ • 血缘自动更新 │  │
+│  │ • Doris类型  │    │ • 组合规则     │    │                │  │
+│  └─────────────┘    └─────────────────┘    └────────────────┘  │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ 生成时检查（A6b / B4）                                       ││
+│  │ • INSERT字段数 vs SELECT表达式数 对齐                         ││
+│  │ • MCP验证目标表字段存在性                                     ││
+│  │ • 跨层字段一致性验证                                          ││
+│  │ • 经验-需求冲突检测                                           ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘</div>
+        </div>
+
+        <div class="card">
+            <h2>核心设计 — 实战模板库（17个）</h2>
+            <table>
+                <tr><th>模板ID</th><th>名称</th><th>适用场景</th></tr>
+                <tr><td>模板1</td><td>DELETE+INSERT幂等模式</td><td>DWS层标准加载</td></tr>
+                <tr><td>模板2</td><td>冰冷洗产品线分类CTE</td><td>产品大类/中类/小类判定</td></tr>
+                <tr><td>模板3</td><td>指标范围判定CTE</td><td>gorenje/标机/CKD剔除</td></tr>
+                <tr><td>模板4</td><td>库存清零判定CTE</td><td>退市+库存联合判定</td></tr>
+                <tr><td>模板5</td><td>内销库存汇总CTE</td><td>多源UNION ALL</td></tr>
+                <tr><td>模板6</td><td>外销库存汇总CTE</td><td>海外+基地+在途</td></tr>
+                <tr><td>模板7</td><td>空调产品线分类CTE</td><td>空调内部组织判定</td></tr>
+                <tr><td>模板8</td><td>ADS层汇总模板</td><td>含"全部"维度行</td></tr>
+                <tr><td>模板9</td><td>is_project保护期判定</td><td>DWS层统一标记</td></tr>
+                <tr><td>模板10</td><td>test库中间表模式</td><td>CTAS替代临时表</td></tr>
+                <tr><td>模板11</td><td>管报MDG关联</td><td>物料→型号映射</td></tr>
+                <tr><td>模板12</td><td>日立销售型号汇总</td><td>sale_model_code口径</td></tr>
+                <tr><td>模板13</td><td>LX规划量行转列</td><td>SPLIT+LATERAL VIEW</td></tr>
+                <tr><td>模板14</td><td>DWS引用在销型号做销量关联</td><td>单型号销量类</td></tr>
+                <tr><td>模板15</td><td>滑动窗口12月最大销量</td><td>企划命中率</td></tr>
+                <tr><td>模板16</td><td>BI数据集公共筛选</td><td>多参数全选/多选</td></tr>
+                <tr><td>模板17</td><td>空调内机→整机转换</td><td>轻商去重</td></tr>
+            </table>
+
+            <h3>模板选择规则</h3>
+            <table>
+                <tr><th>需求场景</th><th>推荐模板组合</th></tr>
+                <tr><td>冰冷洗在销/在产型号</td><td>1 + 2 + 3 + 4 + 5 + 9</td></tr>
+                <tr><td>空调型号类指标</td><td>1 + 7 + 4 + 9 + 17</td></tr>
+                <tr><td>ADS层汇总</td><td>8</td></tr>
+                <tr><td>涉及管报（日立）</td><td>12</td></tr>
+                <tr><td>企划命中率（滑动窗口）</td><td>15 + 12</td></tr>
+                <tr><td>BI数据集（无需建表）</td><td>16</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>核心设计 — 自动快检（Hook）</h2>
+            <p>每次保存 <code>requirements/*/sql_scripts/*.sql</code> 时自动触发3项检查：</p>
+            <table>
+                <tr><th>检查项</th><th>规则</th><th>报告格式</th></tr>
+                <tr><td>关键字大写</td><td>检查select/from/where等30+关键字</td><td>列出前5处违规位置</td></tr>
+                <tr><td>MDG过滤</td><td>引用dim_product_base_info_dd时必须有product_type_code+delete_flag过滤</td><td>缺少时告警</td></tr>
+                <tr><td>字段数对齐</td><td>INSERT字段数 = SELECT表达式数</td><td>不匹配时报具体数字</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>核心设计 — 幂等性保障</h2>
+            <div class="code-block"><span class="comment">-- 标准幂等模式：先删再插</span>
+<span class="keyword">DELETE FROM</span> dws.target_table
+<span class="keyword">WHERE</span> dt_month = DATE_FORMAT(date_sub('${GP_START_DT}', interval 1 month), '%Y%m')
+    <span class="keyword">AND</span> product_line <span class="keyword">IN</span> ('冰箱','冷柜')
+    <span class="keyword">AND</span> zhibiao_type = '2';
+
+<span class="comment">-- 老品清零保护（可选，防覆盖历史标记）</span>
+<span class="comment">-- AND model_label_10 &lt;&gt; '老品清零'</span>
+
+<span class="keyword">INSERT INTO</span> dws.target_table(field1, field2, ...)
+<span class="keyword">SELECT</span> ... <span class="keyword">FROM</span> ...;</div>
+            <p style="margin-top:12px">核心规则：同一组 WHERE 条件的 DELETE 和 INSERT 必须严格对应，确保脚本可任意次数重跑结果一致。</p>
+        </div>
+
+        <div class="card">
+            <h2>优缺点分析</h2>
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>✅ 优势</h4>
+                    <ul>
+                        <li>17个模板覆盖90%以上的编写场景</li>
+                        <li>保存即检查，问题即时发现不积压</li>
+                        <li>幂等性设计确保脚本可安全重跑</li>
+                        <li>模板从实际项目中提取，贴近真实场景</li>
+                        <li>MCP验证字段存在性，避免运行时才发现错误</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>❌ 局限</h4>
+                    <ul>
+                        <li>快检只覆盖格式和结构，不检查业务逻辑正确性</li>
+                        <li>模板适配新场景时仍需手工调整</li>
+                        <li>没有SQL执行计划分析（性能问题不可知）</li>
+                        <li>无法自动检测SQL语义等价性（重复逻辑）</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>待改进项</h2>
+            <div class="improve">
+                <h4>🔧 建议</h4>
+                <ul>
+                    <li>P1：增加业务逻辑检查规则（如is_project必须出现在ADS的WHERE中）</li>
+                    <li>P1：支持SQL Diff对比（变更前后自动高亮差异）</li>
+                    <li>P2：集成EXPLAIN分析，检测全表扫描和数据倾斜风险</li>
+                    <li>P2：模板参数化工具（用户填参数自动生成SQL框架）</li>
+                    <li>P3：跨脚本冗余检测（发现重复CTE/子查询，建议抽取中间表）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <footer>ETL开发助手 · SQL质量管控详解 · 生成日期：2026-06-11</footer>
+</body>
+</html>

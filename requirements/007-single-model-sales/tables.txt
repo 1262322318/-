@@ -1,0 +1,20 @@
+# 涉及数据表清单 - 单型号销量
+
+## 源表（数据读取）
+dws.dws_ipd_ipm_sale_model_detail_dd
+ods.ods_mr_v_app_fm_imat_saledata
+dw.dim_product_base_info_dd
+dim.dim_ipd_tv_model_nengxiao_nd
+dws.dws_ipd_ipm_platform_detail_dd
+dws.dws_ipd_ipm_dxhxl_detail_dd
+dws.dws_ipd_ipm_sales_detail_mid_dd
+ods.ods_feishu_base_P8vTbFzrTaWtQLspDwgcpbm8nng_tblT8dRgmsgrWu9c
+
+## 目标表（数据写入）
+dws.dws_ipd_ipm_dxhxl_detail_dd
+ads.ads_ipd_ipm_dxhxl_result_dd
+
+## 说明
+# 1. 每行一个表，格式为 database.table_name
+# 2. 内销取管报数据，外销取sellin全量数据
+# 3. dws.dws_ipd_ipm_dxhxl_detail_dd 既是源表也是目标表（ADS层读取DWS层数据）

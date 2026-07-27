@@ -1,0 +1,9 @@
+---
+name: interaction-metrics
+version: 1.0.0
+description: "交互度量记录。记录每次需求处理过程的交互度量数据，区分用户侧/框架侧问题，识别瓶颈阶段，生成归因分析和改进Backlog。"
+inclusion: manual
+metadata:
+  requires:
+    bins: []
+---

@@ -1,0 +1,3 @@
+数据源名称,数据源名称,数据库名称,表名称,分层,三级域,表中文名称,表描述,数据模型,负责人,业务负责,安全分级,重要等级,更新周期,更新方式,标签
+doris,ds_rd_rw,dws,dws_ipd_ipd_project_dev_cycle_dd,dws,管理集成产品开发/管理产品开发/整机产品开发,应市项目开发周期明细表,应市项目开发周期明细表（含暂停时段计算）,DUPLICATE,gongying2,luxinping,敏感级,,月,,
+doris,ds_rd_rw,ads,ads_ipd_ipd_project_dev_cycle_result_dd,ads,管理集成产品开发/管理产品开发/整机产品开发,应市项目平均开发周期结果表,按事业部×类型聚合的平均开发周期+目标+完成率,DUPLICATE,gongying2,luxinping,敏感级,,月,,

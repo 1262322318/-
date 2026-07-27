@@ -1,0 +1,9 @@
+# {团队} 项目案例索引
+
+cases:
+  - id: "{项目标识}"
+    name: "{项目名称}"
+    time: "YYYY-MM"
+    tags: ["{标签}"]
+    reference_value: "{对类似需求的参考价值}"
+    file: "{project}.yaml"

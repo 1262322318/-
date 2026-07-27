@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://postgres:lvxuebin%2B521@127.0.0.1:5432/postgres"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "query"
+      ]
+    },
+    "context7": {
+      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

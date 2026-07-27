@@ -1,0 +1,10 @@
+数据源类型,数据源名称,数据库名称,表名称,数仓分层,主题归属,表中文名称,表描述,表类型,业务负责人,技术负责人,安全分级,重要等级,评审链接,更新方式,标签
+doris,ds_rd_rw,dim,dim_ipd_ipm_aw_price_segment_dd,dim,管理集成产品开发/管理产品组合/产品,奥维价格段维度表,奥维价格段维度表,DUPLICATE,gongying2,luxinping,敏感级,,,,
+doris,ds_rd_rw,dim,dim_ipd_ipm_aw_spec_segment_dd,dim,管理集成产品开发/管理产品组合/产品,奥维规格段维度表,奥维规格段维度表,DUPLICATE,gongying2,luxinping,敏感级,,,,
+doris,ds_rd_rw,ads,ads_ipd_ipm_aowei_industry_channel_nd,ads,管理集成产品开发/管理产品组合/产品,奥维行业分渠道数据（全市场）,奥维行业分渠道数据（全市场，指标行格式）,DUPLICATE,gongying2,luxinping,敏感级,,,,
+doris,ds_rd_rw,ads,ads_ipd_ipm_aowei_channel_brand_nd,ads,管理集成产品开发/管理产品组合/产品,奥维分渠道分品牌数据,奥维分渠道分品牌数据（指标行格式）,DUPLICATE,gongying2,luxinping,敏感级,,,,
+doris,ds_rd_rw,ads,ads_ipd_ipm_aowei_model_price_spec_nd,ads,管理集成产品开发/管理产品组合/产品,奥维各型号均价及价格段（筛选品牌）,奥维各型号均价及价格段（筛选品牌，指标行格式）,DUPLICATE,gongying2,luxinping,敏感级,,,,
+doris,ds_rd_rw,ads,ads_ipd_ipm_aowei_price_segment_nd,ads,管理集成产品开发/管理产品组合/产品,奥维分价格段数据（全市场）,奥维分价格段数据（全市场，指标行格式）,DUPLICATE,gongying2,luxinping,敏感级,,,,
+doris,ds_rd_rw,ads,ads_ipd_ipm_aowei_price_brand_nd,ads,管理集成产品开发/管理产品组合/产品,奥维分价格段分品牌数据,奥维分价格段分品牌数据（指标行格式）,DUPLICATE,gongying2,luxinping,敏感级,,,,
+doris,ds_rd_rw,ads,ads_ipd_ipm_aowei_price_spec_nd,ads,管理集成产品开发/管理产品组合/产品,奥维分价格段分规格段数据（全市场）,奥维分价格段分规格段数据（全市场，指标行格式）,DUPLICATE,gongying2,luxinping,敏感级,,,,
+doris,ds_rd_rw,ads,ads_ipd_ipm_aowei_price_spec_brand_nd,ads,管理集成产品开发/管理产品组合/产品,奥维分价格段分规格段分品牌数据,奥维分价格段分规格段分品牌数据（指标行格式）,DUPLICATE,gongying2,luxinping,敏感级,,,,

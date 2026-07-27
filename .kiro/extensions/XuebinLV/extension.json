@@ -1,0 +1,29 @@
+{
+  "name": "XuebinLV",
+  "display_name": "XuebinLV能力包（IPM研发效率指标）",
+  "version": "1.2.0",
+  "team": "IPM数据组",
+  "maintainers": ["XuebinLV"],
+  "last_updated": "2026-07-10",
+
+  "scope": {
+    "keywords": ["IPM", "研发效率", "低效型号", "命中率", "在销型号", "在产型号", "平台数", "单型号销量", "单平台销量", "企划命中率", "设计变更", "奥维", "项目开发周期", "实施率", "新品命中率", "产品型号", "销售型号", "管报", "BP", "LX", "规划量"],
+    "project_patterns": ["ipm_*", "ipd_*"]
+  },
+
+  "capabilities": {
+    "vocabulary":        { "file": "vocabulary.yaml",     "used_in": ["qa", "phase1"], "description": "IPM域术语消歧" },
+    "word_roots":        { "file": "word-roots.yaml",     "used_in": ["phase3", "phase4"], "merge_strategy": "append_to_base", "description": "字段命名词根" },
+    "patterns":          { "dir":  "patterns/",           "used_in": ["phase2", "phase3", "phase4"], "description": "设计与加工模式" },
+    "gates":             { "file": "gates/extra-checks.md", "used_in": ["all_gates"], "merge_strategy": "append", "description": "闸门额外检查" },
+    "prd_guide":         { "file": "prd-guide/extra-collection-items.md", "used_in": ["phase1"], "description": "PRD额外采集项" },
+
+    "metrics":           { "dir":  "metrics/",            "used_in": ["qa", "phase1", "phase2", "phase3"], "description": "指标语义层（效率/命中率/项目管理）" },
+    "dimensions":        { "file": "dimensions.yaml",     "used_in": ["qa", "phase2", "phase3", "phase4"], "description": "维度知识（产品线跨系统对齐）" },
+    "aggregation_rules": { "file": "aggregation-rules.yaml", "used_in": ["qa", "phase3", "phase4"], "description": "粒度转换与聚合规则" },
+    "catalog_cache":     { "file": "catalog.yaml",        "used_in": ["qa", "phase1", "phase2", "phase3"], "description": "表目录缓存" },
+    "source_systems":    { "file": "source-systems.yaml", "used_in": ["qa", "phase1", "phase2"], "description": "源系统经验缓存（管报/PLM/GSS/奥维）" },
+    "business_rules":    { "dir":  "business-rules/",     "used_in": ["phase1", "phase3", "phase4"], "description": "业务规则（产品线分类/时间窗口）" },
+    "cases":             { "dir":  "cases/",              "used_in": ["qa", "phase1", "phase2", "phase3"], "description": "项目案例库" }
+  }
+}

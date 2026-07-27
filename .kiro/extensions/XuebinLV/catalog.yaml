@@ -1,0 +1,153 @@
+# XuebinLV IPM域表目录缓存（catalog.yaml）
+# 轻量缓存：快速定位有哪些表、上游依赖。详情走平台 API。
+
+tables:
+  # ═══ DWD 层 ═══
+  - name: dwd.dwd_ipd_ipm_bp_lx_model_mid_dd
+    layer: DWD
+    granularity: 月 × 型号
+    depends_on: ["dim.dim_ipd_productmodel_dd", "dim.dim_ipd_salemodel_dd"]
+    notes: BP和LX规划量中间表，按产品型号口径+销售型号编码口径双版本
+
+  # ═══ DWS 层（效率指标） ═══
+  - name: dws.dws_ipd_ipm_dxmodel_detail_dd
+    layer: DWS
+    granularity: 月 × 产品线 × 型号
+    depends_on: ["dwd.dwd_ipd_ipm_bp_lx_model_mid_dd", "ods.ods_mr_v_app_fm_imat_saledata", "dw.dim_product_base_info_dd", "dim.dim_ipd_productmodel_dd"]
+    notes: 低效型号明细表，含内销+外销，全产品线
+
+  - name: dws.dws_ipd_ipm_sale_model_detail_dd
+    layer: DWS
+    granularity: 月 × 产品线 × 型号
+    depends_on: ["dim.dim_ipd_productmodel_dd", "dim.dim_ipd_salemodel_dd", "dw.dim_product_base_info_dd"]
+    notes: 在销型号明细表，is_project标记筛选
+
+  - name: dws.dws_ipd_ipm_zcmodel_detail_dd
+    layer: DWS
+    granularity: 月 × 产品线 × 型号
+    depends_on: ["dws.dws_ipd_ipm_sale_model_detail_dd"]
+    notes: 在产型号明细表，从在销型号筛选量产/小批量/停止生产阶段
+
+  - name: dws.dws_ipd_ipm_platform_detail_dd
+    layer: DWS
+    granularity: 月 × 产品线 × 平台
+    depends_on: ["dws.dws_ipd_ipm_zcmodel_detail_dd", "dim.dim_ipd_productplatform_dd"]
+    notes: 产品平台数明细表
+
+  - name: dws.dws_ipd_ipm_dxhxl_detail_dd
+    layer: DWS
+    granularity: 月 × 产品线 × 型号
+    depends_on: ["dws.dws_ipd_ipm_sale_model_detail_dd", "ods.ods_mr_v_app_fm_imat_saledata"]
+    notes: 单型号销量明细表（近3月滚动+年累两种口径）
+
+  - name: dws.dws_ipd_ipm_sales_detail_mid_dd
+    layer: DWS
+    granularity: 月 × 物料
+    depends_on: ["ods.ods_mr_v_app_fm_imat_saledata", "dw.dim_product_base_info_dd"]
+    notes: 销量过渡中间表，被多个DWS表引用
+
+  # ═══ DWS 层（企划命中率） ═══
+  - name: dws.dws_ipd_ipm_qhrate_detail_dd
+    layer: DWS
+    granularity: 月 × 销售型号
+    depends_on: ["dim.dim_ipd_salemodel_dd", "ods.ods_mr_v_app_fm_imat_saledata", "dw.dim_product_base_info_dd"]
+    notes: 企划命中率明细表（央空日立，7阶段判定）
+
+  # ═══ DWS 层（项目管理） ═══
+  - name: dws.dws_ipd_itd_project_dev_cycle_dd
+    layer: DWS
+    granularity: 月 × 项目
+    depends_on: ["odsplm_bm_hbmtprojectkpi", "odsplm_bm_hbmtprojectadjust"]
+    notes: 项目开发周期明细表（暂停天数配对计算）
+
+  - name: dws.dws_ipd_itd_project_impl_rate_dd
+    layer: DWS
+    granularity: 月 × 项目
+    depends_on: ["odsplm_bm_hbmtprojectkpi", "odsplm_bm_hbmtprojectadjust", "ods.odsrdm_holiday"]
+    notes: 项目按计划实施率明细表（5种状态判定、工作日+3计算）
+
+  # ═══ ADS 层 ═══
+  - name: ads.ads_ipd_ipm_dxmodel_result_dd
+    layer: ADS
+    granularity: 月 × 产品线 × 事业部
+    depends_on: ["dws.dws_ipd_ipm_dxmodel_detail_dd"]
+    notes: 低效型号占比+新品命中率结果表
+
+  - name: ads.ads_ipd_ipm_sale_model_result_dd
+    layer: ADS
+    granularity: 月 × 产品线 × 事业部
+    depends_on: ["dws.dws_ipd_ipm_sale_model_detail_dd"]
+    notes: 在销型号数结果表
+
+  - name: ads.ads_ipd_ipm_zcmodel_result_dd
+    layer: ADS
+    granularity: 月 × 产品线 × 事业部
+    depends_on: ["dws.dws_ipd_ipm_zcmodel_detail_dd"]
+    notes: 在产型号数结果表
+
+  - name: ads.ads_ipd_ipm_platform_result_dd
+    layer: ADS
+    granularity: 月 × 产品线 × 事业部
+    depends_on: ["dws.dws_ipd_ipm_platform_detail_dd"]
+    notes: 平台数结果表
+
+  - name: ads.ads_ipd_ipm_dptxl_result_dd
+    layer: ADS
+    granularity: 月 × 产品线 × 事业部
+    depends_on: ["dws.dws_ipd_ipm_dxhxl_detail_dd", "dws.dws_ipd_ipm_platform_detail_dd"]
+    notes: 单平台销量结果表
+
+  - name: ads.ads_ipd_ipm_qhrate_result_dd
+    layer: ADS
+    granularity: 月 × 项目 × 阶段
+    depends_on: ["dws.dws_ipd_ipm_qhrate_detail_dd"]
+    notes: 企划命中率结果表（红黑榜）
+
+  - name: ads.ads_ipd_irs_design_change_kccl_dd
+    layer: ADS
+    granularity: 变更单 × flag
+    depends_on: []
+    notes: 设计变更库存处理意见表（4种flag场景，全量刷新，独立业务域IRS）
+
+  - name: ads.ads_ipd_ipm_aowei_wd
+    layer: ADS
+    granularity: 周 × 品类 × 渠道 × 品牌 × 型号
+    depends_on: []
+    notes: 奥维数据底表（外部数据源，由数据加工脚本维护）
+
+  - name: ads.ads_ipd_itd_project_dev_cycle_dd
+    layer: ADS
+    granularity: 月 × 事业部
+    depends_on: ["dws.dws_ipd_itd_project_dev_cycle_dd"]
+    notes: 项目平均开发周期结果表
+
+  - name: ads.ads_ipd_itd_project_impl_rate_dd
+    layer: ADS
+    granularity: 月 × 事业部
+    depends_on: ["dws.dws_ipd_itd_project_impl_rate_dd"]
+    notes: 项目按计划实施率结果表
+
+  # ═══ 奥维中间表（7张） ═══
+  - name: ads.ads_ipd_ipm_aowei_mid_total_market
+    layer: ADS
+    granularity: 月 × 品类 × 渠道
+    depends_on: ["ads.ads_ipd_ipm_aowei_wd"]
+    notes: 奥维中间表1-全市场总量
+
+  - name: ads.ads_ipd_ipm_aowei_mid_brand_share
+    layer: ADS
+    granularity: 月 × 品类 × 渠道 × 品牌
+    depends_on: ["ads.ads_ipd_ipm_aowei_wd"]
+    notes: 奥维中间表2-品牌占有率
+
+  - name: ads.ads_ipd_ipm_aowei_mid_price_segment
+    layer: ADS
+    granularity: 月 × 品类 × 渠道 × 价格段
+    depends_on: ["ads.ads_ipd_ipm_aowei_wd", "dim.dim_ipd_ipm_aw_price_segment_dd"]
+    notes: 奥维中间表3-价格段分布
+
+  - name: ads.ads_ipd_ipm_aowei_mid_spec_segment
+    layer: ADS
+    granularity: 月 × 品类 × 渠道 × 规格段
+    depends_on: ["ads.ads_ipd_ipm_aowei_wd", "dim.dim_ipd_ipm_aw_spec_segment_dd"]
+    notes: 奥维中间表4-规格段分布

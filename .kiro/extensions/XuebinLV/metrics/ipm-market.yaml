@@ -1,0 +1,75 @@
+# XuebinLV IPM市场分析类指标定义
+# 覆盖：奥维行业数据加工、中间表聚合
+
+metrics:
+
+  # ═══ 基础度量 ═══
+  - name: 奥维零售量
+    type: 基础度量
+    synonyms: [行业零售量, 市场零售量]
+    definition: 奥维云网监测的行业零售销量数据（线上+线下）
+    formula: "SUM(retail_qty)"
+    source: "ads.ads_ipd_ipm_aowei_wd"
+    table: ads.ads_ipd_ipm_aowei_mid_total_market
+    field: retail_qty
+    owner: XuebinLV
+    status: 在用
+
+  - name: 奥维零售额
+    type: 基础度量
+    synonyms: [行业零售额, 市场零售额]
+    definition: 奥维云网监测的行业零售金额数据
+    formula: "SUM(retail_amt)"
+    source: "ads.ads_ipd_ipm_aowei_wd"
+    table: ads.ads_ipd_ipm_aowei_mid_total_market
+    field: retail_amt
+    owner: XuebinLV
+    status: 在用
+
+  # ═══ 复合指标 ═══
+  - name: 品牌占有率
+    type: 复合指标
+    synonyms: [品牌份额, 市场份额, 品牌占比]
+    definition: 指定品牌零售量 / 全行业零售总量（按品类×渠道×时间粒度）
+    formula: "品牌零售量 / NULLIF(行业零售总量, 0)"
+    derives_from: [奥维零售量]
+    granularity: 月 × 品类 × 渠道 × 品牌
+    table: ads.ads_ipd_ipm_aowei_mid_brand_share
+    field: share_rate
+    related_terms: [价格段份额, 规格段份额]
+    owner: XuebinLV
+    status: 在用
+    project: 013-aowei-market-analysis
+    discrimination:
+      vs_内部指标: "奥维是第三方行业数据（零售端），非内部管报出货数据"
+      数据源: "ads.ads_ipd_ipm_aowei_wd（奥维底表，周度更新）"
+      品牌范围: "可筛选任意品牌，含竞品"
+    coverage:
+      品类: [全品类（由奥维数据覆盖范围决定）]
+      渠道: [线上, 线下, 全渠道]
+    scope_rule:
+      summary: "从奥维底表按品类×渠道×品牌聚合，计算零售量占比"
+      time_window: "月度（周数据聚合为月）"
+
+  - name: 价格段份额
+    type: 复合指标
+    synonyms: [价格段占比, 价格带分布]
+    definition: 指定价格段的零售量 / 全价格段零售总量
+    formula: "价格段零售量 / NULLIF(全价格段总量, 0)"
+    derives_from: [奥维零售量]
+    granularity: 月 × 品类 × 渠道 × 价格段
+    table: ads.ads_ipd_ipm_aowei_mid_price_segment
+    field: segment_share
+    related_terms: [品牌占有率, 规格段份额]
+    owner: XuebinLV
+    status: 在用
+    project: 013-aowei-market-analysis
+    discrimination:
+      vs_品牌占有率: "品牌占有率按品牌分，价格段份额按价格区间分"
+      价格段定义: "dim.dim_ipd_ipm_aw_price_segment_dd（维表配置，可动态调整）"
+    coverage:
+      品类: [全品类]
+      渠道: [线上, 线下, 全渠道]
+    scope_rule:
+      summary: "按维表配置的价格段区间对零售额分组统计"
+      time_window: "月度"

@@ -1,0 +1,102 @@
+# XuebinLV IPM域聚合规则（精简版）
+# 核心目的：告诉 AI 哪些字段不能直接 AVG/SUM，必须回到分子分母重算
+
+# ═══════════════════════════════════════════
+# 不可加型指标：numerator / denominator 映射
+# 规则：SUM(numerator) / NULLIF(SUM(denominator), 0)
+# ═══════════════════════════════════════════
+
+non_additive:
+  - field: dx_model_rate
+    numerator: dx_model_cnt
+    denominator: total_model_cnt
+    table: ads.ads_ipd_ipm_dxmodel_result_dd
+    note: 低效型号占比，跨产品线/事业部聚合时需回到分子分母
+
+  - field: hit_rate
+    numerator: hit_model_cnt
+    denominator: total_new_model_cnt
+    table: ads.ads_ipd_ipm_dxmodel_result_dd
+    note: 新品规划命中率，同上
+
+  - field: qh_hit_rate
+    numerator: pass_model_cnt
+    denominator: total_eval_model_cnt
+    table: ads.ads_ipd_ipm_qhrate_result_dd
+    note: 企划命中率（央空日立），跨项目聚合时需重算
+
+  - field: impl_rate
+    numerator: on_time_cnt
+    denominator: total_cnt
+    table: ads.ads_ipd_itd_project_impl_rate_dd
+    note: 项目按计划实施率，跨事业部聚合时需重算
+
+  - field: avg_dev_cycle
+    numerator: total_dev_days
+    denominator: project_cnt
+    table: ads.ads_ipd_itd_project_dev_cycle_dd
+    note: 平均开发周期，是平均值不是比率，但同样不可直接AVG跨维聚合
+
+  - field: avg_model_sales
+    numerator: total_sales_qty
+    denominator: sale_model_cnt
+    table: dws.dws_ipd_ipm_dxhxl_detail_dd
+    note: 单型号销量=总销量/型号数，跨产品线需回到分子分母
+
+  - field: avg_platform_sales
+    numerator: total_sales_qty
+    denominator: platform_cnt
+    table: ads.ads_ipd_ipm_dptxl_result_dd
+    note: 单平台销量=总销量/平台数，跨产品线需回到分子分母
+
+  - field: share_rate
+    numerator: brand_retail_qty
+    denominator: total_retail_qty
+    table: ads.ads_ipd_ipm_aowei_mid_brand_share
+    note: 品牌占有率，跨品类/渠道聚合时需重算
+
+# ═══════════════════════════════════════════
+# 粒度转换示例
+# ═══════════════════════════════════════════
+
+granularity_example:
+  scenario: "从产品线粒度上卷到事业部级别计算低效型号占比"
+  sql: |
+    SELECT
+      bu_name,
+      SUM(dx_model_cnt) AS dx_model_cnt,
+      SUM(total_model_cnt) AS total_model_cnt,
+      SUM(dx_model_cnt) / NULLIF(SUM(total_model_cnt), 0) AS dx_model_rate
+    FROM ads.ads_ipd_ipm_dxmodel_result_dd
+    WHERE is_project = 'N'
+    GROUP BY bu_name
+
+# ═══════════════════════════════════════════
+# 反模式红线
+# ═══════════════════════════════════════════
+
+anti_patterns:
+  - id: avg_ratio
+    severity: 阻塞
+    detection: "AVG(xxx_rate) 或 AVG(xxx_pct)"
+    fix: "SUM(numerator) / NULLIF(SUM(denominator), 0)"
+
+  - id: sum_ratio
+    severity: 阻塞
+    detection: "SUM(xxx_rate) 或 SUM(xxx_pct)"
+    fix: "SUM(numerator) / NULLIF(SUM(denominator), 0)"
+
+  - id: cross_granularity_join_then_sum
+    severity: 阻塞
+    detection: "不同粒度表 JOIN 后直接 SUM（如型号级JOIN产品线级）"
+    fix: "各表先 GROUP BY 到相同粒度，再 FULL JOIN"
+
+  - id: avg_of_avg
+    severity: 阻塞
+    detection: "AVG(avg_dev_cycle) 跨事业部聚合平均值"
+    fix: "SUM(total_dev_days) / NULLIF(SUM(project_cnt), 0)"
+
+  - id: filter_then_aggregate
+    severity: 警告
+    detection: "WHERE rate > N 后再聚合"
+    fix: "先聚合再过滤，或明确这是业务需求（如只看达标率>50%的产品线）"

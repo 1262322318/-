@@ -1,0 +1,8 @@
+## 010-aowei-data-processing 涉及表清单
+
+### 源表（只读）
+- dwd.dwd_mrs_mr_avcdtl_wd  -- 奥维销售明细数据
+
+### 新建表
+- dim.dim_ipd_ipm_awproduct_dd  -- 奥维品线→产品维度映射表
+- ads.ads_ipd_ipm_aowei_wd     -- 奥维数据加工宽表（目标表）

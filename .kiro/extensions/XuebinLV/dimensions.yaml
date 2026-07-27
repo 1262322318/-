@@ -1,0 +1,64 @@
+# XuebinLV IPM域维度知识（精简版）
+# 只保留 AI/API 查不到的经验：编码对齐坑 + 使用注意事项
+
+dimensions:
+
+  - name: 产品线（product_line）
+    dim_table: "无（退化到事实表，通过PUB-003/PUB-006规则计算）"
+    key: [product_line]
+    cross_system_alignment:
+      - "白电PLM用PG00002/PG00003/PG00004三级分类确定产品线"
+      - "视像科技PLM用his_pmdproductlinename（在生产版本表上，不在产品型号表上）"
+      - "MDG的big_class_name/mid_class_name/small_class_name与PLM的PG00002/PG00003/PG00004含义对应但命名不同"
+      - "冰箱vs冷柜的关键区分：冷冻箱小类需进一步看PC00001品类细分字段"
+    usage_notes:
+      - "产品线不是一个维表，而是通过CASE WHEN在SQL中动态计算（见PUB-003/PUB-006）"
+      - "内销和外销的产品线分类规则不同（外销冰箱无需看PC00001）"
+      - "日立/央空以销售型号编码口径为管理粒度，不走产品型号口径"
+      - "激光商用单独标记is_project='Y'不纳入多数指标统计"
+
+  - name: 事业部（business_unit）
+    dim_table: "无（退化，从管报d_bg/desc_bg或PLM系统取）"
+    key: [d_bg, desc_bg]
+    cross_system_alignment:
+      - "管报用d_bg编码+desc_bg名称"
+      - "PLM项目管理用事业部名称字段，可能与管报名称不完全一致"
+    usage_notes:
+      - "同一产品线可能跨事业部（如空调事业部同时有家空和轻商）"
+      - "项目管理指标（011/012）的事业部来源是PLM，不是管报"
+
+  - name: 统计月份（stat_month）
+    dim_table: "dw.dim_date_nd（按需关联）"
+    key: [stat_month]
+    usage_notes:
+      - "格式为YYYYMM（VARCHAR(6)），不是DATE类型"
+      - "GP_START_DT是调度日期前一天，取上月用date_sub interval 1 month"
+      - "年累口径从每年1月开始到当前月"
+      - "近3月滚动含当前月往前3个自然月"
+      - "企划命中率用近12月固定窗口（从当前月往前12个自然月）"
+
+  - name: 产品型号（product_model）
+    dim_table: "dim.dim_ipd_productmodel_dd"
+    key: [ID]
+    cross_system_alignment:
+      - "白电PLM：ID为主键，PG00061为型号名称"
+      - "视像科技PLM：dim_ipd_jtplm_his_productmodel_dd.title为型号描述"
+      - "MDG桥梁：dim_product_base_info_dd.model_name/model_code"
+      - "管报通过matnr→MDG.product_code→MDG.model_name路径关联"
+    usage_notes:
+      - "产品型号口径适用于：冰冷洗/家空/视像/厨电/激光"
+      - "日立/央空不走产品型号口径，走销售型号编码口径"
+      - "外销指标中型号来源可能是GSS订单的生产版本号，需映射"
+
+  - name: 销售型号（sale_model）
+    dim_table: "dim.dim_ipd_salemodel_dd"
+    key: [ID]
+    cross_system_alignment:
+      - "PG00068为销售型号编码（日立管理口径的核心字段）"
+      - "PRODUCTMODEL_ID关联产品型号表的ID"
+      - "MDG.sale_model_code与PG00068对应"
+    usage_notes:
+      - "仅日立/央空以销售型号编码为管理口径"
+      - "HX00379='是'表示模块组合，需排除"
+      - "PC20080归属营销部字段用于日立产品线过滤"
+      - "HX00020首年规划量是企划命中率的核心数据"

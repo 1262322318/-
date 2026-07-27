@@ -1,0 +1,35 @@
+# 涉及数据表清单 - 平台数
+
+## 源表（数据读取）
+dim.dim_ipd_productplatform_dd
+ods.odsrdm_t_wf95_ext
+ods.odsrdm_t_obj_baseitem
+ods.odsjtplm_his_productplatform
+ods.odsplm_hac_plmproductplatform
+dim.dim_ipd_platform_library_class_name_nd
+dws.dws_ipd_ipm_zcmodel_detail_dd
+dws.dws_ipd_ipm_platform_library_detail_dd
+dws.dws_ipd_ipm_platform_detail_dd
+dim.dim_ipd_jtplm_his_productversion_dd
+dim.dim_ipd_tv_new_oldmodel_nd
+test.dwrdm_inzchmodel_kt
+dwd.dwd_ipd_ipm_rlxhyptgx_dd
+ods.odsmdm_mat_bi_base_info
+dim.dim_ipd_td_weidu_nd
+dw.dim_date_nd
+ads.ads_ipd_ipm_platform_library_result_dd
+ods.ods_feishu_base_P8vTbFzrTaWtQLspDwgcpbm8nng_tblugJ2ghgEELtWU
+
+## 目标表（数据写入）
+dws.dws_ipd_ipm_platform_library_detail_dd
+dws.dws_ipd_ipm_platform_detail_dd
+ads.ads_ipd_ipm_platform_library_result_dd
+ads.ads_ipd_ipm_platform_result_dd
+dws.dws_ipd_ipm_add_reduce_detail_dd
+ads.ads_ipd_ipm_add_reduce_result_dd
+
+## 说明
+# 1. 每行一个表，格式为 database.table_name
+# 2. 平台数包含两个子指标：平台库平台数和产品平台数
+# 3. 平台库数据来源4个系统：HDRP(白电)、RDM(空调)、JTPLM(视像)、PLM(日立)
+# 4. 产品平台数依赖在产型号明细和平台库明细的关联

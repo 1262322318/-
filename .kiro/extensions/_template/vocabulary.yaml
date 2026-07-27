@@ -1,0 +1,9 @@
+# {团队}业务概念词表（vocabulary.yaml）
+# Phase 1 语义消歧参考
+# 可计算的指标/度量定义见 metrics/ 目录，本表只放业务概念消歧
+
+vocabulary:
+  - term: # 业务用语
+    definition: # 标准定义（一句话）
+    confused_with: [] # 易混淆的术语
+    related_metrics: [] # 关联指标名（指向 metrics/ 中的定义）

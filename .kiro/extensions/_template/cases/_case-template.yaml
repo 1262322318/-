@@ -1,0 +1,21 @@
+# 项目案例模板（15 分钟填一份）
+
+project_id: "{项目标识}"
+name: "{项目名称}"
+time: "YYYY-MM"
+owner: "{负责人}"
+
+## 关键设计决策（最有价值的部分）
+decisions:
+  - question: "{面临的选择}"
+    decision: "{最终决定}"
+    reason: "{为什么}"
+
+## 踩坑记录
+pitfalls:
+  - issue: "{问题}"
+    solution: "{解决方式}"
+
+## 可复用经验
+reusable_patterns:
+  - "{经验1}"

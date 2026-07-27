@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>变更管理与知识管理详解 - ETL开发助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #2c3e50; line-height: 1.6; }
+        .header { background: linear-gradient(135deg, #1a237e, #283593, #3949ab); color: white; padding: 40px; }
+        .header h1 { font-size: 2em; }
+        .header .nav { margin-top: 10px; }
+        .header .nav a { color: rgba(255,255,255,0.8); text-decoration: none; margin-right: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+        .card { background: white; border-radius: 12px; padding: 30px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .card h2 { color: #1a237e; margin-bottom: 16px; font-size: 1.4em; border-bottom: 2px solid #e8eaf6; padding-bottom: 10px; }
+        .card h3 { color: #283593; margin: 18px 0 10px; font-size: 1.1em; }
+        .flow-diagram { background: #263238; color: #a5d6a7; padding: 20px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 0.82em; overflow-x: auto; white-space: pre; line-height: 1.6; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; }
+        th { background: #e8eaf6; color: #1a237e; padding: 10px 12px; text-align: left; }
+        td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+        .pros, .cons { padding: 16px; border-radius: 8px; }
+        .pros { background: #e8f5e9; }
+        .cons { background: #fce4ec; }
+        .pros h4 { color: #2e7d32; }
+        .cons h4 { color: #c62828; }
+        ul { padding-left: 20px; }
+        li { margin: 6px 0; }
+        .improve { background: #fff8e1; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .improve h4 { color: #f57f17; margin-bottom: 8px; }
+        footer { text-align: center; padding: 30px; color: #999; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔄 变更管理与知识管理详解</h1>
+        <div class="nav"><a href="index.html">← 返回总览</a> <a href="module-pipeline.html">需求链路 →</a></div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h2>模块概述</h2>
+            <p>变更管理定义了"如何安全地修改已有系统"，知识管理定义了"如何让系统越来越聪明"。两者结合形成项目的持续进化能力：每次变更不仅完成功能修改，还沉淀经验、更新模式库、触发健康检查，实现"越用越强"的正反馈循环。</p>
+        </div>
+
+        <div class="card">
+            <h2>架构图 — 变更管理+知识管理双循环</h2>
+            <div class="flow-diagram">┌─────────────────────────────────────────────────────────────────┐
+│                        变更管理循环                                │
+│                                                                 │
+│  需求变更 → 分类(CHG-01~06) → 影响分析 → 交付模式选择            │
+│                                              │                  │
+│              ┌───────────────────────────────┼───────────┐      │
+│              ▼                               ▼           │      │
+│    模式A：直接修改              模式B：草稿→合入→验证      │      │
+│    (简单变更)                  (复杂变更)                │      │
+│              │                               │           │      │
+│              └───────────────────────────────┼───────────┘      │
+│                                              ▼                  │
+│  闭环：changelog + requirement头部 + 模式库更新                   │
+└──────────────────────────────────┬──────────────────────────────┘
+                                   │ 沉淀
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        知识管理循环                                │
+│                                                                 │
+│  ┌─────────────┐   ┌──────────────┐   ┌──────────────────┐     │
+│  │ 知识投喂     │   │ 模式自学习    │   │ 知识健康检查      │     │
+│  │ (表/规则/   │   │ (PAT自动追加) │   │ (5维度体检)      │     │
+│  │  模式)      │   │              │   │                  │     │
+│  └──────┬──────┘   └──────┬───────┘   └────────┬─────────┘     │
+│         │                 │                     │               │
+│         ▼                 ▼                     ▼               │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              知识库（Steering文件）                        │   │
+│  │  data_mapping + business_rules + requirement_patterns    │   │
+│  │  + table_structures + sql_templates                      │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│         │                                                       │
+│         ▼                                                       │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              反馈闭环                                      │   │
+│  │  interaction-metrics + feedback-records + backlog         │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘</div>
+        </div>
+
+        <div class="card">
+            <h2>核心设计 — 变更分类（6种类型）</h2>
+            <table>
+                <tr><th>代码</th><th>类型</th><th>典型场景</th><th>推荐模式</th></tr>
+                <tr><td>CHG-01</td><td>逻辑变更</td><td>修改阈值、判定条件、计算公式</td><td>A（直接修改）</td></tr>
+                <tr><td>CHG-02</td><td>产品线扩展</td><td>已有指标新增一条产品线</td><td>B（草稿模式）</td></tr>
+                <tr><td>CHG-03</td><td>字段新增</td><td>DWS/ADS表加字段</td><td>A</td></tr>
+                <tr><td>CHG-04</td><td>Bug修复</td><td>逻辑错误、数据异常</td><td>A</td></tr>
+                <tr><td>CHG-05</td><td>规则变更</td><td>公共规则PUB-XXX调整</td><td>B（影响面大）</td></tr>
+                <tr><td>CHG-06</td><td>口径调整</td><td>统计口径或维度变化</td><td>B</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>核心设计 — 草稿模式（模式B）流程</h2>
+            <div class="flow-diagram">模式B执行流程：
+
+0. 参考确认 → grep搜索正式脚本定位参考段落
+       │
+1. 草稿生成 → sql_scripts/drafts/{原文件名}_{变更简称}_draft.sql
+       │
+1.5 轻量自检（自动，用户无感）
+    • 字段完整性核对（对照需求中的字段列表）
+    • 指标完整性核对（对照需求中的子指标）
+    • 目标表结构MCP验证
+    • 跨层字段一致性验证
+       │
+1.6 changelog即时记录（状态：🔄 草稿阶段）
+       │
+2. 用户验证 → 提出修改意见 → Agent迭代修正
+       │
+3. 用户确认 → 手工合入正式脚本
+       │
+4. 用户告知"已合入" → Agent grep验证完整性
+       │
+5. 闭环：changelog更新为 ✅ 已完成</div>
+
+            <h3>草稿隔离规则（防参考污染）</h3>
+            <table>
+                <tr><th>规则</th><th>说明</th></tr>
+                <tr><td>存放位置</td><td>统一在 sql_scripts/drafts/ 子目录</td></tr>
+                <tr><td>命名规范</td><td>{原文件名}_{变更简称}_draft.sql</td></tr>
+                <tr><td>禁止参考</td><td>生成新草稿时禁止引用drafts/下的文件</td></tr>
+                <tr><td>合法参考</td><td>仅限正式脚本 + requirement.md + intake文档</td></tr>
+                <tr><td>合入后</td><td>草稿保留不删除，便于追溯</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>核心设计 — 知识管理机制</h2>
+            <h3>1. 知识投喂（4种类型）</h3>
+            <table>
+                <tr><th>类型</th><th>内容</th><th>写入目标</th></tr>
+                <tr><td>表知识</td><td>表名、业务语义、关键词、关联关系</td><td>data_mapping.md + table_structures.md</td></tr>
+                <tr><td>规则知识</td><td>业务规则、计算公式、分类条件</td><td>business_rules.md</td></tr>
+                <tr><td>模式知识</td><td>已完成需求的结构签名</td><td>requirement_patterns.md</td></tr>
+                <tr><td>批量投喂</td><td>一次性录入完整业务域</td><td>多个文件</td></tr>
+            </table>
+
+            <h3>2. 知识健康检查（5维度）</h3>
+            <table>
+                <tr><th>维度</th><th>检查内容</th></tr>
+                <tr><td>完整性</td><td>表清单、关联关系、规则覆盖是否有缺失</td></tr>
+                <tr><td>一致性</td><td>跨文件引用的表名/字段名是否一致</td></tr>
+                <tr><td>新鲜度</td><td>最后命中时间、投喂频率</td></tr>
+                <tr><td>准确性</td><td>MCP交叉验证（表结构vs知识库记录）</td></tr>
+                <tr><td>可用性</td><td>关键词重叠度、模式库命中率</td></tr>
+            </table>
+
+            <h3>3. 自动改进提醒</h3>
+            <p>每次需求完成（A7/B5）后，Agent主动回顾交互过程，如发现可优化点则输出改进建议。用户可选择"立即执行"/"记录到Backlog"/"忽略"。</p>
+        </div>
+
+        <div class="card">
+            <h2>数据流转图 — 知识沉淀链路</h2>
+            <div class="flow-diagram">需求处理完成
+    │
+    ├─→ requirement_patterns.md 追加PAT-0XX（模式签名）
+    │
+    ├─→ interaction-metrics/ 记录度量数据（轮次、耗时、瓶颈）
+    │
+    ├─→ feedback-records/ 记录用户反馈（吐槽、建议）
+    │
+    ├─→ framework-improvement-backlog.md 追加改进项
+    │
+    └─→ feeding-counter.json 更新投喂计数
+
+          ↓ 累计投喂 ≥ 5次
+
+    auto-health-check-reminder Hook 触发提醒
+          │
+          ▼
+    知识健康检查 → 5维度评分 → 修复引导</div>
+        </div>
+
+        <div class="card">
+            <h2>优缺点分析</h2>
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>✅ 优势</h4>
+                    <ul>
+                        <li>6种变更类型覆盖所有常见场景，每种有专属澄清维度</li>
+                        <li>草稿隔离彻底防止了"参考错误草稿"的系统性风险</li>
+                        <li>知识自学习形成正反馈（越用越准确）</li>
+                        <li>健康检查定期发现知识腐化问题</li>
+                        <li>经验教训记录表（etl_change_management.md末尾）防止同类错误重犯</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>❌ 局限</h4>
+                    <ul>
+                        <li>知识库为单文件Markdown，无结构化索引能力</li>
+                        <li>健康检查需人工触发，不能定时自动执行</li>
+                        <li>模式库容量管理较粗放（≥20条才开始inactive）</li>
+                        <li>知识冲突检测缺乏语义理解（纯字符串比对）</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>待改进项</h2>
+            <div class="improve">
+                <h4>🔧 建议</h4>
+                <ul>
+                    <li>P1：知识库结构化存储（如JSON/YAML），支持精准索引和查询</li>
+                    <li>P1：定时健康检查（如每周一自动执行）</li>
+                    <li>P2：知识版本管理（支持回滚到历史知识状态）</li>
+                    <li>P2：知识冲突自动检测（新投喂 vs 已有知识的矛盾发现）</li>
+                    <li>P3：知识图谱可视化（表-字段-规则-需求的关联网络）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <footer>ETL开发助手 · 变更管理与知识管理详解 · 生成日期：2026-06-11</footer>
+</body>
+</html>

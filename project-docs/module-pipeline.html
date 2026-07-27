@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>需求处理链路详解 - ETL开发助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #2c3e50; line-height: 1.6; }
+        .header { background: linear-gradient(135deg, #1a237e, #283593, #3949ab); color: white; padding: 40px; }
+        .header h1 { font-size: 2em; }
+        .header .nav { margin-top: 10px; }
+        .header .nav a { color: rgba(255,255,255,0.8); text-decoration: none; margin-right: 20px; }
+        .header .nav a:hover { color: white; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+        .card { background: white; border-radius: 12px; padding: 30px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .card h2 { color: #1a237e; margin-bottom: 16px; font-size: 1.4em; border-bottom: 2px solid #e8eaf6; padding-bottom: 10px; }
+        .card h3 { color: #283593; margin: 18px 0 10px; font-size: 1.1em; }
+        .flow-diagram { background: #263238; color: #a5d6a7; padding: 20px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 0.82em; overflow-x: auto; white-space: pre; line-height: 1.6; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; }
+        th { background: #e8eaf6; color: #1a237e; padding: 10px 12px; text-align: left; }
+        td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+        .pros, .cons { padding: 16px; border-radius: 8px; }
+        .pros { background: #e8f5e9; }
+        .cons { background: #fce4ec; }
+        .pros h4 { color: #2e7d32; }
+        .cons h4 { color: #c62828; }
+        ul { padding-left: 20px; }
+        li { margin: 6px 0; }
+        .improve { background: #fff8e1; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .improve h4 { color: #f57f17; margin-bottom: 8px; }
+        footer { text-align: center; padding: 30px; color: #999; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔀 需求处理链路详解</h1>
+        <div class="nav"><a href="index.html">← 返回总览</a> <a href="module-steering.html">Steering规则 →</a></div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h2>模块概述</h2>
+            <p>需求处理链路是ETL开发助手的核心对话引擎，定义了从用户提出需求到最终交付SQL脚本和文档的完整流程。v3.0版本引入了"骨架先行"和"多指标编排"机制，通过状态机模型确保每一步都有用户确认门禁，避免跳步或自动推进。</p>
+            <p style="margin-top:10px">核心设计思想：<strong>用户主导节奏，Agent主导专业判断</strong>。每个阶段输出结论后停下来等确认，但阶段内的分析、推理、验证由Agent自主完成。</p>
+        </div>
+
+        <div class="card">
+            <h2>架构图 — 状态机总览</h2>
+            <div class="flow-diagram">状态1（初始）→ 状态2（接收+关键词提取）→ 状态2.5（需求分类判定）
+                                              │
+                              ┌────────────────┼────────────────┐
+                              ▼                                  ▼
+                    链路A：新建需求流程                 链路B：变更需求流程
+                    [A0]→A1→A2→A3→A4a→A4b→A5→A6a→A6b→A7    B1→B2→B3→B3.5→B4→B4.5→B5→B6
+
+链路A 详细：
+┌─────────────────────────────────────────────────────────────────┐
+│ A0 需求编排（多指标≥2时触发）                                      │
+│   → 识别依赖、确定批次、口径一致性矩阵                              │
+├─────────────────────────────────────────────────────────────────┤
+│ A1 依赖识别 → A2 需求澄清 → A3 数据表匹配                         │
+├─────────────────────────────────────────────────────────────────┤
+│ A4a 模型骨架（5要素：分层/粒度/度量/流转/策略）                      │
+│ A4b 字段设计（字段列表+维度处理+一致性对齐）                         │
+├─────────────────────────────────────────────────────────────────┤
+│ A5 最终确认（增量式） → A6a SQL骨架 → A6b SQL填充                  │
+├─────────────────────────────────────────────────────────────────┤
+│ A7 文档生成 + 经验沉淀 + 度量 + 反馈                                │
+└─────────────────────────────────────────────────────────────────┘
+
+链路B 详细：
+┌─────────────────────────────────────────────────────────────────┐
+│ B1 定位已有资产 → B2 变更澄清（按CHG类型） → B3 影响分析           │
+├─────────────────────────────────────────────────────────────────┤
+│ B3.5 交付模式选择（A=直接修改 / B=草稿→合入→验证）                  │
+├─────────────────────────────────────────────────────────────────┤
+│ B4 执行修改 → B4.5 下游影响提醒 → B5 文档更新 → B6 下游执行        │
+└─────────────────────────────────────────────────────────────────┘</div>
+        </div>
+
+        <div class="card">
+            <h2>核心设计决策</h2>
+            <h3>1. 分叉链路设计（v2.0引入）</h3>
+            <p>新建需求和变更需求走完全不同的路径。新建需求侧重"从无到有"的设计和生成；变更需求侧重"精准定位"和"影响控制"。分叉点在状态2.5，通过关键词+动词类型自动判定。</p>
+
+            <h3>2. 骨架先行（v3.0引入）</h3>
+            <p>将"设计"拆为骨架（A4a）和字段（A4b），将"SQL生成"拆为骨架（A6a）和填充（A6b）。先确认方向和结构，再展开细节。避免用户在看到大量字段后才发现架构方向有误。</p>
+
+            <h3>3. 阶段门禁（Anti-Auto-Advance）</h3>
+            <table>
+                <tr><th>规则</th><th>说明</th></tr>
+                <tr><td>确认 ≠ 授权下一步</td><td>用户确认当前阶段不意味着自动进入下一阶段</td></tr>
+                <tr><td>禁止同回复包含两阶段</td><td>当前阶段结论和下一阶段输出不能出现在同一条回复中</td></tr>
+                <tr><td>回退支持</td><td>用户随时可说"回到上一步"，Agent回退到上一状态</td></tr>
+            </table>
+
+            <h3>4. 复杂度动态裁剪</h3>
+            <table>
+                <tr><th>判定条件</th><th>复杂度</th><th>步骤策略</th></tr>
+                <tr><td>单指标 + 不新建DWS</td><td>简单</td><td>A4a+A4b合并，A6a+A6b合并，A5可跳过</td></tr>
+                <tr><td>单指标 + 多产品线</td><td>复杂</td><td>全部拆分执行</td></tr>
+                <tr><td>多指标 ≥2 + 同领域</td><td>复杂+编排</td><td>触发A0，按批次执行</td></tr>
+            </table>
+
+            <h3>5. Refined快速通道</h3>
+            <p>当用户引用已精化的PRD文档（refined/*_prd.md）时，跳过大部分澄清步骤，改为"快速校验模式"：从PRD自动提取骨架→MCP验证字段→输出校验结果→确认后直接进入SQL生成。</p>
+        </div>
+
+        <div class="card">
+            <h2>数据流转图 — 典型需求生命周期</h2>
+            <div class="flow-diagram">用户输入
+    │
+    ▼
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│ intake/      │ ──→ │ refined/     │ ──→ │ 对话流程     │
+│ (原始需求)   │     │ (精化PRD)    │     │ (A0~A7/B1~B6)│
+└─────────────┘     └──────────────┘     └──────┬──────┘
+                                                  │
+                                                  ▼
+                                    ┌─────────────────────────┐
+                                    │ requirements/{ID}/       │
+                                    │ ├── requirement.md       │
+                                    │ ├── sql_scripts/*.sql    │
+                                    │ ├── lineage.md           │
+                                    │ ├── changelog.md         │
+                                    │ └── tables.txt           │
+                                    └─────────────────────────┘
+                                                  │
+                                                  ▼
+                                    ┌─────────────────────────┐
+                                    │ 经验沉淀                  │
+                                    │ ├── requirement_patterns │
+                                    │ ├── interaction-metrics  │
+                                    │ └── feedback-records     │
+                                    └─────────────────────────┘</div>
+        </div>
+
+        <div class="card">
+            <h2>优缺点分析</h2>
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>✅ 优势</h4>
+                    <ul>
+                        <li>门禁机制杜绝了Agent跳步导致的返工</li>
+                        <li>骨架先行减少方向性错误的修正成本</li>
+                        <li>多指标编排避免重复劳动和口径不一致</li>
+                        <li>Refined快速通道显著缩短已精化需求的交互轮次</li>
+                        <li>反例澄清主动发现排除条件，减少遗漏</li>
+                        <li>高完整度快速通道（≥10分跳过逐项澄清）减少无效交互</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>❌ 局限</h4>
+                    <ul>
+                        <li>简单需求也需要经过多步确认，交互轮次偏多</li>
+                        <li>分类判定依赖关键词匹配，无语义理解能力</li>
+                        <li>跨对话恢复依赖用户主动告知上下文</li>
+                        <li>批量输出时后半部分质量可能系统性下降</li>
+                        <li>门禁过严时用户体验偏"啰嗦"</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>待改进项</h2>
+            <div class="improve">
+                <h4>🔧 优先级P1</h4>
+                <ul>
+                    <li>简单需求的自适应裁剪可更激进（当前仍需3-4轮确认）</li>
+                    <li>跨对话状态持久化（当前对话断开后状态丢失）</li>
+                    <li>多指标快速批次模式的质量保障机制需加强</li>
+                </ul>
+            </div>
+            <div class="improve">
+                <h4>🔧 优先级P2</h4>
+                <ul>
+                    <li>分类判定引入语义相似度（替代纯关键词匹配）</li>
+                    <li>自动检测"用户已厌烦门禁"的信号并适当加速</li>
+                    <li>支持并行链路（多需求同时处理）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <footer>ETL开发助手 · 需求处理链路详解 · 生成日期：2026-06-11</footer>
+</body>
+</html>

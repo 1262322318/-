@@ -1,0 +1,35 @@
+表名,字段名,数据类型,字段说明
+dws.dws_ipd_ipd_project_dev_cycle_dd,dt_month,VARCHAR(6),统计月份（项目完成所在月，YYYYMM）
+dws.dws_ipd_ipd_project_dev_cycle_dd,projectname,VARCHAR(150),项目名称
+dws.dws_ipd_ipd_project_dev_cycle_dd,hbmtpproductline,VARCHAR(150),事业部（光模块/终端）
+dws.dws_ipd_ipd_project_dev_cycle_dd,hbmtpderivetype,VARCHAR(150),项目分类原值（PA1/PB2/PC1等）
+dws.dws_ipd_ipd_project_dev_cycle_dd,derive_type_group,VARCHAR(10),项目类型分组（PS/PA/PB/PC）
+dws.dws_ipd_ipd_project_dev_cycle_dd,projectcurrent,VARCHAR(60),项目状态
+dws.dws_ipd_ipd_project_dev_cycle_dd,productcurrent,VARCHAR(60),产品阶段
+dws.dws_ipd_ipd_project_dev_cycle_dd,productowner,VARCHAR(150),项目经理
+dws.dws_ipd_ipd_project_dev_cycle_dd,projectowner,VARCHAR(150),推进主管
+dws.dws_ipd_ipd_project_dev_cycle_dd,hbmtprddept,VARCHAR(150),在研部门
+dws.dws_ipd_ipd_project_dev_cycle_dd,hbmtprocessplant,VARCHAR(150),生产工厂
+dws.dws_ipd_ipd_project_dev_cycle_dd,hbmtpprojectline,VARCHAR(150),开发目的
+dws.dws_ipd_ipd_project_dev_cycle_dd,hbmtpprojecttype,VARCHAR(150),项目类型
+dws.dws_ipd_ipd_project_dev_cycle_dd,hbmtprojectcreatedate,DATETIME,立项时间
+dws.dws_ipd_ipd_project_dev_cycle_dd,hbmtpdesignetime,DATETIME,开发计划完成时间（首次）
+dws.dws_ipd_ipd_project_dev_cycle_dd,hbmtpdesignestimatededate,DATETIME,开发计划完成时间（市场因素变更后）
+dws.dws_ipd_ipd_project_dev_cycle_dd,hbmtpdesignactualedate,DATETIME,开发实际完成时间
+dws.dws_ipd_ipd_project_dev_cycle_dd,hbmtpproductiontrialetime,DATETIME,鉴定计划完成时间（首次）
+dws.dws_ipd_ipd_project_dev_cycle_dd,hbmtpproductionestimatededate,DATETIME,鉴定计划完成时间（市场因素变更后）
+dws.dws_ipd_ipd_project_dev_cycle_dd,hbmtpproductionactualedate,DATETIME,鉴定实际完成时间
+dws.dws_ipd_ipd_project_dev_cycle_dd,hold_days,DECIMAL(10.1),暂停总天数
+dws.dws_ipd_ipd_project_dev_cycle_dd,dev_cycle_days,DECIMAL(10.1),开发周期（天）= 鉴定完成 - 立项 - 暂停天数
+dws.dws_ipd_ipd_project_dev_cycle_dd,load_dt,DATETIME,加载时间
+ads.ads_ipd_ipd_project_dev_cycle_result_dd,dt_month,VARCHAR(6),统计月份（YYYYMM）
+ads.ads_ipd_ipd_project_dev_cycle_result_dd,hbmtpproductline,VARCHAR(150),事业部（光模块/终端）
+ads.ads_ipd_ipd_project_dev_cycle_result_dd,derive_type_group,VARCHAR(10),项目类型分组（PA/PB/PC/PS/平均）
+ads.ads_ipd_ipd_project_dev_cycle_result_dd,dt_type,VARCHAR(10),时间范围类型（当月/年累）
+ads.ads_ipd_ipd_project_dev_cycle_result_dd,project_count,INT,项目数量
+ads.ads_ipd_ipd_project_dev_cycle_result_dd,avg_dev_cycle,DECIMAL(10.1),平均开发周期（天）
+ads.ads_ipd_ipd_project_dev_cycle_result_dd,target_value,DECIMAL(10.1),目标值（天）
+ads.ads_ipd_ipd_project_dev_cycle_result_dd,completion_rate,DECIMAL(10.4),完成率 = 2 - 实际值/目标值
+ads.ads_ipd_ipd_project_dev_cycle_result_dd,last_year_value,DECIMAL(10.1),同期值（去年同期平均开发周期）
+ads.ads_ipd_ipd_project_dev_cycle_result_dd,yoy_improvement,DECIMAL(10.4),同比改善 = 1 - 实际值/同期值
+ads.ads_ipd_ipd_project_dev_cycle_result_dd,load_dt,DATETIME,加载时间

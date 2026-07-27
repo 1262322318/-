@@ -1,0 +1,16 @@
+# 涉及数据表清单 - 企划命中率（央空内销/日立）
+
+## 源表（数据读取）
+dim.dim_ipd_salemodel_dd
+dim.dim_ipd_productmodel_dd
+ods.ods_mr_v_app_fm_imat_saledata
+dw.dim_product_base_info_dd
+
+## 目标表（数据写入）
+dws.dws_ipd_ipm_qihua_hit_detail_dd
+ads.ads_ipd_ipm_qihua_hit_result_dd
+
+## 说明
+# 实际销量取数参考002需求日立口径：管报→MDG(FERT/ZTAO,delete_flag!='Y')→sale_model_code
+# 首年规划量直接取自 dim.dim_ipd_salemodel_dd.HX00020（第一年规划量）
+# 按项目维度汇总：project_code聚合

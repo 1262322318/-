@@ -1,0 +1,113 @@
+{
+  "metric_version": "1.0",
+  "requirement_id": "002-dx-model-rate",
+  "requirement_name": "厨电低效型号数+新品规划命中率闭环",
+  "session_info": {
+    "start_time": "2026-05-20",
+    "end_time": "2026-05-20",
+    "total_duration_minutes": 5,
+    "operator": "lvxuebin",
+    "link_type": "B",
+    "link_subtype": "CHG-02（产品线扩展-闭环确认）"
+  },
+  "input_quality": {
+    "first_submission_text": "厨电：低效型号数、新品规划命中率 需求闭环",
+    "completeness_score": 11,
+    "completeness_max": 14,
+    "completeness_level": "明确",
+    "missing_dimensions": [],
+    "provided_dimensions": ["需求ID", "指标名称", "操作意图"]
+  },
+  "stage_metrics": {
+    "state_2_keyword_extraction": {
+      "rounds": 0,
+      "duration_minutes": 0,
+      "success": true,
+      "user_corrections": 0,
+      "notes": "用户直接说明需求和操作意图"
+    },
+    "state_2_5_classification": {
+      "rounds": 0,
+      "duration_minutes": 0,
+      "success": true,
+      "user_corrections": 0,
+      "notes": "明确为变更闭环确认"
+    },
+    "B1_locate_assets": {
+      "rounds": 1,
+      "duration_minutes": 1,
+      "success": true,
+      "user_corrections": 0,
+      "notes": "Agent定位DWS和ADS正式脚本+3个草稿文件"
+    },
+    "B2_change_clarification": {
+      "rounds": 1,
+      "duration_minutes": 1,
+      "success": true,
+      "user_corrections": 0,
+      "notes": "Agent发现ADS正式脚本未包含厨电，向用户确认；用户回复已手工粘贴"
+    },
+    "B3_impact_analysis": {
+      "rounds": 0,
+      "duration_minutes": 0,
+      "success": true,
+      "user_corrections": 0,
+      "notes": "无下游影响"
+    },
+    "B4_execute_modification": {
+      "rounds": 1,
+      "duration_minutes": 1,
+      "success": true,
+      "user_corrections": 0,
+      "notes": "用户手工完成修改，Agent验证确认"
+    },
+    "B5_documentation_update": {
+      "rounds": 1,
+      "duration_minutes": 1,
+      "success": true,
+      "user_corrections": 0,
+      "notes": "Agent更新changelog.md记录#003闭环"
+    },
+    "B6_downstream_sync": {
+      "rounds": 0,
+      "duration_minutes": 0,
+      "success": true,
+      "user_corrections": 0,
+      "notes": "无下游需要同步"
+    }
+  },
+  "interaction_summary": {
+    "total_rounds": 3,
+    "total_user_corrections": 0,
+    "total_repeated_questions": 0,
+    "total_rollbacks": 0,
+    "bottleneck_stages": []
+  },
+  "sql_quality": {
+    "generated_files_count": 0,
+    "first_pass_acceptance": true,
+    "revision_rounds": 0,
+    "lines_of_code": 0,
+    "user_modifications_after_generation": 1,
+    "modification_categories": {
+      "logic_fix": 0,
+      "format_adjustment": 0,
+      "field_addition": 0,
+      "rule_application": 0,
+      "manual_merge": 1
+    }
+  },
+  "attribution": {
+    "primary_cause": "clean",
+    "user_side_issues": [],
+    "framework_side_issues": [],
+    "tags": []
+  },
+  "reference_patterns": {
+    "matched_pattern": "PAT-001",
+    "match_score": 1.0,
+    "depended_on_requirements": ["002-dx-model-rate"],
+    "applied_business_rules": ["PUB-001", "PUB-003"]
+  },
+  "improvement_backlog_items": []
+}

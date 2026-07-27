@@ -1,0 +1,212 @@
+# XuebinLV IPM效率类指标定义
+# 覆盖：低效型号占比、在销型号数、在产型号数、平台数、单型号销量、单平台销量
+
+metrics:
+
+  # ═══ 基础度量 ═══
+  - name: 实际销量
+    type: 基础度量
+    synonyms: [管报销量, 出货量]
+    definition: 管报系统按月统计的实际出货销量（sale_qty），按物料编码粒度
+    formula: "SUM(sale_qty)"
+    source: "ods.ods_mr_v_app_fm_imat_saledata.sale_qty"
+    table: dws.dws_ipd_ipm_dxmodel_detail_dd
+    field: act_sales_qty
+    owner: XuebinLV
+    status: 在用
+
+  - name: 规划销量
+    type: 基础度量
+    synonyms: [BP销量, LX销量, 目标销量]
+    definition: BP或LX来源的规划量（按PUB-002规则选择），按月度×型号粒度
+    formula: "SUM(plan_sales_qty)"
+    source: "dwd.dwd_ipd_ipm_bp_lx_model_mid_dd.plan_sales_qty"
+    table: dws.dws_ipd_ipm_dxmodel_detail_dd
+    field: plan_sales_qty
+    owner: XuebinLV
+    status: 在用
+
+  - name: 在销型号数
+    type: 基础度量
+    synonyms: [有效型号数, 销售中型号数量]
+    definition: 生命周期未停止服务且库存未清零的产品型号（或销售型号）数量
+    formula: "COUNT(DISTINCT model_name) WHERE is_project='N'"
+    source: "dws.dws_ipd_ipm_sale_model_detail_dd"
+    table: ads.ads_ipd_ipm_sale_model_result_dd
+    field: sale_model_cnt
+    owner: XuebinLV
+    status: 在用
+    project: 004-sale-model-count
+    coverage:
+      内销: [冰箱, 冷柜, 洗衣机, 家用空调(家空+轻商), 平板电视, 中央空调(日立), 厨电, 激光家用, 激光商用]
+      外销: [冰箱, 冷柜, 洗衣机, 家用空调, 平板电视, 厨电, 激光]
+    scope_rule:
+      summary: "生命周期处于在产阶段（上市/退市准备/停止下单）且库存未清零的型号"
+      is_project_rule: "保护期(PUB-001) + 老品清零(PUB-007) + gorenje/ODM/模块组合/委外排除"
+      time_window: "月度"
+      dependencies: "无上游依赖（基础指标，被005/006/007依赖）"
+
+  - name: 平台数
+    type: 基础度量
+    synonyms: [产品平台数, 平台库平台数]
+    definition: 关联在产型号的有效产品平台数量（含平台库平台和产品平台两种维度）
+    formula: "COUNT(DISTINCT platform_name)"
+    source: "dim.dim_ipd_productplatform_dd + dws.dws_ipd_ipm_zcmodel_detail_dd"
+    table: ads.ads_ipd_ipm_platform_result_dd
+    field: platform_cnt
+    owner: XuebinLV
+    status: 在用
+    project: 006-platform-count
+    discrimination:
+      双维度: "平台库平台数（平台管理视角，统计发布/禁选状态平台）vs 产品平台数（实际有在产型号引用的平台）"
+      平台源系统: "HDRP(白电)、JTPLM(视像+激光)、RDM(空调)、PLM(日立)"
+      完成率方向: "2 - 实际值/计划值（平台数越少越好）"
+    coverage:
+      内销: [冰箱, 冷柜, 洗衣机, 家用空调(家空+轻商), 平板电视, 中央空调(日立), 厨电, 激光]
+      外销: [冰箱, 冷柜, 洗衣机, 家用空调, 平板电视, 厨电, 激光]
+    scope_rule:
+      summary: "平台库统计发布/禁选状态；产品平台数统计有在产型号引用的平台"
+      exclusion: "欧产平台、外部代工专用平台、外购平台"
+      time_window: "月度 + 年累"
+      dependencies: "依赖 005-zcmodel-count（在产型号数提供平台关联基础）"
+
+  # ═══ 派生度量 ═══
+  - name: 在产型号数
+    type: 派生度量
+    synonyms: [生产中型号数]
+    definition: 从在销型号中筛选生命周期处于量产/小批量/停止生产阶段，排除代工/委外
+    formula: "COUNT(DISTINCT model_name) WHERE jieduan IN ('量产','小批量','停止生产') AND is_project='N'"
+    derives_from: [在销型号数]
+    table: ads.ads_ipd_ipm_zcmodel_result_dd
+    field: zcmodel_cnt
+    owner: XuebinLV
+    status: 在用
+    project: 005-zcmodel-count
+    coverage:
+      内销: [冰箱, 冷柜, 洗衣机, 家用空调(家空+轻商), 平板电视, 中央空调(日立), 厨电, 激光家用, 激光商用]
+      外销: [冰箱, 冷柜, 洗衣机, 家用空调, 平板电视, 厨电, 激光]
+    scope_rule:
+      summary: "从在销型号筛选model_label_10='在产'，额外剔除代工产品"
+      is_project_rule: "继承在销型号的保护期判定 + 各产品线独立代工剔除规则"
+      time_window: "月度"
+      dependencies: "依赖 004-sale-model-count（在销型号数提供基础数据）"
+
+  - name: 低效型号数
+    type: 派生度量
+    synonyms: [不达标型号数]
+    definition: 上市满保护期后，实际累计销量<累计规划量的型号数
+    formula: "COUNT(DISTINCT model_name) WHERE act_cum_qty < plan_cum_qty AND beyond_protect='Y'"
+    derives_from: [实际销量, 规划销量]
+    table: dws.dws_ipd_ipm_dxmodel_detail_dd
+    field: is_dx (='Y')
+    owner: XuebinLV
+    status: 在用
+
+  # ═══ 复合指标 ═══
+  - name: 低效型号占比
+    type: 复合指标
+    synonyms: [低效占比, 型号效率]
+    definition: 低效型号数 / 在销型号数（限定指标范围内的型号）
+    formula: "低效型号数 / NULLIF(在销型号数, 0)"
+    derives_from: [低效型号数, 在销型号数]
+    granularity: 月 × 产品线 × 事业部
+    table: ads.ads_ipd_ipm_dxmodel_result_dd
+    field: dx_model_rate
+    related_terms: [新品规划命中率]
+    owner: XuebinLV
+    status: 在用
+    project: 002-dx-model-rate
+    discrimination:
+      zhibiao_type: "2（年累）"
+      dimension_type: "低效型号数"
+      numerator_condition: "is_dx = 'Y'（销量完成率 < 0.8 的型号数）"
+      denominator_condition: "is_project = 'N' 的全部型号数"
+      completion_formula: "(1 - 实际占比) / (1 - 计划值)"
+      completion_direction: "越低越好（低效少=好）"
+    coverage:
+      内销: [冰箱, 冷柜, 洗衣机, 家用空调, 平板电视, 中央空调, 厨电, 激光家用, 激光商用]
+      外销: []
+    scope_rule:
+      summary: "在售 + 已过保护期（上市≥3个月）的型号"
+      protect_period: "3个月（本月上市=第0月不纳入总数）"
+      time_window: "年累（年初至今累计销量/规划量）"
+      exclusion: "gorenje品牌、ODM、模块组合、委外工厂、本年复产机型"
+
+  - name: 新品规划命中率
+    type: 复合指标
+    synonyms: [新品命中率, BP命中率]
+    definition: 新品中实际累计销量≥累计规划量的型号数 / 新品型号总数
+    formula: "命中型号数 / NULLIF(新品型号总数, 0)"
+    derives_from: [实际销量, 规划销量]
+    granularity: 月 × 产品线 × 事业部
+    table: ads.ads_ipd_ipm_dxmodel_result_dd
+    field: hit_rate
+    related_terms: [低效型号占比]
+    owner: XuebinLV
+    status: 在用
+    project: 002-dx-model-rate
+    discrimination:
+      zhibiao_type: "4"
+      dimension_type: "新品规划命中率"
+      numerator_condition: "is_dx = 'N'（销量完成率 ≥ 0.8 的型号数）"
+      denominator_condition: "is_project = 'N' 的新品期内全部型号数"
+      completion_formula: "实际命中率 / 计划值"
+      completion_direction: "越高越好（命中多=好）"
+    coverage:
+      内销: [冰箱, 冷柜, 洗衣机, 家用空调, 平板电视, 中央空调, 厨电, 激光家用, 激光商用]
+      外销: [冰箱, 冷柜, 洗衣机, 家用空调, 平板电视, 厨电, 激光]
+    scope_rule:
+      summary: "在售 + 新品期内（上市≤12个月）的型号"
+      protect_period: "无（新品期本身就是考核窗口）"
+      time_window: "上市至今累计（12个月窗口内）"
+      exclusion: "gorenje品牌、ODM、模块组合、委外工厂、本年复产机型"
+
+  - name: 单型号销量
+    type: 复合指标
+    synonyms: [平均型号销量, 型号均销]
+    definition: 近3月滚动总销量 / 在销型号数（或年累口径）
+    formula: "SUM(act_sales_qty) / NULLIF(COUNT(DISTINCT model_name), 0)"
+    derives_from: [实际销量, 在销型号数]
+    granularity: 月 × 产品线 × 事业部
+    table: dws.dws_ipd_ipm_dxhxl_detail_dd
+    field: avg_model_sales
+    related_terms: [在销型号数]
+    owner: XuebinLV
+    status: 在用
+    project: 007-single-model-sales
+    discrimination:
+      zhibiao_type: "无（独立表，不通过zhibiao_type区分）"
+      dimension_type: "单型号销量"
+      numerator_condition: "管报近3月滚动或年累总销量"
+      denominator_condition: "在销型号数（from dws_ipd_ipm_sale_model_detail_dd, is_project='N'）"
+    coverage:
+      内销: [冰箱, 冷柜, 洗衣机, 家用空调, 平板电视, 中央空调, 厨电, 激光家用, 激光商用]
+      外销: [冰箱, 冷柜, 洗衣机, 家用空调, 平板电视, 厨电, 激光]
+    scope_rule:
+      summary: "在销型号数DWS表中is_project='N'的型号为分母，管报销量为分子"
+      time_window: "近3月滚动 + 年累两种口径"
+
+  - name: 单平台销量
+    type: 复合指标
+    synonyms: [平均平台销量, 平台均销]
+    definition: 总销量 / 平台数（月度+年累两种口径）
+    formula: "SUM(act_sales_qty) / NULLIF(平台数, 0)"
+    derives_from: [实际销量, 平台数]
+    granularity: 月 × 产品线 × 事业部
+    table: ads.ads_ipd_ipm_dptxl_result_dd
+    field: avg_platform_sales
+    related_terms: [平台数, 单型号销量]
+    owner: XuebinLV
+    status: 在用
+    project: 008-single-platform-sales
+    discrimination:
+      zhibiao_type: "无（独立表）"
+      dimension_type: "单平台销量"
+      numerator_condition: "总销量（同单型号销量口径）"
+      denominator_condition: "平台数（from ads_ipd_ipm_platform_result_dd）"
+    coverage:
+      内销: [冰箱, 冷柜, 洗衣机, 家用空调, 平板电视, 中央空调, 厨电, 激光家用, 激光商用]
+      外销: [冰箱, 冷柜, 洗衣机, 家用空调, 平板电视, 厨电, 激光]
+    scope_rule:
+      summary: "总销量/平台数，平台数取有关联在产型号的有效平台"
+      time_window: "月度 + 年累两种口径"

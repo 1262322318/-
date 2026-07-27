@@ -1,0 +1,58 @@
+# XuebinLV IPM命中率类指标定义
+# 覆盖：企划命中率（央空日立7阶段判定）
+
+metrics:
+
+  # ═══ 基础度量 ═══
+  - name: 首年规划量
+    type: 基础度量
+    synonyms: [HX00020, 第一年规划量, 企划规划量]
+    definition: 销售型号维表中HX00020字段，代表该型号立项时的首年规划销量
+    formula: "SUM(HX00020)"
+    source: "dim.dim_ipd_salemodel_dd.HX00020"
+    table: dws.dws_ipd_ipm_qhrate_detail_dd
+    field: plan_qty_year1
+    owner: XuebinLV
+    status: 在用
+
+  - name: 企划实际销量
+    type: 基础度量
+    synonyms: [央空实际销量, 日立实际销量]
+    definition: 按销售型号编码口径汇总的管报实际销量（日立/央空专用PUB-004口径）
+    formula: "SUM(sale_qty) GROUP BY sale_model_code"
+    source: "ods.ods_mr_v_app_fm_imat_saledata → dw.dim_product_base_info_dd.sale_model_code"
+    table: dws.dws_ipd_ipm_qhrate_detail_dd
+    field: act_sales_qty
+    owner: XuebinLV
+    status: 在用
+
+  # ═══ 复合指标 ═══
+  - name: 企划命中率
+    type: 复合指标
+    synonyms: [央空命中率, 日立命中率, 阶段达标率, 红黑榜]
+    definition: |
+      7阶段命中率：根据上市后经过的月数判定所处阶段，
+      各阶段有不同的达标比例要求（如阶段1要求实际≥规划×10%）。
+      命中率 = 达标型号数 / 总参评型号数
+    formula: "达标型号数 / NULLIF(总参评型号数, 0)"
+    derives_from: [首年规划量, 企划实际销量]
+    granularity: 月 × 项目 × 阶段
+    table: ads.ads_ipd_ipm_qhrate_result_dd
+    field: hit_rate
+    related_terms: [低效型号占比, 新品规划命中率]
+    owner: XuebinLV
+    status: 在用
+    project: 003-qihua-hit-rate
+    discrimination:
+      vs_新品规划命中率: "新品规划命中率是全产品线通用(0.8阈值)，企划命中率是央空日立专用(7阶段递增阈值)"
+      管理口径: "销售型号编码口径（PUB-004）"
+      规划量来源: "HX00020首年规划量（非BP/LX选择规则）"
+      判定方式: "7阶段递增达标比例（10%→20%→...→80%），不是固定0.8"
+      时间窗口: "滑动12个月最大销量 + 近12月固定窗口"
+    coverage:
+      内销: [中央空调(日立)]
+      外销: [中央空调(日立)]
+    scope_rule:
+      summary: "央空日立销售型号，按归属营销部筛选，排除非标/委外/模块组合"
+      protect_period: "无（上市即参评，但阶段1要求仅10%）"
+      time_window: "滑动12个月（取最大累计值）+ 近12月固定窗口"

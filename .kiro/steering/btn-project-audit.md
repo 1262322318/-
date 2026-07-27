@@ -1,0 +1,6 @@
+---
+inclusion: manual
+description: "一键执行项目审计，生成交互式HTML审计报告"
+---
+
+请执行项目审计。按照 .kiro/skills/project-audit.md 中定义的步骤：1.读取 .kiro/steering/project_audit.md 获取审计规则；2.遍历 requirements/ 下所有需求文件夹逐项检查；3.检查 .kiro/steering/ 规则文件完整性；4.检查 .kiro/data/ 配置文件；5.对每个维度打分（10分制）；6.生成交互式HTML报告保存为 audit-report-20260515.html（含处理意见下拉框、备注输入框、Chart.js图表、localStorage持久化）。

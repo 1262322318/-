@@ -1,0 +1,65 @@
+# XuebinLV IPM域业务规则：时间窗口与口径
+# 对应 PUB-002（BP/LX选择）+ PUB-008（调度参数）
+
+rules:
+  - id: bp_lx_selection
+    name: BP与LX规划量选择规则
+    domain: IPM
+    entity: 规划量
+    field: plan_sales_qty
+    判定逻辑: |
+      当立项首月(min_dtmonth)的年份=当前年时，用LX立项规划量；否则用BP规划量。
+      滞后上市以实际上市时间开始算累计BP目标。
+      SQL模式：
+        CASE WHEN SUBSTRING(COALESCE(min_dtmonth, '190001'), 1, 4) = '当前年'
+          THEN LX规划量 ELSE BP规划量 END
+    待确认:
+
+  - id: protect_period
+    name: 保护期规则
+    domain: IPM
+    entity: 产品型号
+    field: is_dx判定
+    判定逻辑: |
+      新品上市后给予保护期，保护期内不判定为低效。
+      保护期定义因产品线和上市时间而异，由各需求的requirement.md中的专属规则具体定义。
+      通用公式：上市月数 = 当前月 - 实际上市月，上市月数 ≤ 保护期月数 → 不参评。
+    待确认:
+
+  - id: time_granularity
+    name: 时间口径统一规则
+    domain: IPM
+    entity: 统计
+    field: stat_month / stat_year
+    判定逻辑: |
+      - 当月口径：取GP_START_DT对应的上月年月（因为月初跑前一天=上月末）
+      - 年累口径：当前年1月到当前月（含）
+      - 近3月滚动：当前月往前3个自然月（含当前月）
+      - 近12月固定窗口：当前月往前12个自然月（企划命中率专用）
+      - 调度参数：${GP_START_DT} = 脚本执行日前一天，格式yyyymmdd
+    待确认:
+
+  - id: workday_plus_3
+    name: 工作日+3规则
+    domain: IPM
+    entity: 项目
+    field: 延期判定
+    判定逻辑: |
+      项目按计划实施率中，结题日期在"计划日期+3个工作日"以内视为按时完成。
+      工作日定义来自ods.odsrdm_holiday维表。
+      具体计算：从计划日期开始，向后数3个工作日（跳过周末和节假日），得到截止日期。
+    待确认:
+
+  - id: pause_matching
+    name: 暂停配对规则
+    domain: IPM
+    entity: 项目
+    field: pause_days
+    判定逻辑: |
+      PLM项目暂停天数计算：
+      1. 从projectadjust表按项目ID+时间排序
+      2. 暂停记录与下一条恢复记录配对
+      3. 暂停天数 = DATEDIFF(恢复日期, 暂停日期)
+      4. 同一项目可能多次暂停，累加所有配对天数
+      5. 最后一次暂停无恢复记录 → 该项目标记为"暂停中"状态
+    待确认:

@@ -1,0 +1,46 @@
+# {团队}聚合规则（精简版模板）
+# 核心目的：告诉 AI 哪些字段不能直接 AVG/SUM，必须回到分子分母重算
+# 可加型字段无需列出（默认 SUM），这里只管"例外"
+
+# ═══════════════════════════════════════════
+# 不可加型指标：numerator / denominator 映射
+# 规则：SUM(numerator) / NULLIF(SUM(denominator), 0)
+# ═══════════════════════════════════════════
+
+non_additive:
+  - field: # 比率字段名（如 yield_rate）
+    numerator: # 分子字段（如 qualified_qty）
+    denominator: # 分母字段（如 input_qty）
+    table: # 所在表
+    # note: 可选，有上卷歧义或特殊注意时填
+
+# ═══════════════════════════════════════════
+# 粒度转换示例（保留 1 个代表性场景即可）
+# ═══════════════════════════════════════════
+
+granularity_example:
+  scenario: # 场景描述（如"去掉物料维度"）
+  sql: |
+    # 完整 SQL，展示比率字段如何正确重算
+
+# ═══════════════════════════════════════════
+# 反模式红线（自检清单）
+# ═══════════════════════════════════════════
+
+anti_patterns:
+  - id: avg_ratio
+    severity: 阻塞
+    detection: "AVG(xxx_rate) 或 AVG(xxx_pct)"
+    fix: "SUM(numerator) / NULLIF(SUM(denominator), 0)"
+
+  - id: sum_ratio
+    severity: 阻塞
+    detection: "SUM(xxx_rate) 或 SUM(xxx_pct)"
+    fix: "SUM(numerator) / NULLIF(SUM(denominator), 0)"
+
+  - id: cross_granularity_join_then_sum
+    severity: 阻塞
+    detection: "不同粒度表 JOIN 后直接 SUM"
+    fix: "各表先 GROUP BY 到相同粒度，再 FULL JOIN"
+
+  # 按需追加团队特有的反模式...

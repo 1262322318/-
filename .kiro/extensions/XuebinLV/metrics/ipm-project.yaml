@@ -1,0 +1,98 @@
+# XuebinLV IPM项目管理类指标定义
+# 覆盖：应市项目平均开发周期、应市项目按计划实施率
+
+metrics:
+
+  # ═══ 基础度量 ═══
+  - name: 项目开发天数
+    type: 基础度量
+    synonyms: [开发工期, 研发天数]
+    definition: 从PLM项目鉴定日期到立项日期的日历天数，减去暂停天数
+    formula: "DATEDIFF(鉴定日期, 立项日期) - 暂停天数"
+    source: "odsplm_bm_hbmtprojectkpi + odsplm_bm_hbmtprojectadjust"
+    table: dws.dws_ipd_itd_project_dev_cycle_dd
+    field: dev_days
+    owner: XuebinLV
+    status: 在用
+
+  - name: 暂停天数
+    type: 基础度量
+    synonyms: [暂停时长, 中断天数]
+    definition: PLM系统中项目暂停-恢复配对的日历天数总和（按projectadjust表计算）
+    formula: "SUM(DATEDIFF(恢复日期, 暂停日期))"
+    source: "odsplm_bm_hbmtprojectadjust"
+    table: dws.dws_ipd_itd_project_dev_cycle_dd
+    field: pause_days
+    owner: XuebinLV
+    status: 在用
+
+  - name: 按时完成项目数
+    type: 基础度量
+    synonyms: [按计划项目数, 未延期项目数]
+    definition: 结题日期在计划日期+3个工作日以内的项目数
+    formula: "COUNT(*) WHERE 结题日期 <= 计划日期 + 3工作日"
+    source: "odsplm_bm_hbmtprojectkpi"
+    table: dws.dws_ipd_itd_project_impl_rate_dd
+    field: on_time_cnt
+    owner: XuebinLV
+    status: 在用
+
+  - name: 参评项目数
+    type: 基础度量
+    synonyms: [总项目数, 有效项目数]
+    definition: 排除暂停和终止后的应市项目总数（项目状态判定5种：按时结题/延期结题/暂停/终止/进行中）
+    formula: "COUNT(*) WHERE status NOT IN ('暂停','终止')"
+    source: "odsplm_bm_hbmtprojectkpi"
+    table: dws.dws_ipd_itd_project_impl_rate_dd
+    field: total_cnt
+    owner: XuebinLV
+    status: 在用
+
+  # ═══ 复合指标 ═══
+  - name: 项目平均开发周期
+    type: 复合指标
+    synonyms: [平均开发天数, 研发效率]
+    definition: 当月完成鉴定的应市项目的开发天数平均值（去除暂停天数），分当月和年累两种口径
+    formula: "SUM(dev_days) / NULLIF(COUNT(项目), 0)"
+    derives_from: [项目开发天数, 暂停天数]
+    granularity: 月 × 事业部
+    table: ads.ads_ipd_itd_project_dev_cycle_dd
+    field: avg_dev_cycle
+    related_terms: [项目按计划实施率]
+    owner: XuebinLV
+    status: 在用
+    project: 011-project-dev-cycle
+    discrimination:
+      vs_实施率: "开发周期看'多快'（天数），实施率看'准不准'（是否延期）"
+      筛选条件: "项目类别='应市'，当月完成鉴定的项目"
+      暂停处理: "暂停天数从总天数中扣除（配对计算）"
+    coverage:
+      事业部: [冰冷事业部, 洗护事业部, 空气事业部, 显示事业部, 厨电事业部, 全部]
+    scope_rule:
+      summary: "当月完成鉴定的应市项目，开发天数=鉴定日-立项日-暂停天数"
+      time_window: "当月 + 年累两种口径"
+      exclusion: "非应市项目（预研/平台类）、暂停中未恢复项目"
+
+  - name: 项目按计划实施率
+    type: 复合指标
+    synonyms: [实施率, 按时完成率, 项目达成率]
+    definition: 按时完成项目数 / 参评项目数（结题日期在计划+3工作日内视为按时）
+    formula: "按时完成项目数 / NULLIF(参评项目数, 0)"
+    derives_from: [按时完成项目数, 参评项目数]
+    granularity: 月 × 事业部
+    table: ads.ads_ipd_itd_project_impl_rate_dd
+    field: impl_rate
+    related_terms: [项目平均开发周期]
+    owner: XuebinLV
+    status: 在用
+    project: 012-project-impl-rate
+    discrimination:
+      vs_开发周期: "实施率看'是否延期'（按时/延期），开发周期看'绝对天数'"
+      判定规则: "结题日期 ≤ 计划日期 + 3个工作日 → 按时"
+      状态分类: "5种：按时结题/延期结题/暂停/终止/进行中"
+    coverage:
+      事业部: [冰冷事业部, 洗护事业部, 空气事业部, 显示事业部, 厨电事业部, 全部]
+    scope_rule:
+      summary: "应市项目，排除暂停和终止后计算按时率"
+      time_window: "当月 + 年累两种口径"
+      exclusion: "非应市项目、暂停中项目、已终止项目"

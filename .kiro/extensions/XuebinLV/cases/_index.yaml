@@ -1,0 +1,60 @@
+# XuebinLV IPM域项目案例索引
+# 快速查找历史项目的决策和踩坑经验
+
+cases_index:
+  - project_id: 002-dx-model-rate
+    name: 低效型号占比与新品规划命中率
+    time: "2026-04 ~ 2026-06"
+    tags: [低效, 命中率, 多产品线, BP/LX, 保护期, 内外销, 能效机, 复产排除]
+    reference_value: 高
+    summary: "最复杂的需求，覆盖内9+外7产品线，DWD→DWS→ADS全链路，5个脚本，8次变更"
+    detail_file: "002-dx-model-rate.yaml"
+
+  - project_id: 003-qihua-hit-rate
+    name: 企划命中率
+    time: "2026-04 ~ 2026-06"
+    tags: [企划, 命中率, 央空, 日立, 7阶段, 滑动窗口]
+    reference_value: 高
+    summary: "7阶段判定逻辑复杂，滑动窗口+固定窗口双口径"
+
+  - project_id: 004-sale-model-count
+    name: 在销型号数
+    time: "2026-04 ~ 2026-06"
+    tags: [在销, 型号数, 生命周期, 库存清零]
+    reference_value: 高
+    summary: "上游基础表，被005/007/008依赖"
+
+  - project_id: 009-design-change-stats
+    name: 设计变更统计
+    time: "2026-05"
+    tags: [设计变更, IRS, 独立域, 直接查询]
+    reference_value: 中
+    summary: "独立业务域(IRS)，单表多维度统计，无需建新表"
+
+  - project_id: 010-aowei-data-processing
+    name: 奥维数据加工
+    time: "2026-07"
+    tags: [奥维, 外部数据, 全品类, 底表加工]
+    reference_value: 中
+    summary: "外部数据源加工，为013提供上游"
+
+  - project_id: 011-project-dev-cycle
+    name: 应市项目平均开发周期
+    time: "2026-07"
+    tags: [项目, 开发周期, PLM, 暂停配对]
+    reference_value: 高
+    summary: "PLM新数据源，暂停天数配对计算有坑"
+
+  - project_id: 012-project-impl-rate
+    name: 应市项目按计划实施率
+    time: "2026-07"
+    tags: [项目, 实施率, 工作日, 延期判定]
+    reference_value: 高
+    summary: "5种项目状态判定，工作日+3计算"
+
+  - project_id: 013-aowei-market-analysis
+    name: 奥维中间表（行业市场分析）
+    time: "2026-07"
+    tags: [奥维, 中间表, 聚合, 7张表, 价格段, 规格段]
+    reference_value: 高
+    summary: "从已有ADS再聚合，7张独立表，2模块递进"

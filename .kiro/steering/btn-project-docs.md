@@ -1,0 +1,6 @@
+---
+inclusion: manual
+description: "一键生成项目全景文档（HTML格式），包含总览页和各模块详细介绍，存储在 project-docs/ 目录下"
+---
+
+请按照 .kiro/skills/project-docs-generator.md 中定义的步骤执行项目文档生成：1.先清空 project-docs/ 目录；2.读取项目全部 steering/skills/hooks/requirements 文件；3.生成 index.html（项目总览）+ 7个模块详细介绍HTML文件；4.参考 文件输出/project-overview.html 的视觉风格；5.每个模块文档必须包含：模块概述、架构图、核心设计、数据流转图、优缺点分析、待改进项。

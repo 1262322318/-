@@ -1,0 +1,112 @@
+# XuebinLV IPM域指标语义索引
+# AI 匹配入口：通过 synonyms 快速定位指标/度量 → table.field
+
+metrics_index:
+  # ═══ 效率类（低效型号系列） ═══
+  - name: 低效型号占比
+    type: 复合指标
+    synonyms: [低效占比, 型号效率, 低效率]
+    table: ads.ads_ipd_ipm_dxmodel_result_dd
+    field: dx_model_rate
+    domain: 效率
+    file: ipm-efficiency.yaml
+
+  - name: 新品规划命中率
+    type: 复合指标
+    synonyms: [新品命中率, 规划命中, BP命中率, LX命中率]
+    table: ads.ads_ipd_ipm_dxmodel_result_dd
+    field: hit_rate
+    domain: 效率
+    file: ipm-efficiency.yaml
+
+  - name: 在销型号数
+    type: 基础度量
+    synonyms: [在销数量, 有效型号数, 销售中型号]
+    table: ads.ads_ipd_ipm_sale_model_result_dd
+    field: sale_model_cnt
+    domain: 效率
+    file: ipm-efficiency.yaml
+
+  - name: 在产型号数
+    type: 派生度量
+    synonyms: [在产数量, 生产中型号]
+    table: ads.ads_ipd_ipm_zcmodel_result_dd
+    field: zcmodel_cnt
+    domain: 效率
+    file: ipm-efficiency.yaml
+
+  - name: 平台数
+    type: 基础度量
+    synonyms: [产品平台数, 平台库平台数]
+    table: ads.ads_ipd_ipm_platform_result_dd
+    field: platform_cnt
+    domain: 效率
+    file: ipm-efficiency.yaml
+
+  - name: 单型号销量
+    type: 复合指标
+    synonyms: [平均型号销量, 型号均销]
+    table: dws.dws_ipd_ipm_dxhxl_detail_dd
+    field: avg_model_sales
+    domain: 效率
+    file: ipm-efficiency.yaml
+
+  - name: 单平台销量
+    type: 复合指标
+    synonyms: [平均平台销量, 平台均销]
+    table: ads.ads_ipd_ipm_dptxl_result_dd
+    field: avg_platform_sales
+    domain: 效率
+    file: ipm-efficiency.yaml
+
+  # ═══ 命中率类 ═══
+  - name: 企划命中率
+    type: 复合指标
+    synonyms: [央空命中率, 日立命中率, 阶段达标率]
+    table: ads.ads_ipd_ipm_qhrate_result_dd
+    field: hit_rate
+    domain: 命中率
+    file: ipm-hitrate.yaml
+
+  # ═══ 项目管理类 ═══
+  - name: 项目平均开发周期
+    type: 复合指标
+    synonyms: [开发周期, 研发周期, 平均周期]
+    table: ads.ads_ipd_itd_project_dev_cycle_dd
+    field: avg_dev_cycle
+    domain: 项目管理
+    file: ipm-project.yaml
+
+  - name: 项目按计划实施率
+    type: 复合指标
+    synonyms: [实施率, 按时完成率, 项目达成率]
+    table: ads.ads_ipd_itd_project_impl_rate_dd
+    field: impl_rate
+    domain: 项目管理
+    file: ipm-project.yaml
+
+  # ═══ 市场分析类 ═══
+  - name: 品牌占有率
+    type: 复合指标
+    synonyms: [市场份额, 品牌份额, 行业占比]
+    table: ads.ads_ipd_ipm_aowei_mid_brand_share
+    field: share_rate
+    domain: 市场分析
+    file: ipm-market.yaml
+
+  # ═══ 基础度量 ═══
+  - name: 实际销量
+    type: 基础度量
+    synonyms: [管报销量, 出货量, sale_qty]
+    table: ods.ods_mr_v_app_fm_imat_saledata
+    field: sale_qty
+    domain: 通用
+    file: ipm-efficiency.yaml
+
+  - name: 规划销量
+    type: 基础度量
+    synonyms: [BP销量, LX销量, 目标销量, plan_sales_qty]
+    table: dwd.dwd_ipd_ipm_bp_lx_model_mid_dd
+    field: plan_sales_qty
+    domain: 通用
+    file: ipm-efficiency.yaml
