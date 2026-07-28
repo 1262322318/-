@@ -19,7 +19,7 @@ metadata:
 - "启动ETL流程"
 
 ## 技能说明
-本技能激活后，Agent严格按照 `etl_dialogue_flow.md`（v2.0分叉链路）执行，每一步必须获得用户确认后才进入下一阶段。
+本技能激活后，Agent严格按照 `.kiro/skills/etl-requirement/references/etl_dialogue_flow.md`（分叉链路）执行，每一步必须获得用户确认后才进入下一阶段。
 
 ## 执行规则
 
@@ -61,20 +61,22 @@ B5.5 自动调用 interaction-metrics 技能（生成度量数据）
 B6 下游同步（如有影响）
 ```
 
-### 5. 读取的规则文件（Multica 运行说明）
+### 5. 读取的规则文件（依赖已随技能携带）
 
-> ⚠️ 在 Multica 下，steering **不会像 Kiro IDE 那样自动加载**。本技能激活后，Agent 必须按下列**显式路径主动读取**所需文件；凡涉及查询表结构/校验字段，一律遵循 MCP 契约，不得凭记忆编字段。
+> ⚠️ Multica 只把 `.kiro/skills/` 下内容投递到运行环境，**不投递 `.kiro/steering/`**。因此本技能依赖的规则文件已作为**技能支撑文件**放在 `references/` 下随技能携带，按下列路径主动读取；凡涉及查询表结构/校验字段，一律遵循 MCP 契约，不得凭记忆编字段。
 
 - `.kiro/skills/etl-requirement/mcp-table-metadata.md` — **MCP 表结构查询契约**（A3 表匹配 / A4 骨架校验 / 链路B 改前校验的唯一查表入口）
-- `.kiro/steering/etl_dialogue_flow.md` — 总控流程
-- `.kiro/steering/etl_analysis_clarification.md` — 关键词提取 + 模糊度评分 + 澄清问题 + 表匹配 + 分层识别
-- `.kiro/steering/etl_change_management.md` — 变更需求专属流程
-- `.kiro/steering/requirement_patterns.md` — 模式匹配 + 依赖关系
-- `.kiro/steering/data_mapping.md` — 关键词→表映射
-- `.kiro/steering/business_rules.md` — 公共业务规则
-- `.kiro/steering/sql_rules.md` — SQL编码规范
-- `.kiro/steering/sql_templates.md` — SQL模板
-- `.kiro/steering/etl_sql_generator.md` — SQL生成器
+- `.kiro/skills/etl-requirement/references/etl_dialogue_flow.md` — 总控流程
+- `.kiro/skills/etl-requirement/references/etl_analysis_clarification.md` — 关键词提取 + 模糊度评分 + 澄清问题 + 表匹配 + 分层识别
+- `.kiro/skills/etl-requirement/references/etl_change_management.md` — 变更需求专属流程
+- `.kiro/skills/etl-requirement/references/requirement_patterns.md` — 模式匹配 + 依赖关系
+- `.kiro/skills/etl-requirement/references/data_mapping.md` — 关键词→表映射
+- `.kiro/skills/etl-requirement/references/business_rules.md` — 公共业务规则
+- `.kiro/skills/etl-requirement/references/sql_rules.md` — SQL编码规范
+- `.kiro/skills/etl-requirement/references/sql_templates.md` — SQL模板
+- `.kiro/skills/etl-requirement/references/etl_sql_generator.md` — SQL生成器
+
+> 说明：`.kiro/steering/` 下同名文件是 Kiro IDE 用的同源副本；编辑以 `steering/` 为单一来源，改后同步到本 `references/`。
 
 ### 6. 输出产物
 

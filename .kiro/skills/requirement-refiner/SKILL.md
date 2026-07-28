@@ -211,12 +211,12 @@ refined文档让每个步骤执行更快，但**不跳过任何步骤**：
 | 依赖项 | 用途 |
 |--------|------|
 | `.kiro/skills/etl-requirement/mcp-table-metadata.md`（MCP 契约） | 查询字段映射的唯一入口（步骤3/4/9），查询范式与失败降级以契约为准 |
-| `.kiro/steering/requirement_patterns.md` | 模式匹配、依赖识别 |
+| `.kiro/skills/requirement-refiner/references/requirement_patterns.md` | 模式匹配、依赖识别 |
 | 目标需求的正式SQL脚本 | 变更场景的参考对象 |
 | 目标需求的 requirement.md | 展开"同XX"引用 |
-| `.kiro/steering/etl_change_management.md` | 禁止行为来源（经验教训记录） |
+| `.kiro/skills/requirement-refiner/references/etl_change_management.md` | 禁止行为来源（经验教训记录） |
 
-> ⚠️ Multica 下 steering 不会自动加载，上表中的 `.kiro/steering/*` 需由本技能按路径主动读取。
+> ⚠️ Multica 只投递 `.kiro/skills/` 下内容；上表依赖文件已作为技能支撑文件放在本技能的 `references/` 下随技能携带（`.kiro/steering/` 下为 Kiro IDE 同源副本）。
 
 ## 注意事项
 
