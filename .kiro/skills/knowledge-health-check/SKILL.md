@@ -64,14 +64,7 @@ metadata:
 | 规则引用字段 vs table_metadata | business_rules中SQL引用的字段是否在table_metadata中存在 | ❌ 错误 |
 
 #### table_metadata 验证方法
-通过MCP postgres查询验证：
-```sql
--- 检查表是否在table_metadata中
-SELECT DISTINCT table_name FROM public.table_metadata WHERE table_name = '{表名}';
-
--- 检查字段是否存在
-SELECT column_name FROM public.table_metadata WHERE table_name = '{表名}' AND column_name = '{字段名}';
-```
+通过 MCP postgres 查询验证：表存在性用 Q2、字段存在性用 Q3（查询范式与失败降级见 `.kiro/skills/etl-requirement/mcp-table-metadata.md` 契约；本文件不再内嵌 SQL）。
 
 ### 维度5：覆盖度评估
 

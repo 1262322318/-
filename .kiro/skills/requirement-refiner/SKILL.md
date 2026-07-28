@@ -70,15 +70,7 @@ metadata:
 
 ### 步骤3：表字段映射（MCP查询）
 
-对 converted 文档中的每个业务描述，通过 MCP 查询 table_metadata 映射到实际字段：
-
-```sql
--- 查询表的字段列表
-SELECT column_name, column_type, column_comment 
-FROM public.table_metadata 
-WHERE table_name = '{表名}' 
-ORDER BY id;
-```
+对 converted 文档中的每个业务描述，通过 MCP 查询字段列表映射到实际字段（用 Q1，查询范式与失败降级规则见 `.kiro/skills/etl-requirement/mcp-table-metadata.md` 契约；本文件不再内嵌 SQL）。
 
 映射规则：
 | 业务描述中的关键词 | 匹配 column_comment | 输出 |
@@ -218,11 +210,13 @@ refined文档让每个步骤执行更快，但**不跳过任何步骤**：
 
 | 依赖项 | 用途 |
 |--------|------|
-| MCP postgres | 查询 table_metadata 映射字段 |
-| `requirement_patterns.md` | 模式匹配、依赖识别 |
+| `.kiro/skills/etl-requirement/mcp-table-metadata.md`（MCP 契约） | 查询字段映射的唯一入口（步骤3/4/9），查询范式与失败降级以契约为准 |
+| `.kiro/steering/requirement_patterns.md` | 模式匹配、依赖识别 |
 | 目标需求的正式SQL脚本 | 变更场景的参考对象 |
 | 目标需求的 requirement.md | 展开"同XX"引用 |
-| `etl_change_management.md` | 禁止行为来源（经验教训记录） |
+| `.kiro/steering/etl_change_management.md` | 禁止行为来源（经验教训记录） |
+
+> ⚠️ Multica 下 steering 不会自动加载，上表中的 `.kiro/steering/*` 需由本技能按路径主动读取。
 
 ## 注意事项
 
