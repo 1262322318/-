@@ -26,8 +26,16 @@
 工作区配置（.kiro/settings/mcp.json）← 本文件
 ```
 
+## Multica 运行环境（重要）
+
+在 **Multica** 下运行时，MCP 连接**不读本目录的 `mcp.json`**，而是由**运行 Agent 的 `mcp_config` / `custom_env`** 承载（`multica agent update <id> --mcp-config-file ...`，读取时脱敏）。
+
+- 连接串/账号/口令只存于 Agent `mcp_config`，本仓库任何文件都不写连接信息。
+- 更换库/主机/账号时，**只改 Agent `mcp_config` 一处**；skill、契约、steering 均无需改动。
+- 本目录的 `mcp.json` 仅供 **Kiro IDE** 本地使用；两套环境互不影响。
+
 ## 注意事项
 
-- 修改mcp.json后，MCP服务器会自动重连
+- （Kiro IDE）修改mcp.json后，MCP服务器会自动重连
 - 敏感信息（密码、Token）存储在此文件中，注意不要提交到公共仓库
-- 如需添加新的MCP服务器，直接编辑mcp.json的mcpServers对象
+- 如需添加新的MCP服务器：Kiro IDE 编辑 mcp.json 的 mcpServers；Multica 改 Agent `mcp_config`

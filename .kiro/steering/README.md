@@ -107,3 +107,19 @@ etl_dialogue_flow.md（总控，分叉链路v2.0）
 - 调用频率=低频 但 遗忘风险=高 → 不降级，或降级后必须在相关技能入口增加自动加载提示
 - 调用频率=高频 → 不降级
 - 关键规则（safety.md、language.md、etl_dialogue_flow.md）→ 永不降级
+
+## Multica 迁移：加载模型与知识分层（防上下文膨胀）
+
+Kiro IDE 会按 `inclusion` 自动加载 steering；**Multica 不会自动加载 steering**。迁移后按内容性质归位，避免把知识塞进"每次都加载"的上下文：
+
+| 内容性质 | 归位 | 示例 | 加载时机 |
+|----------|------|------|----------|
+| 行为规则 | **Agent instructions（提示词）** | 中文输出、改前确认、修改一致性 | 常驻（仅规则，不含领域知识）|
+| 流程编排 | **Skill 正文 / 支撑文件** | 对话流程、澄清、变更管理 | 技能激活时 |
+| 领域知识 | **Skill 支撑文件（`references/`）或知识库** | 表映射、公共规则、模式库、表语义 | **按需读取**，不常驻 |
+| 连接/密钥 | **Agent `mcp_config` / `custom_env`** | postgres 连接串 | 运行时注入，不进仓库 |
+| 表结构查询 | **`.kiro/skills/etl-requirement/mcp-table-metadata.md` 契约** | table_metadata 查询 | 按需，全项目唯一 |
+
+**防膨胀三原则**：①Agent instructions 只放行为规则，**不放领域知识**；②领域知识按需读取（支撑文件/知识库），不常驻；③同一份知识全项目**单一副本**，其余引用（如 MCP 契约）。
+
+**运行时可达性**：Multica 只把 `.kiro/skills/` 下的内容（含 skill 的 `references/` 支撑文件）投递到任务环境；`.kiro/steering/` **不投递**。因此 skill 在 Multica 下依赖的文件必须作为**技能支撑文件**随 skill 携带（见各 skill 的 `references/`），不能依赖 `.kiro/steering/` 路径。`.kiro/steering/` 仅在 Kiro IDE 下有效。

@@ -58,7 +58,7 @@ inclusion: manual
 ### 6. 配置文件检查
 - [ ] .kiro/data/table_permissions.csv 格式是否正确（database,table_name,username,permission_level,last_verified,notes）
 - [ ] .kiro/hooks/ 中的hook文件JSON格式是否合法
-- [ ] .kiro/settings/mcp.json 是否可解析
+- [ ] MCP 连接可用性：**Multica** 下检查运行 Agent 的 `mcp_config` 是否含 `postgres` 且探活成功（表结构查询按 `.kiro/skills/etl-requirement/mcp-table-metadata.md` 契约）；**Kiro IDE** 下检查 `.kiro/settings/mcp.json` 是否可解析
 
 ### 7. 需求间依赖完整性检查
 - [ ] lineage.md中声明的上游依赖表是否真实存在于对应需求的sql_scripts中
