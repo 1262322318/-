@@ -60,11 +60,7 @@ metadata:
 
 ### 1.2 核心字段采集（MCP优先）
 
-**优先方式**：Agent自动通过MCP查询 `public.table_metadata` 获取字段列表：
-```sql
-SELECT column_name, column_type, column_comment 
-FROM public.table_metadata WHERE table_name = '{表名}' ORDER BY id;
-```
+**优先方式**：Agent 自动通过 MCP 查询字段列表（用 Q1，见 `.kiro/skills/etl-requirement/mcp-table-metadata.md` 契约；本文件不再内嵌 SQL）：
 
 - 如果MCP查询成功：向用户展示字段列表，请用户标注哪些是**核心字段**（常用于JOIN/WHERE/SELECT的字段）
 - 如果MCP查询无结果（表未录入metadata）：退回手动模式，请用户提供字段信息

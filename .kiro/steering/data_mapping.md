@@ -97,11 +97,7 @@ LEFT JOIN dim.dim_ipd_salemodel_dd s ON p.ID = s.PRODUCTMODEL_ID;
 
 ## 详细表结构参考
 
-> 完整字段列表和类型信息通过 MCP postgres 查询 `public.table_metadata` 获取：
-> ```sql
-> SELECT column_name, column_type, column_comment 
-> FROM public.table_metadata WHERE table_name = '{表名}' ORDER BY id;
-> ```
+> 完整字段列表和类型信息通过 MCP postgres 查询获取（用 Q1，见 `.kiro/skills/etl-requirement/mcp-table-metadata.md` 契约）。
 > 业务语义（用途、关联规则、使用场景）见 `table_structures.md`（Agent按需读取）。
 > 本文件（data_mapping.md）为快速索引。
 

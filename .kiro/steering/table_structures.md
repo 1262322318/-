@@ -4,12 +4,7 @@ inclusion: manual
 # 表结构业务语义索引
 
 > 本文档记录已录入数据表的**业务语义信息**（用途、关联规则、关键词、核心字段说明）。
-> 完整字段列表和类型信息请通过 MCP postgres 查询 `public.table_metadata` 获取：
-> ```sql
-> SELECT column_name, column_type, column_comment 
-> FROM public.table_metadata 
-> WHERE table_name = '{表名}' ORDER BY id;
-> ```
+> 完整字段列表和类型信息请通过 MCP postgres 查询获取（用 Q1，见 `.kiro/skills/etl-requirement/mcp-table-metadata.md` 契约）。
 
 ## 表清单索引
 
@@ -251,24 +246,4 @@ inclusion: manual
 
 ## 查询表结构的标准方式
 
-当需要查看某张表的完整字段列表时，使用以下SQL查询 `public.table_metadata`：
-
-```sql
--- 查看某张表的所有字段
-SELECT column_name, column_type, column_comment 
-FROM public.table_metadata 
-WHERE table_name = '{表名}' 
-ORDER BY id;
-
--- 查看某个库下所有表
-SELECT DISTINCT table_name, table_comment 
-FROM public.table_metadata 
-WHERE db_name = '{库名}' 
-ORDER BY table_name;
-
--- 搜索包含某关键词的字段
-SELECT table_name, column_name, column_type, column_comment 
-FROM public.table_metadata 
-WHERE column_comment LIKE '%{关键词}%' 
-ORDER BY table_name, id;
-```
+查询 `public.table_metadata` 的所有范式（查字段列表 Q1、查库下所有表 Q4、按关键词搜字段 Q5）统一以 `.kiro/skills/etl-requirement/mcp-table-metadata.md` 契约为准，本文件不再内嵌 SQL。

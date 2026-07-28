@@ -35,15 +35,7 @@ inclusion: manual
 从需求分析结果中提取所有涉及的表（源表、目标表、维度表）
 
 ### 2. 验证表和字段存在性（通过 table_metadata）
-Agent通过MCP postgres查询 `public.table_metadata` 验证：
-```sql
--- 验证表是否存在
-SELECT DISTINCT table_name, table_comment FROM public.table_metadata WHERE table_name = '{表名}';
-
--- 验证字段是否存在
-SELECT column_name, column_type, column_comment FROM public.table_metadata 
-WHERE table_name = '{表名}' AND column_name = '{字段名}';
-```
+Agent 通过 MCP postgres 验证表与字段存在性：表用 Q2、字段用 Q3（查询范式与失败降级见 `.kiro/skills/etl-requirement/mcp-table-metadata.md` 契约；本文件不再内嵌 SQL）。
 - 表存在 → ✅ 继续检查权限
 - 表不存在 → ❌ 表未录入元数据，需确认表名是否正确
 - 字段不存在 → ⚠️ 字段可能拼写错误或表结构已变更
