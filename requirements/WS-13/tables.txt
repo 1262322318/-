@@ -1,0 +1,32 @@
+# WS-13 涉及表清单
+
+## 源表（ODS层）
+
+### odsplm_bm_hbmtprojectkpi
+- 层级：ODS
+- 用途：项目主表，提供立项时间、完成时间、应市类判定、产品线维度
+- 关键字段：hbmtprojectcreatedate, hbmtpproductionactualedate, hbmtpderivetype, hbmtpproductline, productname
+- 校验状态：【待确认-MCP未匹配】ODS物理列名采用PLM属性名小写假设
+
+### odsplm_bm_hbmtprojectadjust
+- 层级：ODS
+- 用途：变更单表，提供暂停/恢复单的发布日期
+- 关键字段：type, projectname, releasedate
+- 校验状态：【待确认-MCP未匹配】ODS物理列名采用PLM属性名小写假设
+- 关联关系：hbmtprojectkpi.productname = hbmtprojectadjust.projectname
+
+## 目标表（DWS层）
+
+### dws_plm_project_dev_cycle_monthly
+- 层级：DWS
+- 用途：应市项目平均开发周期月度宽表
+- 新建/复用：新建
+- 粒度：产品线 × 统计月
+- 模型：Duplicate
+
+## 待引入表（M2/M3 落地时）
+
+### 目标值模拟表（名称待定）
+- 层级：待定
+- 用途：M2 完成率的目标值来源
+- 状态：结构/字段/粒度未定（遗留-1）
